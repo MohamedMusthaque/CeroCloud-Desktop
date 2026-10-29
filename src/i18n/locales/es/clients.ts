@@ -40,6 +40,10 @@ export const clients = {
     'cliForm.addressPlaceholder': 'Dirección física completa',
     'cliForm.notes': 'Notas Adicionales',
     'cliForm.notesPlaceholder': 'Información extra...',
+    'cliForm.creditLimit': 'Límite de Crédito',
+    'cliForm.creditLimitHint': 'Monto máximo que el cliente puede deber. Usa 0 para no permitir crédito.',
+    'cliForm.creditLimitInvalid': 'El límite de crédito no puede ser negativo',
+    'cli.creditLimit': 'Crédito: {amount}',
     'cliForm.saving': 'Guardando...',
     'cliForm.save': 'Guardar Cliente',
 

@@ -7,9 +7,12 @@ export interface CartTab {
     name: string
     items: CartItem[]
     customerName: string
+    clientId?: number | null // Set only when a registered client is picked (required for credit)
     discount: number
-    paymentMethod: 'cash' | 'card' | 'transfer' | 'other'
+    paymentMethod: PaymentMethod
 }
+
+export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'credit' | 'other'
 
 interface CartState {
     tabs: CartTab[]
@@ -29,8 +32,9 @@ interface CartState {
 
     // Transaction Data
     setCustomerName: (name: string) => void
+    setCustomer: (name: string, clientId: number | null) => void
     setDiscount: (discount: number) => void
-    setPaymentMethod: (method: 'cash' | 'card' | 'transfer' | 'other') => void
+    setPaymentMethod: (method: PaymentMethod) => void
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9)
@@ -40,6 +44,7 @@ const createEmptyTab = (index: number): CartTab => ({
     name: `Ticket ${index + 1}`,
     items: [],
     customerName: '',
+    clientId: null,
     discount: 0,
     paymentMethod: 'cash'
 })
@@ -148,9 +153,18 @@ export const useCartStore = create<CartState>()(
                 )
             })),
 
+            // Typing a name unlinks the registered client, so credit is no longer allowed
             setCustomerName: (name) => set(state => ({
                 tabs: state.tabs.map(tab =>
-                    tab.id === state.activeTabId ? { ...tab, customerName: name } : tab
+                    tab.id === state.activeTabId
+                        ? { ...tab, customerName: name, clientId: null, paymentMethod: tab.paymentMethod === 'credit' ? 'cash' : tab.paymentMethod }
+                        : tab
+                )
+            })),
+
+            setCustomer: (name, clientId) => set(state => ({
+                tabs: state.tabs.map(tab =>
+                    tab.id === state.activeTabId ? { ...tab, customerName: name, clientId } : tab
                 )
             })),
 

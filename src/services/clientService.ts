@@ -7,6 +7,7 @@ export interface Client {
     phone?: string
     email?: string
     notes?: string
+    credit_limit?: number
     created_at?: string
     updated_at?: string
 }
@@ -52,6 +53,14 @@ class ClientService {
             throw new Error('Client API not available')
         }
         return window.electronAPI.clients.delete(id)
+    }
+
+    // Outstanding balance of the client's non-cancelled credit sales
+    async getCreditBalance(id: number): Promise<number> {
+        if (!window.electronAPI?.clients) {
+            throw new Error('Client API not available')
+        }
+        return window.electronAPI.clients.getCreditBalance(id)
     }
 }
 

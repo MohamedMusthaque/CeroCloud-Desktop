@@ -17,6 +17,13 @@ db.pragma('foreign_keys = ON')
 // 1. Definición del Esquema (Schema)
 // ==========================================
 
+function addColumnIfMissing(table: string, column: string, definition: string) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+  if (!columns.some(c => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
+  }
+}
+
 function initSchema() {
   // Tabla: Productos
   db.exec(`
@@ -69,6 +76,7 @@ function initSchema() {
         phone TEXT,
         email TEXT,
         notes TEXT,
+        credit_limit REAL DEFAULT 0,
         created_at TEXT,
         updated_at TEXT
     )`)
@@ -83,6 +91,7 @@ function initSchema() {
         total REAL NOT NULL,
         payment_method TEXT,
         customer_name TEXT,
+        client_id INTEGER,
         notes TEXT,
         status TEXT DEFAULT 'completed',
         created_at TEXT
@@ -105,6 +114,10 @@ function initSchema() {
 
 
 
+  // Columnas agregadas después de la versión inicial (bases de datos existentes)
+  addColumnIfMissing('clients', 'credit_limit', 'REAL DEFAULT 0')
+  addColumnIfMissing('sales', 'client_id', 'INTEGER')
+
   // Índices Estratégicos para Rendimiento
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
@@ -115,6 +128,7 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_clients_name ON clients(name);
     CREATE INDEX IF NOT EXISTS idx_clients_tax_id ON clients(tax_id);
     CREATE INDEX IF NOT EXISTS idx_clients_tax_id ON clients(tax_id);
+    CREATE INDEX IF NOT EXISTS idx_sales_client_id ON sales(client_id);
   `)
 
   console.log('✅ Esquema SQLite inicializado con optimizaciones de rendimiento.')
@@ -405,8 +419,8 @@ export const clientQueries = {
 
   create: (client: Omit<Client, 'id'> & { id?: number }): Client => {
     const stmt = db.prepare(`
-            INSERT INTO clients(id, name, tax_id, address, phone, email, notes, created_at, updated_at)
-            VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @created_at, @updated_at)
+            INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, created_at, updated_at)
+            VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @created_at, @updated_at)
         `)
 
     const info = stmt.run({
@@ -417,6 +431,7 @@ export const clientQueries = {
       phone: client.phone || null,
       email: client.email || null,
       notes: client.notes || '',
+      credit_limit: client.credit_limit || 0,
       created_at: client.created_at || new Date().toISOString(),
       updated_at: client.updated_at || new Date().toISOString()
     })
@@ -443,6 +458,15 @@ export const clientQueries = {
   delete: (id: number): boolean => {
     const info = db.prepare('DELETE FROM clients WHERE id = ?').run(id)
     return info.changes > 0
+  },
+
+  // Saldo pendiente: total de ventas a crédito no canceladas del cliente
+  getCreditBalance: (id: number): number => {
+    const row = db.prepare(`
+            SELECT COALESCE(SUM(total), 0) AS balance FROM sales
+            WHERE client_id = ? AND payment_method = 'credit' AND status != 'cancelled'
+        `).get(id) as { balance: number }
+    return row.balance
   }
 }
 
@@ -518,13 +542,14 @@ export const saleQueries = {
     const createTx = db.transaction(() => {
       // 1. Insertar Venta (Permite restaurar ID, status y fechas originales)
       const insertSale = db.prepare(`
-                INSERT INTO sales(id, subtotal, tax, discount, total, payment_method, customer_name, notes, status, created_at)
-  VALUES(@id, @subtotal, @tax, @discount, @total, @payment_method, @customer_name, @notes, @status, @created_at)
+                INSERT INTO sales(id, subtotal, tax, discount, total, payment_method, customer_name, client_id, notes, status, created_at)
+  VALUES(@id, @subtotal, @tax, @discount, @total, @payment_method, @customer_name, @client_id, @notes, @status, @created_at)
     `)
 
       const info = insertSale.run({
         ...sale,
         id: sale.id || null,
+        client_id: sale.client_id ?? null,
         notes: sale.notes || '',
         status: sale.status || 'completed',
         created_at: sale.created_at || new Date().toISOString()
@@ -675,8 +700,8 @@ export function restoreDatabase(data: any) {
     `)
 
     const insertSale = db.prepare(`
-        INSERT INTO sales(id, subtotal, tax, discount, total, payment_method, customer_name, notes, status, created_at)
-  VALUES(@id, @subtotal, @tax, @discount, @total, @payment_method, @customer_name, @notes, @status, @created_at)
+        INSERT INTO sales(id, subtotal, tax, discount, total, payment_method, customer_name, client_id, notes, status, created_at)
+  VALUES(@id, @subtotal, @tax, @discount, @total, @payment_method, @customer_name, @client_id, @notes, @status, @created_at)
     `)
 
     const insertSaleItem = db.prepare(`
@@ -722,6 +747,7 @@ export function restoreDatabase(data: any) {
         insertSale.run({
           id: s.id, subtotal: s.subtotal, tax: s.tax, discount: s.discount, total: s.total,
           payment_method: s.payment_method, customer_name: s.customer_name || '',
+          client_id: s.client_id ?? null,
           notes: s.notes || '', status: s.status || 'completed',
           created_at: s.created_at || new Date().toISOString()
         })
@@ -740,14 +766,15 @@ export function restoreDatabase(data: any) {
     // 6. Restaurar Clientes
     if (data.clients) {
       const insertClient = db.prepare(`
-        INSERT INTO clients(id, name, tax_id, address, phone, email, notes, created_at, updated_at)
-        VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @created_at, @updated_at)
+        INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, created_at, updated_at)
+        VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @created_at, @updated_at)
       `)
 
       for (const c of data.clients) {
         insertClient.run({
           id: c.id, name: c.name, tax_id: c.tax_id || null, address: c.address || null,
           phone: c.phone || null, email: c.email || null, notes: c.notes || '',
+          credit_limit: c.credit_limit || 0,
           created_at: c.created_at || new Date().toISOString(),
           updated_at: c.updated_at || new Date().toISOString()
         })

@@ -19,6 +19,7 @@ export const common: Record<keyof typeof es, string> = {
     'payment.card': 'Card',
     'payment.transfer': 'Transfer',
     'payment.other': 'Other',
+    'payment.credit': 'Credit',
 
     // Auto backup (App)
     'app.autoBackupStarting': 'Starting automatic backup...',

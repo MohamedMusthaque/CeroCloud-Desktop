@@ -35,6 +35,7 @@ export interface Client {
     phone?: string
     email?: string
     notes?: string
+    credit_limit?: number
     created_at?: string
     updated_at?: string
 }
@@ -55,6 +56,7 @@ export interface Sale {
     total: number
     payment_method: string
     customer_name?: string
+    client_id?: number
     notes?: string
     status: 'completed' | 'cancelled'
     created_at?: string

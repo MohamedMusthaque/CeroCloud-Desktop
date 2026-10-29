@@ -42,6 +42,10 @@ export const clients: Record<keyof typeof es, string> = {
     'cliForm.addressPlaceholder': 'Full physical address',
     'cliForm.notes': 'Additional Notes',
     'cliForm.notesPlaceholder': 'Extra information...',
+    'cliForm.creditLimit': 'Credit Limit',
+    'cliForm.creditLimitHint': 'Maximum amount the client can owe. Use 0 to disallow credit.',
+    'cliForm.creditLimitInvalid': 'Credit limit cannot be negative',
+    'cli.creditLimit': 'Credit: {amount}',
     'cliForm.saving': 'Saving...',
     'cliForm.save': 'Save Client',
 

@@ -249,6 +249,10 @@ export function registerIpcHandlers() {
         return { success: true }
     })
 
+    ipcMain.handle('clients:getCreditBalance', (_event, id: number) => {
+        return clientQueries.getCreditBalance(id)
+    })
+
     // Inventory Logs handlers REMOVED
 
     console.log('✅ IPC Handlers registered')

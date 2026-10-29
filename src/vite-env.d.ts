@@ -52,6 +52,7 @@ interface ElectronAPI {
         create: (client: any) => Promise<any>
         update: (id: number, client: any) => Promise<any>
         delete: (id: number) => Promise<{ success: boolean }>
+        getCreditBalance: (id: number) => Promise<number>
     }
     database: {
         clearAll: () => Promise<{ success: boolean; error?: string }>

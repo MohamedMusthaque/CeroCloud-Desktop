@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useTranslation, t as translateNow } from '@/i18n'
+import { companyService } from '@/services/companyService'
 
 export function Clients() {
     const { t } = useTranslation()
@@ -80,6 +81,7 @@ export function Clients() {
     const totalClients = clients.length
     const withTaxId = clients.filter(c => c.tax_id).length
     const withEmail = clients.filter(c => c.email).length
+    const withCredit = clients.filter(c => (c.credit_limit ?? 0) > 0).length
 
     return (
         <div className="space-y-6 pb-20 p-2">
@@ -124,7 +126,7 @@ export function Clients() {
                 />
                 <StatCard
                     label={t('cli.statCredit')}
-                    value={0} // Placeholder
+                    value={withCredit}
                     icon={CreditCard}
                     color="bg-emerald-500"
                 />
@@ -264,6 +266,7 @@ interface ClientCardProps {
 
 function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCardProps) {
     const { t } = useTranslation()
+    const { currencySymbol } = companyService.getSettings()
     return (
         <motion.div
             layout
@@ -303,12 +306,20 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
                         )}
                     </div>
 
-                    {client.tax_id && (
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded-md w-fit">
-                            <FileText className="w-3 h-3" />
-                            {client.tax_id}
-                        </p>
-                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                        {client.tax_id && (
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded-md w-fit">
+                                <FileText className="w-3 h-3" />
+                                {client.tax_id}
+                            </p>
+                        )}
+                        {(client.credit_limit ?? 0) > 0 && (
+                            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md w-fit">
+                                <CreditCard className="w-3 h-3" />
+                                {t('cli.creditLimit', { amount: `${currencySymbol}${client.credit_limit!.toFixed(2)}` })}
+                            </p>
+                        )}
+                    </div>
 
                     {/* Datos de contacto compactos */}
                     <div className="flex flex-wrap gap-y-1 gap-x-3 text-xs text-gray-500 pt-1">

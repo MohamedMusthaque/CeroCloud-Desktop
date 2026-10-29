@@ -5,6 +5,7 @@ import { X, Save, Loader2 } from 'lucide-react'
 import { clientService, type Client } from '@/services/clientService'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { companyService } from '@/services/companyService'
 import { useTranslation } from '@/i18n'
 
 interface ClientFormProps {
@@ -23,7 +24,8 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
         email: '',
         phone: '',
         address: '',
-        notes: ''
+        notes: '',
+        credit_limit: 0
     })
 
     useEffect(() => {
@@ -35,7 +37,8 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                     email: clientToEdit.email || '',
                     phone: clientToEdit.phone || '',
                     address: clientToEdit.address || '',
-                    notes: clientToEdit.notes || ''
+                    notes: clientToEdit.notes || '',
+                    credit_limit: clientToEdit.credit_limit || 0
                 })
             } else {
                 setFormData({
@@ -44,7 +47,8 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                     email: '',
                     phone: '',
                     address: '',
-                    notes: ''
+                    notes: '',
+                    credit_limit: 0
                 })
             }
         }
@@ -57,6 +61,12 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
         try {
             if (!formData.name?.trim()) {
                 toast.error(t('cliForm.nameRequired'))
+                setLoading(false)
+                return
+            }
+
+            if ((formData.credit_limit ?? 0) < 0) {
+                toast.error(t('cliForm.creditLimitInvalid'))
                 setLoading(false)
                 return
             }
@@ -182,6 +192,22 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                         className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                                         placeholder={t('cliForm.addressPlaceholder')}
                                     />
+                                </div>
+
+                                {/* Límite de crédito */}
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                                        {t('cliForm.creditLimit')} ({companyService.getSettings().currencySymbol})
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={formData.credit_limit ?? 0}
+                                        onChange={(e) => setFormData({ ...formData, credit_limit: Math.max(0, Number(e.target.value) || 0) })}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    />
+                                    <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{t('cliForm.creditLimitHint')}</p>
                                 </div>
 
                                 {/* Notas */}

@@ -42,4 +42,12 @@ export const pos = {
     'pos.confirmTransaction': 'Confirme que la transacción fue exitosa.',
     'pos.processing': 'Procesando...',
     'pos.confirmAndFinish': 'Confirmar y Finalizar',
+    'pos.creditNeedsClient': 'Selecciona un cliente registrado para vender a crédito',
+    'pos.creditNoLimit': 'Este cliente no tiene límite de crédito asignado',
+    'pos.creditExceeded': 'La venta supera el crédito disponible ({amount})',
+    'pos.creditAvailable': 'Crédito disponible: {amount}',
+    'pos.creditLimit': 'Límite de crédito',
+    'pos.creditBalance': 'Saldo pendiente',
+    'pos.creditAfterSale': 'Disponible después de la venta',
+    'pos.creditOnAccount': 'La venta se cargará a la cuenta de {name}.',
 }

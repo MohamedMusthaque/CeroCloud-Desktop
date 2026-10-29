@@ -44,4 +44,12 @@ export const pos: Record<keyof typeof es, string> = {
     'pos.confirmTransaction': 'Confirm that the transaction was successful.',
     'pos.processing': 'Processing...',
     'pos.confirmAndFinish': 'Confirm and Finish',
+    'pos.creditNeedsClient': 'Select a registered client to sell on credit',
+    'pos.creditNoLimit': 'This client has no credit limit assigned',
+    'pos.creditExceeded': 'The sale exceeds the available credit ({amount})',
+    'pos.creditAvailable': 'Available credit: {amount}',
+    'pos.creditLimit': 'Credit limit',
+    'pos.creditBalance': 'Outstanding balance',
+    'pos.creditAfterSale': 'Available after this sale',
+    'pos.creditOnAccount': 'The sale will be charged to {name}\'s account.',
 }

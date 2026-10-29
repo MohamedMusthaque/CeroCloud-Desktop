@@ -14,7 +14,9 @@ import {
     User,
     Percent,
     Ticket as TicketIcon,
-    ArrowUpDown
+    ArrowUpDown,
+    Camera,
+    HandCoins
 } from 'lucide-react'
 import { productService } from '@/services/productService'
 import { saleService } from '@/services/saleService'
@@ -51,6 +53,7 @@ export function Sales() {
         removeItem,
         clearCart,
         setCustomerName,
+        setCustomer,
         setDiscount,
         setPaymentMethod,
         updateTabName
@@ -76,6 +79,21 @@ export function Sales() {
     const [showClientResults, setShowClientResults] = useState(false)
     const clientSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const clientContainerRef = useRef<HTMLDivElement>(null)
+
+    // Credit info of the selected registered client
+    const [clientCredit, setClientCredit] = useState<{ limit: number; balance: number } | null>(null)
+    useEffect(() => {
+        const clientId = activeTab.clientId
+        setClientCredit(null)
+        if (!clientId) return
+        let stale = false
+        Promise.all([clientService.getById(clientId), clientService.getCreditBalance(clientId)])
+            .then(([client, balance]) => {
+                if (!stale) setClientCredit({ limit: client?.credit_limit || 0, balance })
+            })
+            .catch(console.error)
+        return () => { stale = true }
+    }, [activeTab.clientId])
 
     // Handle click outside client results
     useEffect(() => {
@@ -111,7 +129,7 @@ export function Sales() {
     }
 
     const selectClient = (client: Client) => {
-        setCustomerName(client.name)
+        setCustomer(client.name, client.id ?? null)
         setShowClientResults(false)
         setClientSearchResults([])
     }
@@ -260,10 +278,25 @@ export function Sales() {
     const change = Math.max(0, amountReceivedNum - total)
     const isPaymentSufficient = activeTab.paymentMethod !== 'cash' || amountReceivedNum >= total
 
+    // Credit: only for a registered client, capped by credit limit minus outstanding balance
+    const isCredit = activeTab.paymentMethod === 'credit'
+    const availableCredit = clientCredit ? Math.max(0, clientCredit.limit - clientCredit.balance) : 0
+    const creditError = !isCredit ? null
+        : !activeTab.clientId ? t('pos.creditNeedsClient')
+            : !clientCredit ? null // still loading
+                : clientCredit.limit <= 0 ? t('pos.creditNoLimit')
+                    : total > availableCredit ? t('pos.creditExceeded', { amount: `${settings.currencySymbol}${availableCredit.toFixed(2)}` })
+                        : null
+    const canConfirmCredit = !isCredit || (!!clientCredit && !creditError)
+
     const processSale = useCallback(async () => {
         if (!isPaymentSufficient && activeTab.paymentMethod === 'cash') {
             toast.error(t('pos.insufficientAmount'))
             receivedAmountInputRef.current?.focus()
+            return
+        }
+        if (isCredit && !canConfirmCredit) {
+            if (creditError) toast.error(creditError)
             return
         }
 
@@ -286,6 +319,7 @@ export function Sales() {
                 total,
                 payment_method: activeTab.paymentMethod,
                 customer_name: activeTab.customerName || undefined,
+                client_id: activeTab.clientId ?? undefined,
                 status: 'completed',
             }
 
@@ -334,7 +368,7 @@ export function Sales() {
         } finally {
             setLoading(false)
         }
-    }, [isPaymentSufficient, activeTab.paymentMethod, activeTab.customerName, cart, subtotal, tax, discountAmount, total, settings, change, clearCart, loadProducts, addNotification, t])
+    }, [isPaymentSufficient, isCredit, canConfirmCredit, creditError, activeTab.paymentMethod, activeTab.customerName, activeTab.clientId, cart, subtotal, tax, discountAmount, total, settings, change, clearCart, loadProducts, addNotification, t])
 
     // Update ref on render
     useEffect(() => {
@@ -613,7 +647,20 @@ export function Sales() {
                                 {settings.paymentMethods?.other && (
                                     <PaymentChip active={activeTab.paymentMethod === 'other'} onClick={() => setPaymentMethod('other')} icon={Package} label={t('payment.other')} />
                                 )}
+                                <PaymentChip
+                                    active={isCredit}
+                                    onClick={() => setPaymentMethod('credit')}
+                                    icon={HandCoins}
+                                    label={t('payment.credit')}
+                                    disabled={!activeTab.clientId}
+                                    title={!activeTab.clientId ? t('pos.creditNeedsClient') : undefined}
+                                />
                             </div>
+                            {isCredit && clientCredit && (
+                                <p className={cn("text-xs font-medium px-1", creditError ? "text-red-500" : "text-gray-500 dark:text-gray-400")}>
+                                    {creditError ?? t('pos.creditAvailable', { amount: `${settings.currencySymbol}${availableCredit.toFixed(2)}` })}
+                                </p>
+                            )}
                         </div>
 
                         {/* Totals & Action */}
@@ -737,6 +784,28 @@ export function Sales() {
                                             <span className="text-2xl font-black">{settings.currencySymbol}{change.toFixed(2)}</span>
                                         </div>
                                     </div>
+                                ) : isCredit ? (
+                                    <div className="space-y-3">
+                                        <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 space-y-2 text-sm">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500">{t('pos.creditLimit')}</span>
+                                                <span className="font-bold text-gray-900 dark:text-white">{settings.currencySymbol}{(clientCredit?.limit ?? 0).toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500">{t('pos.creditBalance')}</span>
+                                                <span className="font-bold text-gray-900 dark:text-white">{settings.currencySymbol}{(clientCredit?.balance ?? 0).toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                                                <span className="text-gray-500">{t('pos.creditAfterSale')}</span>
+                                                <span className={cn("font-black", creditError ? "text-red-600" : "text-green-600")}>
+                                                    {settings.currencySymbol}{(availableCredit - total).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p className={cn("text-xs text-center font-medium", creditError ? "text-red-500" : "text-gray-500")}>
+                                            {creditError ?? t('pos.creditOnAccount', { name: activeTab.customerName })}
+                                        </p>
+                                    </div>
                                 ) : (
                                     <div className="text-center py-6 text-gray-500 font-medium bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
                                         <p>{t('pos.payWith', { method: activeTab.paymentMethod === 'card' ? t('payment.card') : activeTab.paymentMethod === 'transfer' ? t('payment.transfer') : t('pos.otherMethod') })}</p>
@@ -751,7 +820,7 @@ export function Sales() {
                                 </button>
                                 <button
                                     onClick={processSale}
-                                    disabled={loading || (activeTab.paymentMethod === 'cash' && !isPaymentSufficient)}
+                                    disabled={loading || (activeTab.paymentMethod === 'cash' && !isPaymentSufficient) || !canConfirmCredit}
                                     className="flex-[2] py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                                 >
                                     {loading ? t('pos.processing') : t('pos.confirmAndFinish')}
@@ -777,17 +846,17 @@ function ProductCard({ product, settings, onClick }: { product: Product; setting
             className="group bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-300 dark:border-gray-700 shadow-md hover:shadow-lg hover:border-primary/50 cursor-pointer transition-all flex flex-col h-full"
         >
             <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg mb-3 overflow-hidden relative">
-                <LazyImage
-                    src={getImageSrc(product.image) || ""}
-                    alt={product.name}
-                    aspectRatio="aspect-square"
-                    className="w-full h-full object-cover"
-                    fallback={
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                            <Package className="w-8 h-8" />
-                        </div>
-                    }
-                />
+                {product.image ? (
+                    <LazyImage
+                        src={getImageSrc(product.image) || ""}
+                        alt={product.name}
+                        aspectRatio="aspect-square"
+                        className="w-full h-full object-cover"
+                        fallback={<NoImagePlaceholder iconClassName="w-10 h-10" />}
+                    />
+                ) : (
+                    <NoImagePlaceholder iconClassName="w-10 h-10" />
+                )}
                 <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded backdrop-blur-md z-20">
                     {product.stock}
                 </div>
@@ -815,14 +884,16 @@ function CartItemRow({ item, onUpdate, onRemove, currencySymbol }: { item: CartI
             className="flex gap-3 items-center bg-gray-50 dark:bg-gray-700/30 p-2 rounded-xl group"
         >
             <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-lg shrink-0 overflow-hidden border border-gray-100 dark:border-gray-600">
-                <img
-                    src={getImageSrc(item.product.image) || ""}
-                    className={cn("w-full h-full object-cover", !item.product.image && "hidden")}
-                />
-                {!item.product.image && (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-5 h-5 text-gray-300" />
-                    </div>
+                {item.product.image ? (
+                    <LazyImage
+                        src={getImageSrc(item.product.image) || ""}
+                        alt={item.product.name}
+                        aspectRatio="aspect-square"
+                        className="w-full h-full object-cover"
+                        fallback={<NoImagePlaceholder iconClassName="w-5 h-5" />}
+                    />
+                ) : (
+                    <NoImagePlaceholder iconClassName="w-5 h-5" />
                 )}
             </div>
             <div className="flex-1 min-w-0">
@@ -850,19 +921,32 @@ function CartItemRow({ item, onUpdate, onRemove, currencySymbol }: { item: CartI
     )
 }
 
+// Default product image: shown when a product has no image or it fails to load
+function NoImagePlaceholder({ iconClassName }: { iconClassName?: string }) {
+    return (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-500">
+            <Camera className={iconClassName} strokeWidth={1.5} />
+        </div>
+    )
+}
+
 interface PaymentChipProps {
     active: boolean
     onClick: () => void
     icon: React.ElementType
     label: string
+    disabled?: boolean
+    title?: string
 }
 
-function PaymentChip({ active, onClick, icon: Icon, label }: PaymentChipProps) {
+function PaymentChip({ active, onClick, icon: Icon, label, disabled, title }: PaymentChipProps) {
     return (
         <button
             onClick={onClick}
+            disabled={disabled}
+            title={title}
             className={cn(
-                "flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all duration-200 border-2",
+                "flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all duration-200 border-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent",
                 active
                     ? "bg-white dark:bg-gray-800 border-indigo-500 shadow-sm transform scale-105 z-10"
                     : "border-transparent hover:bg-white/50 dark:hover:bg-gray-800/50 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
