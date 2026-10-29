@@ -14,6 +14,18 @@ import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { useTranslation } from '@/i18n'
 
+// Display symbol stored with the selected currency (unlisted codes fall back to '$')
+const currencySymbols: Record<string, string> = {
+    GTQ: 'Q',
+    USD: '$',
+    EUR: '€',
+    MXN: '$',
+    LKR: 'Rs',
+    INR: '₹',
+    MYR: 'RM',
+    SGD: 'S$'
+}
+
 interface GeneralTabProps {
     settings: CompanySettings
     setSettings: (settings: CompanySettings) => void
@@ -150,10 +162,7 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
                                 value={settings.currency}
                                 onChange={(e) => {
                                     const val = e.target.value
-                                    let sym = '$'
-                                    if (val === 'GTQ') sym = 'Q'
-                                    if (val === 'EUR') sym = '€'
-                                    setSettings({ ...settings, currency: val, currencySymbol: sym })
+                                    setSettings({ ...settings, currency: val, currencySymbol: currencySymbols[val] ?? '$' })
                                 }}
                                 className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-gray-900 dark:text-white font-medium appearance-none cursor-pointer"
                             >
@@ -161,6 +170,10 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
                                 <option value="USD">{t('general.currency.USD')}</option>
                                 <option value="EUR">{t('general.currency.EUR')}</option>
                                 <option value="MXN">{t('general.currency.MXN')}</option>
+                                <option value="LKR">{t('general.currency.LKR')}</option>
+                                <option value="INR">{t('general.currency.INR')}</option>
+                                <option value="MYR">{t('general.currency.MYR')}</option>
+                                <option value="SGD">{t('general.currency.SGD')}</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-xs bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-white px-2 py-0.5 rounded pointer-events-none">
                                 {settings.currencySymbol}
