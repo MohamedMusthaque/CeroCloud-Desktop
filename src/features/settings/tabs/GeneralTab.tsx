@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
+import { useTranslation } from '@/i18n'
 
 interface GeneralTabProps {
     settings: CompanySettings
@@ -22,14 +23,15 @@ interface GeneralTabProps {
 }
 
 export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUpload, handleRemoveLogo }: GeneralTabProps) {
+    const { t } = useTranslation()
     return (
 
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* Header Text */}
             <div className="text-left">
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Identidad del Negocio</h2>
-                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">Configura cómo ven tus clientes a tu empresa.</p>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{t('general.title')}</h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">{t('general.subtitle')}</p>
             </div>
 
             {/* Profile Card */}
@@ -65,7 +67,7 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
                                             handleRemoveLogo()
                                         }}
                                         className="absolute top-2 right-2 z-[60] p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all scale-90 hover:scale-100"
-                                        title="Eliminar logo"
+                                        title={t('general.removeLogo')}
                                     >
                                         <X className="w-3.5 h-3.5" />
                                     </button>
@@ -75,19 +77,19 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
                                     <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center mx-auto text-indigo-500 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform">
                                         <Store className="w-5 h-5" />
                                     </div>
-                                    <span className="text-xs font-bold text-gray-400">LOGOTIPO</span>
+                                    <span className="text-xs font-bold text-gray-400">{t('general.logo')}</span>
                                 </div>
                             )}
                         </div>
                         <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500 uppercase tracking-widest text-center">
-                            Visible en Reportes
+                            {t('general.visibleInReports')}
                         </span>
                     </div>
 
                     {/* Main Info Fields */}
                     <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="md:col-span-2 space-y-2">
-                            <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">Nombre del Negocio</label>
+                            <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('general.businessName')}</label>
                             <div className="relative group">
                                 <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                                 <input
@@ -95,13 +97,13 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
                                     value={settings.name}
                                     onChange={(e) => setSettings({ ...settings, name: e.target.value })}
                                     className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-900 dark:text-white font-bold text-lg placeholder:font-medium"
-                                    placeholder="Ej. Cafetería Central"
+                                    placeholder={t('general.businessNamePlaceholder')}
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">Dirección</label>
+                            <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('general.address')}</label>
                             <div className="relative group">
                                 <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                                 <input
@@ -109,13 +111,13 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
                                     value={settings.address || ''}
                                     onChange={(e) => setSettings({ ...settings, address: e.target.value })}
                                     className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-900 dark:text-white font-medium"
-                                    placeholder="Ubicación completa"
+                                    placeholder={t('general.addressPlaceholder')}
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">Teléfono</label>
+                            <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('general.phone')}</label>
                             <div className="relative group">
                                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                                 <input
@@ -137,12 +139,12 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
 
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2 relative z-10">
                     <Coins className="w-5 h-5 text-purple-500" />
-                    Configuración Regional
+                    {t('general.regional')}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">Moneda Principal</label>
+                        <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('general.currency')}</label>
                         <div className="relative group">
                             <select
                                 value={settings.currency}
@@ -155,10 +157,10 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
                                 }}
                                 className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-gray-900 dark:text-white font-medium appearance-none cursor-pointer"
                             >
-                                <option value="GTQ">Quetzales (GTQ)</option>
-                                <option value="USD">Dólares (USD)</option>
-                                <option value="EUR">Euros (EUR)</option>
-                                <option value="MXN">Pesos (MXN)</option>
+                                <option value="GTQ">{t('general.currency.GTQ')}</option>
+                                <option value="USD">{t('general.currency.USD')}</option>
+                                <option value="EUR">{t('general.currency.EUR')}</option>
+                                <option value="MXN">{t('general.currency.MXN')}</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-xs bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-white px-2 py-0.5 rounded pointer-events-none">
                                 {settings.currencySymbol}
@@ -168,7 +170,7 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
 
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">Impuesto (IVA)</label>
+                            <label className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">{t('general.tax')}</label>
                             <Switch
                                 checked={settings.enableTax}
                                 onChange={(c) => setSettings({ ...settings, enableTax: c })}
@@ -202,12 +204,12 @@ export function GeneralTab({ settings, setSettings, logoPreview, handleLogoUploa
                                             onChange={(e) => setSettings({ ...settings, taxIncluded: e.target.checked })}
                                         />
                                     </div>
-                                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300">Incluido</span>
+                                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300">{t('general.taxIncluded')}</span>
                                 </label>
                             </div>
                         ) : (
                             <div className="h-[48px] flex items-center justify-center bg-gray-50 dark:bg-slate-900/20 rounded-xl border border-dashed border-gray-200 dark:border-slate-700/50 text-gray-400 text-xs font-medium">
-                                Sin impuestos aplicados
+                                {t('general.noTax')}
                             </div>
                         )}
                     </div>

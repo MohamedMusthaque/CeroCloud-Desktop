@@ -17,8 +17,10 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { companyService } from '@/services/companyService'
 import pkg from '../../../package.json'
+import { useTranslation } from '@/i18n'
 
 export function Sidebar() {
+    const { t } = useTranslation()
     const { sidebarCollapsed, toggleSidebar, setSidebarCollapsed } = useUIStore()
     const [companyInfo, setCompanyInfo] = useState({ name: 'CeroCloud', logo: '' })
 
@@ -49,18 +51,18 @@ export function Sidebar() {
 
 
     const navigation = [
-        { name: 'Dashboard', href: '/', icon: LayoutDashboard, shortcut: 'D' },
-        { name: 'Inventario', href: '/inventory', icon: Package, shortcut: 'I' },
+        { name: t('nav.dashboard'), href: '/', icon: LayoutDashboard, shortcut: 'D' },
+        { name: t('nav.inventory'), href: '/inventory', icon: Package, shortcut: 'I' },
 
-        { name: 'Ventas', href: '/sales', icon: ShoppingCart, shortcut: 'V' },
-        { name: 'Proveedores', href: '/suppliers', icon: Truck, shortcut: 'P' },
-        { name: 'Clientes', href: '/clients', icon: Users, shortcut: 'C' },
-        { name: 'Reportes', href: '/reports', icon: FileText, shortcut: 'R' },
+        { name: t('nav.sales'), href: '/sales', icon: ShoppingCart, shortcut: 'V' },
+        { name: t('nav.suppliers'), href: '/suppliers', icon: Truck, shortcut: 'P' },
+        { name: t('nav.clients'), href: '/clients', icon: Users, shortcut: 'C' },
+        { name: t('nav.reports'), href: '/reports', icon: FileText, shortcut: 'R' },
     ]
 
     const secondaryNavigation = [
-        { name: 'Configuración', href: '/settings', icon: Settings, shortcut: 'S' },
-        { name: 'Acerca de', href: '/about', icon: Info, shortcut: 'A' },
+        { name: t('nav.settings'), href: '/settings', icon: Settings, shortcut: 'S' },
+        { name: t('nav.about'), href: '/about', icon: Info, shortcut: 'A' },
     ]
 
     return (
@@ -90,7 +92,7 @@ export function Sidebar() {
                             </h1>
                             {/* Mostrar subtítulo solo si es el nombre por defecto o si queremos siempre mostrar algo */}
                             {companyInfo.name === 'CeroCloud' && (
-                                <p className="text-[10px] text-gray-400 -mt-0.5">Sin Nube. Sin Límites.</p>
+                                <p className="text-[10px] text-gray-400 -mt-0.5">{t('nav.tagline')}</p>
                             )}
                         </div>
                     </motion.div>

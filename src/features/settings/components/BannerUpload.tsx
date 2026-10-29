@@ -2,6 +2,7 @@ import React from 'react'
 import { Upload, X, Camera } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/i18n'
 
 interface BannerUploadProps {
     label: string
@@ -12,11 +13,12 @@ interface BannerUploadProps {
 }
 
 export function BannerUpload({ label, currentImage, onUpload, onRemove, recommendedSize }: BannerUploadProps) {
+    const { t } = useTranslation()
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
             if (file.size > 2 * 1024 * 1024) {
-                toast.error('La imagen debe ser menor a 2MB')
+                toast.error(t('banner.tooLarge'))
                 return
             }
             const reader = new FileReader()
@@ -51,13 +53,13 @@ export function BannerUpload({ label, currentImage, onUpload, onRemove, recommen
                         <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20 backdrop-blur-[2px]">
                             <label className="cursor-pointer px-4 py-2 bg-white text-slate-900 hover:bg-slate-100 rounded-xl font-bold text-xs flex items-center gap-2 transition-all transform hover:scale-105 shadow-xl">
                                 <Camera className="w-3.5 h-3.5" />
-                                <span>Cambiar</span>
+                                <span>{t('banner.change')}</span>
                                 <input type="file" accept="image/*" className="hidden" onChange={handleChange} />
                             </label>
                             <button
                                 onClick={onRemove}
                                 className="p-2 bg-white/20 hover:bg-red-500 text-white border border-white/50 hover:border-red-500 rounded-xl transition-all transform hover:scale-105 shadow-xl backdrop-blur-sm"
-                                title="Eliminar imagen"
+                                title={t('banner.remove')}
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -69,8 +71,8 @@ export function BannerUpload({ label, currentImage, onUpload, onRemove, recommen
                             <Upload className="w-4 h-4 text-slate-400 group-hover/item:text-indigo-500 transition-colors" />
                         </div>
                         <div className="flex flex-col items-start">
-                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 group-hover/item:text-indigo-500 transition-colors">Click para subir imagen</span>
-                            <span className="text-[10px] text-slate-400">PNG, JPG hasta 2MB</span>
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 group-hover/item:text-indigo-500 transition-colors">{t('banner.clickToUpload')}</span>
+                            <span className="text-[10px] text-slate-400">{t('banner.formats')}</span>
                         </div>
                         <input type="file" accept="image/*" className="hidden" onChange={handleChange} />
                     </label>
