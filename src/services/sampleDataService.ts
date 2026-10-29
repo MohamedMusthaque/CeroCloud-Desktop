@@ -1,4 +1,5 @@
 import { productService } from './productService'
+import { categoryService } from './categoryService'
 import type { Language } from '@/i18n'
 
 type SampleText = { name: string; description: string; category: string }
@@ -29,13 +30,35 @@ const SAMPLE_PRODUCTS: Record<string, Record<Language, SampleText>> = {
 
 const FIELDS: (keyof SampleText)[] = ['name', 'description', 'category']
 
+// Category names used by the demo products, per language
+const SAMPLE_CATEGORIES = Object.values(SAMPLE_PRODUCTS).map(sample => ({ es: sample.es.category, en: sample.en.category }))
+
+const sameName = (a?: string, b?: string) => (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase()
+
 export const sampleDataService = {
     // Translate demo products to the UI language. A field is only changed while it still
     // holds one of the original sample texts, so anything the user edited is left alone.
     async localizeSampleProducts(language: Language): Promise<void> {
         if (!window.electronAPI?.products) return
 
-        const products = await productService.getAll()
+        let products = await productService.getAll()
+
+        // Rename sample categories first (this also renames them on their products),
+        // but only when no user product uses that category
+        const categories = await categoryService.getAll()
+        let renamed = false
+        for (const pair of SAMPLE_CATEGORIES) {
+            const target = pair[language]
+            if (categories.some(c => sameName(c.name, target))) continue
+            const current = categories.find(c => Object.values(pair).some(name => sameName(c.name, name)))
+            if (!current?.id) continue
+            const usedByUser = products.some(p => sameName(p.category, current.name) && !SAMPLE_PRODUCTS[p.code])
+            if (usedByUser) continue
+            await categoryService.update(current.id, { name: target })
+            renamed = true
+        }
+        if (renamed) products = await productService.getAll()
+
         for (const product of products) {
             const sample = SAMPLE_PRODUCTS[product.code]
             if (!sample || !product.id) continue

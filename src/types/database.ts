@@ -45,6 +45,7 @@ export interface Category {
     name: string
     description?: string
     created_at?: string
+    products_count?: number
 }
 
 export interface Sale {

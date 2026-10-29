@@ -13,12 +13,14 @@ import {
     List,
     ArrowUpDown,
     AlertTriangle,
-    CheckCircle2
+    CheckCircle2,
+    Tags
 } from 'lucide-react'
 import { productService } from '@/services/productService'
 import { companyService } from '@/services/companyService'
 import { Product } from '@/types/database'
 import { ProductForm } from './ProductForm'
+import { Categories } from './Categories'
 import { ImportWizard } from '@/components/inventory/ImportWizard'
 import { useUIStore } from '@/stores/uiStore'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -56,6 +58,7 @@ export function Inventory() {
     const [isImportOpen, setIsImportOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [loading, setLoading] = useState(true)
+    const [section, setSection] = useState<'products' | 'categories'>('products')
 
     // Load Data
     useEffect(() => {
@@ -175,6 +178,7 @@ export function Inventory() {
                         {t('inv.subtitle', { count: products.length })}
                     </p>
                 </div>
+                {section === 'products' && (
                 <div className="flex gap-3">
                     <button
                         onClick={() => setIsImportOpen(true)}
@@ -191,8 +195,35 @@ export function Inventory() {
                         {t('inv.newProduct')}
                     </button>
                 </div>
+                )}
             </div>
 
+            {/* SECTION TABS */}
+            <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl w-fit">
+                {([
+                    { id: 'products', label: t('inv.section.products'), icon: Package },
+                    { id: 'categories', label: t('inv.section.categories'), icon: Tags }
+                ] as const).map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setSection(tab.id)}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                            section === tab.id
+                                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                        )}
+                    >
+                        <tab.icon className="w-4 h-4" />
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {section === 'categories' ? (
+                <Categories onProductsChanged={loadProducts} />
+            ) : (
+            <>
             {/* TOOLBAR (Search, Filters, View Toggle) */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-md border border-gray-300 dark:border-gray-700 flex flex-col lg:flex-row gap-4 justify-between items-center sticky top-0 z-10 backdrop-blur-xl bg-opacity-90 dark:bg-opacity-90">
                 {/* Search */}
@@ -416,6 +447,8 @@ export function Inventory() {
                     </>
                 )}
             </AnimatePresence>
+            </>
+            )}
 
             {/* MODALS */}
             {isFormOpen && (

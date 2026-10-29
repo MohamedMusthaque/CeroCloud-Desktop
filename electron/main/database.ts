@@ -546,20 +546,72 @@ export const productQueries = {
   }
 }
 
+// Errores de gestión de categorías; el código se traduce en la interfaz
+export class CategoryError extends Error {
+  constructor(public code: 'NAME_REQUIRED' | 'NAME_TAKEN' | 'NOT_FOUND') {
+    super(code)
+  }
+}
+
+// Los productos guardan el nombre de la categoría como texto; estas consultas mantienen ambos sincronizados
 export const categoryQueries = {
   getAll: (): Category[] => {
-    return db.prepare('SELECT * FROM categories ORDER BY name ASC').all() as Category[]
+    // Registrar categorías que solo existen en productos (importaciones, datos antiguos)
+    db.prepare(`
+      INSERT INTO categories (name, description, created_at)
+      SELECT TRIM(p.category), '', ? FROM products p
+      WHERE TRIM(COALESCE(p.category, '')) != ''
+        AND NOT EXISTS (SELECT 1 FROM categories c WHERE c.name = TRIM(p.category) COLLATE NOCASE)
+      GROUP BY LOWER(TRIM(p.category))
+    `).run(new Date().toISOString())
+
+    return db.prepare(`
+      SELECT c.*, (SELECT COUNT(*) FROM products p WHERE TRIM(p.category) = c.name COLLATE NOCASE) AS products_count
+      FROM categories c ORDER BY c.name COLLATE NOCASE ASC
+    `).all() as Category[]
   },
 
-  create: (name: string, description?: string, id?: number): Category => {
-    const stmt = db.prepare('INSERT INTO categories (id, name, description, created_at) VALUES (?, ?, ?, ?)')
-    const info = stmt.run(id || null, name, description || '', new Date().toISOString())
-    return { id: Number(info.lastInsertRowid), name, description, created_at: new Date().toISOString() }
+  create: (name: string, description?: string): Category => {
+    const trimmed = (name ?? '').trim()
+    if (!trimmed) throw new CategoryError('NAME_REQUIRED')
+    if (db.prepare('SELECT 1 FROM categories WHERE name = ? COLLATE NOCASE').get(trimmed)) throw new CategoryError('NAME_TAKEN')
+
+    const createdAt = new Date().toISOString()
+    const info = db.prepare('INSERT INTO categories (name, description, created_at) VALUES (?, ?, ?)').run(trimmed, description?.trim() || '', createdAt)
+    return { id: Number(info.lastInsertRowid), name: trimmed, description: description?.trim() || '', created_at: createdAt, products_count: 0 }
   },
 
-  delete: (id: number): boolean => {
-    const info = db.prepare('DELETE FROM categories WHERE id = ?').run(id)
-    return info.changes > 0
+  // Renombrar también actualiza los productos que usan la categoría
+  update: (id: number, data: { name?: string; description?: string }): Category => {
+    const existing = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
+    if (!existing) throw new CategoryError('NOT_FOUND')
+
+    const name = data.name !== undefined ? data.name.trim() : existing.name
+    if (!name) throw new CategoryError('NAME_REQUIRED')
+    if (db.prepare('SELECT 1 FROM categories WHERE name = ? COLLATE NOCASE AND id != ?').get(name, id)) throw new CategoryError('NAME_TAKEN')
+    const description = data.description !== undefined ? data.description.trim() : (existing.description || '')
+
+    db.transaction(() => {
+      db.prepare('UPDATE categories SET name = ?, description = ? WHERE id = ?').run(name, description, id)
+      if (name !== existing.name) {
+        db.prepare('UPDATE products SET category = ?, updated_at = ? WHERE TRIM(category) = ? COLLATE NOCASE')
+          .run(name, new Date().toISOString(), existing.name)
+      }
+    })()
+
+    return { ...existing, name, description }
+  },
+
+  // Eliminar deja sus productos sin categoría
+  delete: (id: number): void => {
+    const existing = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
+    if (!existing) throw new CategoryError('NOT_FOUND')
+
+    db.transaction(() => {
+      db.prepare("UPDATE products SET category = '', updated_at = ? WHERE TRIM(category) = ? COLLATE NOCASE")
+        .run(new Date().toISOString(), existing.name)
+      db.prepare('DELETE FROM categories WHERE id = ?').run(id)
+    })()
   }
 }
 

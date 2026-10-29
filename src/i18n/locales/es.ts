@@ -1,4 +1,5 @@
 import { common } from './es/common'
+import { categories } from './es/categories'
 import { usersPage } from './es/users'
 import { auth } from './es/auth'
 import { imageUpload } from './es/imageUpload'
@@ -19,6 +20,7 @@ import { exportTexts } from './es/exports'
 
 export const es = {
     ...common,
+    ...categories,
     ...usersPage,
     ...auth,
     ...imageUpload,

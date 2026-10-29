@@ -6,7 +6,8 @@ import { createPortal } from 'react-dom'
 import { X, Image as ImageIcon, Loader2, Save } from 'lucide-react'
 import { productService } from '@/services/productService'
 import { supplierService } from '@/services/supplierService'
-import { Product, Supplier } from '@/types/database'
+import { categoryService } from '@/services/categoryService'
+import { Product, Supplier, Category } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn, getImageSrc } from '@/lib/utils'
@@ -23,11 +24,13 @@ interface ProductFormProps {
 export function ProductForm({ product, onClose }: ProductFormProps) {
     const { t } = useTranslation()
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
+    const [categories, setCategories] = useState<Category[]>([])
     // Schema messages are translation keys (see validators.ts)
     const errorText = (message?: string) => message ? t(message as TranslationKey) : null
 
     useEffect(() => {
         supplierService.getAll().then(setSuppliers).catch(console.error)
+        categoryService.getAll().then(setCategories).catch(console.error)
     }, [])
 
     const {
@@ -56,6 +59,11 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
 
     // Watch image for preview
     const imagePreview = watch('image')
+    const selectedCategory = watch('category') || ''
+    // Keep a product's current category selectable even if it isn't in the list
+    const categoryOptions = categories.some(c => c.name.toLowerCase() === selectedCategory.toLowerCase()) || !selectedCategory
+        ? categories.map(c => c.name)
+        : [selectedCategory, ...categories.map(c => c.name)]
 
     useEffect(() => {
         if (product) {
@@ -246,12 +254,16 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div className="col-span-2">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.category')}</label>
-                                    <input
-                                        type="text"
-                                        {...register('category')}
-                                        placeholder={t('productForm.categoryPlaceholder')}
-                                        className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                    />
+                                    <select
+                                        value={categoryOptions.find(name => name.toLowerCase() === selectedCategory.toLowerCase()) ?? ''}
+                                        onChange={(e) => setValue('category', e.target.value, { shouldDirty: true })}
+                                        className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none cursor-pointer"
+                                    >
+                                        <option value="">{t('productForm.noCategory')}</option>
+                                        {categoryOptions.map(name => (
+                                            <option key={name} value={name}>{name}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="col-span-2">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.supplier')}</label>

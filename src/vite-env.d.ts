@@ -39,7 +39,9 @@ interface ElectronAPI {
     }
     categories: {
         getAll: () => Promise<any[]>
-        create: (name: string, description?: string) => Promise<any>
+        create: (name: string, description?: string) => Promise<UserResult<any>>
+        update: (id: number, data: { name?: string; description?: string }) => Promise<UserResult<any>>
+        delete: (id: number) => Promise<UserResult<void>>
     }
     sales: {
         getAll: () => Promise<any[]>

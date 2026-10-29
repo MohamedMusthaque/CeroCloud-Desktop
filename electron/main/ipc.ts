@@ -1,7 +1,7 @@
 import { ipcMain, app } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, type AuthUser } from './database'
+import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, type AuthUser } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
 
@@ -24,6 +24,16 @@ function withUserAdmin<T>(action: (actor: AuthUser) => T) {
     } catch (error) {
         if (error instanceof UserError) return { success: false, error: error.code }
         logger.error('Users', error)
+        return { success: false, error: 'UNKNOWN' }
+    }
+}
+
+function withCategoryErrors<T>(action: () => T) {
+    try {
+        return { success: true, data: action() }
+    } catch (error) {
+        if (error instanceof CategoryError) return { success: false, error: error.code }
+        logger.error('Categories', error)
         return { success: false, error: 'UNKNOWN' }
     }
 }
@@ -176,9 +186,14 @@ export function registerIpcHandlers() {
         return categoryQueries.getAll()
     })
 
-    ipcMain.handle('categories:create', (_event, name: string, description?: string) => {
-        return categoryQueries.create(name, description)
-    })
+    ipcMain.handle('categories:create', (_event, name: string, description?: string) =>
+        withCategoryErrors(() => categoryQueries.create(name, description)))
+
+    ipcMain.handle('categories:update', (_event, id: number, data: { name?: string; description?: string }) =>
+        withCategoryErrors(() => categoryQueries.update(id, data ?? {})))
+
+    ipcMain.handle('categories:delete', (_event, id: number) =>
+        withCategoryErrors(() => categoryQueries.delete(id)))
 
     // Sales
     ipcMain.handle('sales:getAll', () => {

@@ -36,6 +36,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     categories: {
         getAll: () => ipcRenderer.invoke('categories:getAll'),
         create: (name: string, description?: string) => ipcRenderer.invoke('categories:create', name, description),
+        update: (id: number, data: { name?: string; description?: string }) => ipcRenderer.invoke('categories:update', id, data),
+        delete: (id: number) => ipcRenderer.invoke('categories:delete', id),
     },
 
     // Sales
