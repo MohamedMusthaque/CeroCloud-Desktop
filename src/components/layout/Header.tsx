@@ -67,7 +67,7 @@ export function Header() {
                             {t('header.searchPlaceholder')}
                         </span>
                         <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-xs text-gray-400 dark:text-gray-400 font-mono font-bold shadow-sm group-hover:text-gray-600 dark:group-hover:text-gray-200">
-                            <span className="text-xs">⌘</span>K
+                            <span className="text-xs">Ctrl+K</span>
                         </kbd>
                     </div>
                 </button>

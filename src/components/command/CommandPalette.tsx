@@ -141,7 +141,7 @@ export function CommandPalette() {
                                     >
                                         <Plus className="w-4 h-4" />
                                         <span className="text-sm font-medium">{t('cmd.createProduct')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">⌘N</kbd>
+                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+N</kbd>
                                     </Command.Item>
 
                                     <Command.Item
@@ -150,7 +150,7 @@ export function CommandPalette() {
                                     >
                                         <ShoppingCart className="w-4 h-4" />
                                         <span className="text-sm font-medium">{t('cmd.newSale')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">⌘V</kbd>
+                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+V</kbd>
                                     </Command.Item>
 
                                     <Command.Item
@@ -159,7 +159,7 @@ export function CommandPalette() {
                                     >
                                         <BarChart3 className="w-4 h-4" />
                                         <span className="text-sm font-medium">{t('cmd.viewReports')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">⌘R</kbd>
+                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+R</kbd>
                                     </Command.Item>
                                 </Command.Group>
                             </Command.List>
