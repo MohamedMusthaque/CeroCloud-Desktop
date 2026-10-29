@@ -7,6 +7,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Auth
     auth: {
         login: (username: string, password: string) => ipcRenderer.invoke('auth:login', username, password),
+        logout: () => ipcRenderer.invoke('auth:logout'),
+        getSession: () => ipcRenderer.invoke('auth:getSession'),
+    },
+    // Users
+    users: {
+        getAll: () => ipcRenderer.invoke('users:getAll'),
+        create: (user: any) => ipcRenderer.invoke('users:create', user),
+        update: (id: number, user: any) => ipcRenderer.invoke('users:update', id, user),
+        delete: (id: number) => ipcRenderer.invoke('users:delete', id),
     },
     // Products
     products: {

@@ -1,4 +1,5 @@
 import { common } from './es/common'
+import { usersPage } from './es/users'
 import { auth } from './es/auth'
 import { imageUpload } from './es/imageUpload'
 import { restoreWizard } from './es/restoreWizard'
@@ -18,6 +19,7 @@ import { exportTexts } from './es/exports'
 
 export const es = {
     ...common,
+    ...usersPage,
     ...auth,
     ...imageUpload,
     ...restoreWizard,
@@ -43,6 +45,7 @@ export const es = {
     'nav.clients': 'Clientes',
     'nav.reports': 'Reportes',
     'nav.settings': 'Configuración',
+    'nav.users': 'Usuarios',
     'nav.about': 'Acerca de',
     'nav.tagline': 'Sin Nube. Sin Límites.',
 

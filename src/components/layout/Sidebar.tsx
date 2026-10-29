@@ -11,6 +11,7 @@ import {
     Info,
     Truck,
     Users,
+    UserCog,
 } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { motion } from 'framer-motion'
@@ -18,10 +19,13 @@ import { cn } from '@/lib/utils'
 import { companyService } from '@/services/companyService'
 import pkg from '../../../package.json'
 import { useTranslation } from '@/i18n'
+import { useAuthStore } from '@/stores/authStore'
+import { canAccessPath } from '@/lib/permissions'
 
 export function Sidebar() {
     const { t } = useTranslation()
     const { sidebarCollapsed, toggleSidebar, setSidebarCollapsed } = useUIStore()
+    const user = useAuthStore((state) => state.user)
     const [companyInfo, setCompanyInfo] = useState({ name: 'CeroCloud', logo: '' })
 
     const loadCompanyInfo = () => {
@@ -58,12 +62,13 @@ export function Sidebar() {
         { name: t('nav.suppliers'), href: '/suppliers', icon: Truck, shortcut: 'P' },
         { name: t('nav.clients'), href: '/clients', icon: Users, shortcut: 'C' },
         { name: t('nav.reports'), href: '/reports', icon: FileText, shortcut: 'R' },
-    ]
+    ].filter(item => canAccessPath(user, item.href))
 
     const secondaryNavigation = [
+        { name: t('nav.users'), href: '/users', icon: UserCog, shortcut: 'U' },
         { name: t('nav.settings'), href: '/settings', icon: Settings, shortcut: 'S' },
         { name: t('nav.about'), href: '/about', icon: Info, shortcut: 'A' },
-    ]
+    ].filter(item => canAccessPath(user, item.href))
 
     return (
         <motion.aside

@@ -17,6 +17,12 @@ import { Login } from '@/features/auth/Login'
 export function App() {
     const language = useLanguageStore((state) => state.language)
     const user = useAuthStore((state) => state.user)
+    const syncSession = useAuthStore((state) => state.syncSession)
+
+    // Re-validate a stored session against the main process (permissions may have changed)
+    useEffect(() => {
+        syncSession().catch(console.error)
+    }, [syncSession])
 
     // Keep the demo products' texts in the selected language
     useEffect(() => {

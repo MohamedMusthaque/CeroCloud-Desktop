@@ -15,9 +15,13 @@ import {
 import { useUIStore } from '@/stores/uiStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from '@/i18n'
+import { useAuthStore } from '@/stores/authStore'
+import { canAccessPath } from '@/lib/permissions'
 
 export function CommandPalette() {
     const navigate = useNavigate()
+    const user = useAuthStore((state) => state.user)
+    const allowed = (path: string) => canAccessPath(user, path)
     const { t } = useTranslation()
     const { commandPaletteOpen, setCommandPaletteOpen } = useUIStore()
 
@@ -87,80 +91,96 @@ export function CommandPalette() {
 
                                 {/* Navegación */}
                                 <Command.Group heading={t('cmd.navigation')} className="px-2 pt-2 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                    <Command.Item
-                                        onSelect={() => runCommand(() => navigate('/'))}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
-                                    >
-                                        <Home className="w-4 h-4" />
-                                        <span className="text-sm font-medium">{t('cmd.goDashboard')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">D</kbd>
-                                    </Command.Item>
+                                    {allowed('/') && (
+                                        <Command.Item
+                                            onSelect={() => runCommand(() => navigate('/'))}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
+                                        >
+                                            <Home className="w-4 h-4" />
+                                            <span className="text-sm font-medium">{t('cmd.goDashboard')}</span>
+                                            <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">D</kbd>
+                                        </Command.Item>
+                                    )}
 
-                                    <Command.Item
-                                        onSelect={() => runCommand(() => navigate('/inventory'))}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
-                                    >
-                                        <Package className="w-4 h-4" />
-                                        <span className="text-sm font-medium">{t('cmd.goInventory')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">I</kbd>
-                                    </Command.Item>
+                                    {allowed('/inventory') && (
+                                        <Command.Item
+                                            onSelect={() => runCommand(() => navigate('/inventory'))}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
+                                        >
+                                            <Package className="w-4 h-4" />
+                                            <span className="text-sm font-medium">{t('cmd.goInventory')}</span>
+                                            <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">I</kbd>
+                                        </Command.Item>
+                                    )}
 
-                                    <Command.Item
-                                        onSelect={() => runCommand(() => navigate('/sales'))}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
-                                    >
-                                        <ShoppingCart className="w-4 h-4" />
-                                        <span className="text-sm font-medium">{t('cmd.goSales')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">V</kbd>
-                                    </Command.Item>
+                                    {allowed('/sales') && (
+                                        <Command.Item
+                                            onSelect={() => runCommand(() => navigate('/sales'))}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
+                                        >
+                                            <ShoppingCart className="w-4 h-4" />
+                                            <span className="text-sm font-medium">{t('cmd.goSales')}</span>
+                                            <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">V</kbd>
+                                        </Command.Item>
+                                    )}
 
-                                    <Command.Item
-                                        onSelect={() => runCommand(() => navigate('/reports'))}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
-                                    >
-                                        <FileText className="w-4 h-4" />
-                                        <span className="text-sm font-medium">{t('cmd.goReports')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">R</kbd>
-                                    </Command.Item>
+                                    {allowed('/reports') && (
+                                        <Command.Item
+                                            onSelect={() => runCommand(() => navigate('/reports'))}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            <span className="text-sm font-medium">{t('cmd.goReports')}</span>
+                                            <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">R</kbd>
+                                        </Command.Item>
+                                    )}
 
-                                    <Command.Item
-                                        onSelect={() => runCommand(() => navigate('/settings'))}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
-                                    >
-                                        <Settings className="w-4 h-4" />
-                                        <span className="text-sm font-medium">{t('cmd.goSettings')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">S</kbd>
-                                    </Command.Item>
+                                    {allowed('/settings') && (
+                                        <Command.Item
+                                            onSelect={() => runCommand(() => navigate('/settings'))}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
+                                        >
+                                            <Settings className="w-4 h-4" />
+                                            <span className="text-sm font-medium">{t('cmd.goSettings')}</span>
+                                            <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">S</kbd>
+                                        </Command.Item>
+                                    )}
                                 </Command.Group>
 
                                 {/* Acciones Rápidas */}
                                 <Command.Group heading={t('cmd.actions')} className="px-2 pt-3 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 mt-2">
-                                    <Command.Item
-                                        onSelect={() => runCommand(() => navigate('/inventory'))}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-green-500/10 data-[selected=true]:text-green-600 transition-colors"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        <span className="text-sm font-medium">{t('cmd.createProduct')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+N</kbd>
-                                    </Command.Item>
+                                    {allowed('/inventory') && (
+                                        <Command.Item
+                                            onSelect={() => runCommand(() => navigate('/inventory'))}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-green-500/10 data-[selected=true]:text-green-600 transition-colors"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            <span className="text-sm font-medium">{t('cmd.createProduct')}</span>
+                                            <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+N</kbd>
+                                        </Command.Item>
+                                    )}
 
-                                    <Command.Item
-                                        onSelect={() => runCommand(() => navigate('/sales'))}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-blue-500/10 data-[selected=true]:text-blue-600 transition-colors"
-                                    >
-                                        <ShoppingCart className="w-4 h-4" />
-                                        <span className="text-sm font-medium">{t('cmd.newSale')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+V</kbd>
-                                    </Command.Item>
+                                    {allowed('/sales') && (
+                                        <Command.Item
+                                            onSelect={() => runCommand(() => navigate('/sales'))}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-blue-500/10 data-[selected=true]:text-blue-600 transition-colors"
+                                        >
+                                            <ShoppingCart className="w-4 h-4" />
+                                            <span className="text-sm font-medium">{t('cmd.newSale')}</span>
+                                            <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+V</kbd>
+                                        </Command.Item>
+                                    )}
 
-                                    <Command.Item
-                                        onSelect={() => runCommand(() => navigate('/reports'))}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-purple-500/10 data-[selected=true]:text-purple-600 transition-colors"
-                                    >
-                                        <BarChart3 className="w-4 h-4" />
-                                        <span className="text-sm font-medium">{t('cmd.viewReports')}</span>
-                                        <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+R</kbd>
-                                    </Command.Item>
+                                    {allowed('/reports') && (
+                                        <Command.Item
+                                            onSelect={() => runCommand(() => navigate('/reports'))}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-purple-500/10 data-[selected=true]:text-purple-600 transition-colors"
+                                        >
+                                            <BarChart3 className="w-4 h-4" />
+                                            <span className="text-sm font-medium">{t('cmd.viewReports')}</span>
+                                            <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+R</kbd>
+                                        </Command.Item>
+                                    )}
                                 </Command.Group>
                             </Command.List>
 

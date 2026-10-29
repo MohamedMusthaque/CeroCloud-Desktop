@@ -1,5 +1,6 @@
 import type { TranslationKey } from './es'
 import { common } from './en/common'
+import { usersPage } from './en/users'
 import { auth } from './en/auth'
 import { imageUpload } from './en/imageUpload'
 import { restoreWizard } from './en/restoreWizard'
@@ -19,6 +20,7 @@ import { exportTexts } from './en/exports'
 
 export const en: Record<TranslationKey, string> = {
     ...common,
+    ...usersPage,
     ...auth,
     ...imageUpload,
     ...restoreWizard,
@@ -44,6 +46,7 @@ export const en: Record<TranslationKey, string> = {
     'nav.clients': 'Clients',
     'nav.reports': 'Reports',
     'nav.settings': 'Settings',
+    'nav.users': 'Users',
     'nav.about': 'About',
     'nav.tagline': 'No Cloud. No Limits.',
 

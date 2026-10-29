@@ -10,9 +10,19 @@ interface ImportMeta {
 }
 
 // Electron API Types
+type UserResult<T> = { success: boolean; data?: T; error?: string }
+
 interface ElectronAPI {
     auth: {
-        login: (username: string, password: string) => Promise<{ success: boolean; user?: { id: number; username: string; role: string } }>
+        login: (username: string, password: string) => Promise<{ success: boolean; user?: import('@/lib/permissions').AuthUser }>
+        logout: () => Promise<{ success: boolean }>
+        getSession: () => Promise<import('@/lib/permissions').AuthUser | null>
+    }
+    users: {
+        getAll: () => Promise<UserResult<any[]>>
+        create: (user: any) => Promise<UserResult<any>>
+        update: (id: number, user: any) => Promise<UserResult<any>>
+        delete: (id: number) => Promise<UserResult<void>>
     }
     products: {
         getAll: () => Promise<any[]>

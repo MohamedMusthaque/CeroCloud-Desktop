@@ -1,8 +1,32 @@
 import { ipcMain, app } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, saleQueries, supplierQueries, clientQueries, userQueries, cancelSale, clearAll, restoreDatabase } from './database'
+import { productQueries, categoryQueries, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, type AuthUser } from './database'
+import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
+
+// Signed-in user of this app session (set on login, cleared on logout)
+let sessionUser: AuthUser | null = null
+
+// Re-read the session user so role/permission changes apply immediately
+function currentUser(): AuthUser | null {
+    if (!sessionUser) return null
+    sessionUser = userQueries.getById(sessionUser.id)
+    return sessionUser
+}
+
+// Runs a user-management action only for users allowed on the Users page
+function withUserAdmin<T>(action: (actor: AuthUser) => T) {
+    const actor = currentUser()
+    if (!actor || !canAccessPage(actor, 'users')) return { success: false, error: 'FORBIDDEN' }
+    try {
+        return { success: true, data: action(actor) }
+    } catch (error) {
+        if (error instanceof UserError) return { success: false, error: error.code }
+        logger.error('Users', error)
+        return { success: false, error: 'UNKNOWN' }
+    }
+}
 
 export function registerIpcHandlers() {
     // Database Utils
@@ -257,12 +281,28 @@ export function registerIpcHandlers() {
     ipcMain.handle('auth:login', (_event, username: string, password: string) => {
         try {
             const user = userQueries.authenticate(String(username ?? ''), String(password ?? ''))
+            sessionUser = user
             return user ? { success: true, user } : { success: false }
         } catch (error) {
             logger.error('Auth Login', error)
             return { success: false }
         }
     })
+
+    ipcMain.handle('auth:logout', () => {
+        sessionUser = null
+        return { success: true }
+    })
+
+    ipcMain.handle('auth:getSession', () => {
+        return currentUser()
+    })
+
+    // Users (management requires access to the Users page)
+    ipcMain.handle('users:getAll', () => withUserAdmin(() => userQueries.getAll()))
+    ipcMain.handle('users:create', (_event, input) => withUserAdmin(() => userQueries.create(input ?? {})))
+    ipcMain.handle('users:update', (_event, id: number, input) => withUserAdmin(actor => userQueries.update(id, input ?? {}, actor.id)))
+    ipcMain.handle('users:delete', (_event, id: number) => withUserAdmin(actor => userQueries.delete(id, actor.id)))
 
     // Inventory Logs handlers REMOVED
 

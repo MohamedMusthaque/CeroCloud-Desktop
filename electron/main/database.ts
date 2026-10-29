@@ -4,6 +4,7 @@ import { app } from 'electron'
 import fs from 'fs'
 import crypto from 'crypto'
 import { Product, Category, Sale, Supplier, SaleItem, Client } from '../../src/types/database'
+import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
 // Configuración de la Base de Datos
 const dbPath = path.join(app.getPath('userData'), 'cerocloud.db')
@@ -47,26 +48,131 @@ function verifyPassword(password: string, stored: string): boolean {
 function seedDefaultUser() {
   const { count } = db.prepare('SELECT COUNT(*) AS count FROM users').get() as { count: number }
   if (count === 0) {
-    db.prepare('INSERT INTO users(username, password_hash, role, created_at) VALUES(?, ?, ?, ?)')
-      .run('admin', hashPassword('admin'), 'admin', new Date().toISOString())
+    db.prepare('INSERT INTO users(username, password_hash, role, permissions, created_at) VALUES(?, ?, ?, ?, ?)')
+      .run('admin', hashPassword('admin'), 'admin', DEFAULT_PERMISSIONS, new Date().toISOString())
     console.log('👤 Usuario por defecto creado: admin')
   }
 }
 
-export interface AuthUser {
-  id: number
-  username: string
-  role: string
+export type { AuthUser }
+
+export interface ManagedUser extends AuthUser {
+  created_at?: string
+}
+
+export interface UserInput {
+  username?: string
+  password?: string
+  role?: UserRole
+  permissions?: string[]
+}
+
+// Errores de gestión de usuarios; el código se traduce en la interfaz
+export class UserError extends Error {
+  constructor(public code: 'USERNAME_REQUIRED' | 'USERNAME_TAKEN' | 'PASSWORD_TOO_SHORT' | 'LAST_ADMIN' | 'SELF_DELETE' | 'SELF_DEMOTE' | 'NOT_FOUND') {
+    super(code)
+  }
+}
+
+const MIN_PASSWORD_LENGTH = 4
+
+type UserRow = { id: number; username: string; role: string; permissions: string | null; password_hash: string; created_at?: string }
+
+function rowToUser(row: UserRow): ManagedUser {
+  let permissions: unknown = []
+  try { permissions = JSON.parse(row.permissions || '[]') } catch { /* permisos corruptos = ninguno */ }
+  return {
+    id: row.id,
+    username: row.username,
+    role: row.role === 'admin' ? 'admin' : 'user',
+    permissions: sanitizePermissions(permissions),
+    created_at: row.created_at
+  }
+}
+
+function countAdmins(): number {
+  return (db.prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'admin'").get() as { count: number }).count
 }
 
 export const userQueries = {
   authenticate: (username: string, password: string): AuthUser | null => {
-    const row = db.prepare('SELECT id, username, role, password_hash FROM users WHERE username = ?')
-      .get(username.trim()) as (AuthUser & { password_hash: string }) | undefined
+    const row = db.prepare('SELECT * FROM users WHERE username = ?').get(username.trim()) as UserRow | undefined
     if (!row || !verifyPassword(password, row.password_hash)) return null
-    return { id: row.id, username: row.username, role: row.role }
+    return rowToUser(row)
+  },
+
+  getById: (id: number): ManagedUser | null => {
+    const row = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined
+    return row ? rowToUser(row) : null
+  },
+
+  getAll: (): ManagedUser[] => {
+    return (db.prepare('SELECT * FROM users ORDER BY username COLLATE NOCASE').all() as UserRow[]).map(rowToUser)
+  },
+
+  create: (input: UserInput): ManagedUser => {
+    const username = (input.username ?? '').trim()
+    if (!username) throw new UserError('USERNAME_REQUIRED')
+    if (!input.password || input.password.length < MIN_PASSWORD_LENGTH) throw new UserError('PASSWORD_TOO_SHORT')
+    if (db.prepare('SELECT 1 FROM users WHERE username = ?').get(username)) throw new UserError('USERNAME_TAKEN')
+
+    const info = db.prepare('INSERT INTO users(username, password_hash, role, permissions, created_at) VALUES(?, ?, ?, ?, ?)').run(
+      username,
+      hashPassword(input.password),
+      input.role === 'admin' ? 'admin' : 'user',
+      JSON.stringify(sanitizePermissions(input.permissions)),
+      new Date().toISOString()
+    )
+    return userQueries.getById(Number(info.lastInsertRowid))!
+  },
+
+  // actorId: usuario que realiza el cambio (no puede quitarse el rol de administrador)
+  update: (id: number, input: UserInput, actorId: number): ManagedUser => {
+    const existing = userQueries.getById(id)
+    if (!existing) throw new UserError('NOT_FOUND')
+
+    const updates: Record<string, string> = {}
+    if (input.username !== undefined) {
+      const username = input.username.trim()
+      if (!username) throw new UserError('USERNAME_REQUIRED')
+      const taken = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(username, id)
+      if (taken) throw new UserError('USERNAME_TAKEN')
+      updates.username = username
+    }
+    if (input.password) {
+      if (input.password.length < MIN_PASSWORD_LENGTH) throw new UserError('PASSWORD_TOO_SHORT')
+      updates.password_hash = hashPassword(input.password)
+    }
+    if (input.role !== undefined) {
+      const role: UserRole = input.role === 'admin' ? 'admin' : 'user'
+      if (existing.role === 'admin' && role !== 'admin') {
+        if (id === actorId) throw new UserError('SELF_DEMOTE')
+        if (countAdmins() <= 1) throw new UserError('LAST_ADMIN')
+      }
+      updates.role = role
+    }
+    if (input.permissions !== undefined) {
+      updates.permissions = JSON.stringify(sanitizePermissions(input.permissions))
+    }
+
+    const fields = Object.keys(updates)
+    if (fields.length > 0) {
+      db.prepare(`UPDATE users SET ${fields.map(f => `${f} = @${f}`).join(', ')} WHERE id = @id`).run({ ...updates, id })
+    }
+    return userQueries.getById(id)!
+  },
+
+  delete: (id: number, actorId: number): void => {
+    const existing = userQueries.getById(id)
+    if (!existing) throw new UserError('NOT_FOUND')
+    if (id === actorId) throw new UserError('SELF_DELETE')
+    if (existing.role === 'admin' && countAdmins() <= 1) throw new UserError('LAST_ADMIN')
+    db.prepare('DELETE FROM users WHERE id = ?').run(id)
   }
 }
+
+// Usuario por defecto: administrador con acceso a todas las páginas
+const DEFAULT_PERMISSIONS = JSON.stringify(PAGE_IDS)
 
 function initSchema() {
   // Tabla: Productos
@@ -165,8 +271,10 @@ function initSchema() {
         username TEXT NOT NULL UNIQUE COLLATE NOCASE,
         password_hash TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'admin',
+        permissions TEXT DEFAULT '[]',
         created_at TEXT
     )`)
+  addColumnIfMissing('users', 'permissions', "TEXT DEFAULT '[]'")
   seedDefaultUser()
 
   // Columnas agregadas después de la versión inicial (bases de datos existentes)

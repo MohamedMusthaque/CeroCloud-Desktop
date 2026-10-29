@@ -48,6 +48,7 @@ export function MainLayout() {
                 case 'v': navigate('/sales'); break;
                 case 'r': navigate('/reports'); break;
                 case 's': navigate('/settings'); break;
+                case 'u': navigate('/users'); break;
                 case 'a': navigate('/about'); break;
             }
         }
