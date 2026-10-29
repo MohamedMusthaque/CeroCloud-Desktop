@@ -1,104 +1,104 @@
-# Código de Conducta
+# Code of Conduct
 
-## Nuestro Compromiso
+## Our Commitment
 
-En el interés de fomentar un entorno abierto y acogedor, como contribuyentes y mantenedores del proyecto **CeroCloud**, nos comprometemos a hacer de la participación en nuestro proyecto y nuestra comunidad una experiencia libre de acoso para todos, independientemente de:
+In the interest of fostering an open and welcoming environment, as contributors and maintainers of the **CeroCloud** project, we pledge to make participation in our project and community a harassment-free experience for everyone, regardless of:
 
-- Edad
-- Tamaño corporal
-- Discapacidad
-- Etnia
-- Identidad y expresión de género
-- Nivel de experiencia
-- Nacionalidad
-- Apariencia personal
-- Raza
-- Religión
-- Identidad y orientación sexual
-
----
-
-## Nuestros Estándares
-
-### Ejemplos de comportamiento que contribuyen a crear un ambiente positivo:
-
-✅ Usar un lenguaje acogedor e inclusivo  
-✅ Ser respetuoso con diferentes puntos de vista y experiencias  
-✅ Aceptar con gracia las críticas constructivas  
-✅ Enfocarse en lo que es mejor para la comunidad  
-✅ Mostrar empatía hacia otros miembros de la comunidad  
-✅ Reconocer y agradecer las contribuciones de otros  
-
-### Ejemplos de comportamiento inaceptable:
-
-❌ Uso de lenguaje o imágenes sexualizadas y atención sexual no deseada  
-❌ Trolling, comentarios insultantes/despectivos y ataques personales o políticos  
-❌ Acoso público o privado  
-❌ Publicar información privada de otros, como direcciones físicas o electrónicas, sin permiso explícito  
-❌ Otras conductas que razonablemente podrían considerarse inapropiadas en un entorno profesional  
+- Age
+- Body size
+- Disability
+- Ethnicity
+- Gender identity and expression
+- Level of experience
+- Nationality
+- Personal appearance
+- Race
+- Religion
+- Sexual identity and orientation
 
 ---
 
-## Nuestras Responsabilidades
+## Our Standards
 
-Los mantenedores del proyecto son responsables de:
+### Examples of behavior that contribute to a positive environment:
 
-- Aclarar los estándares de comportamiento aceptable
-- Tomar medidas correctivas apropiadas y justas en respuesta a cualquier instancia de comportamiento inaceptable
-- Eliminar, editar o rechazar comentarios, commits, código, ediciones de wiki, issues y otras contribuciones que no estén alineadas con este Código de Conducta
-- Banear temporal o permanentemente a cualquier contribuyente por comportamientos que consideren inapropiados, amenazantes, ofensivos o dañinos
+✅ Use welcoming and inclusive language  
+✅ Be respectful of differing viewpoints and experiences  
+✅ Accept constructive criticism gracefully  
+✅ Focus on what is best for the community  
+✅ Show empathy toward other community members  
+✅ Recognize and appreciate the contributions of others  
 
----
+### Examples of unacceptable behavior:
 
-## Alcance
-
-Este Código de Conducta aplica tanto dentro de los espacios del proyecto como en espacios públicos cuando un individuo representa al proyecto o su comunidad.
-
-Ejemplos de representación del proyecto o comunidad incluyen:
-- Usar una dirección de correo electrónico oficial del proyecto
-- Publicar a través de una cuenta oficial de redes sociales
-- Actuar como representante designado en un evento en línea o fuera de línea
-
----
-
-## Aplicación
-
-Los casos de comportamiento abusivo, acosador o inaceptable pueden ser reportados contactando al equipo del proyecto a través de:
-
-- **GitHub Issues**: Para reportes públicos apropiados
-- **Email**: [contact@cerocloud.local] (cuando esté disponible)
-
-Todas las quejas serán:
-- Revisadas e investigadas
-- Resultarán en una respuesta que se considere necesaria y apropiada a las circunstancias
-- Mantenidas confidenciales con respecto al reportero del incidente
-
-Los mantenedores del proyecto que no sigan o hagan cumplir el Código de Conducta de buena fe pueden enfrentar repercusiones temporales o permanentes según lo determinen otros miembros del liderazgo del proyecto.
+❌ Use of sexualized language or imagery and unwelcome sexual attention  
+❌ Trolling, insulting/derogatory comments, and personal or political attacks  
+❌ Public or private harassment  
+❌ Publishing others' private information, such as physical or electronic addresses, without explicit permission  
+❌ Other conduct that could reasonably be considered inappropriate in a professional environment  
 
 ---
 
-## Proceso de Resolución
+## Our Responsibilities
 
-1. **Advertencia**: Primera instancia, advertencia privada del comportamiento inaceptable
-2. **Advertencia Temporal**: Suspensión temporal de participación (1-7 días)
-3. **Expulsión Permanente**: Prohibición permanente del proyecto
+The project maintainers are responsible for:
 
-La escalación dependerá de la severidad y frecuencia de la infracción.
-
----
-
-## Atribución
-
-Este Código de Conducta es una adaptación del [Contributor Covenant](https://www.contributor-covenant.org/), versión 2.1, disponible en https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
+- Clarifying the standards of acceptable behavior
+- Taking appropriate and fair corrective action in response to any instance of unacceptable behavior
+- Removing, editing, or rejecting comments, commits, code, wiki edits, issues, and other contributions that are not aligned with this Code of Conduct
+- Temporarily or permanently banning any contributor for behaviors they consider inappropriate, threatening, offensive, or harmful
 
 ---
 
-## Preguntas
+## Scope
 
-¿Tienes preguntas sobre este Código de Conducta? Abre un **Issue** con la etiqueta `question` o contacta a los mantenedores.
+This Code of Conduct applies both within project spaces and in public spaces when an individual represents the project or its community.
+
+Examples of representing the project or community include:
+- Using an official project email address
+- Posting through an official social media account
+- Acting as a designated representative at an online or offline event
 
 ---
 
-**Última actualización:** Enero 2026
+## Enforcement
 
-Al participar en este proyecto, aceptas cumplir con este Código de Conducta. 🤝
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team through:
+
+- **GitHub Issues**: For appropriate public reports
+- **Email**: [contact@nexoracloud.local] (when available)
+
+All complaints will be:
+- Reviewed and investigated
+- Result in a response deemed necessary and appropriate to the circumstances
+- Kept confidential with respect to the reporter of the incident
+
+Project maintainers who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of the project leadership.
+
+---
+
+## Resolution Process
+
+1. **Warning**: First instance, private warning about unacceptable behavior
+2. **Temporary Warning**: Temporary suspension of participation (1-7 days)
+3. **Permanent Ban**: Permanent ban from the project
+
+Escalation will depend on the severity and frequency of the violation.
+
+---
+
+## Attribution
+
+This Code of Conduct is an adaptation of the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1, available at https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
+
+---
+
+## Questions
+
+Do you have questions about this Code of Conduct? Open an **Issue** with the `question` label or contact the maintainers.
+
+---
+
+**Last updated:** January 2026
+
+By participating in this project, you agree to comply with this Code of Conduct. 🤝

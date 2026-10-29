@@ -4,8 +4,8 @@
     "description": "Sistema Integral de Ventas e Inventario de Escritorio - 100% Local y Gratuito",
     "main": "dist-electron/main/main.js",
     "author": {
-        "name": "CeroCloud Team",
-        "email": "contact@cerocloud.local"
+        "name": "Mohamed Musthaque",
+        "email": "contact@nexoracloud.local"
     },
     "license": "SEE LICENSE IN LICENSE",
     "private": true,
