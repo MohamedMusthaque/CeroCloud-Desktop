@@ -9,9 +9,17 @@ const queryClient = new QueryClient()
 import { useEffect } from 'react'
 import { companyService } from '@/services/companyService'
 import { backupService } from '@/services/backupService'
-import { t } from '@/i18n'
+import { t, useLanguageStore } from '@/i18n'
+import { sampleDataService } from '@/services/sampleDataService'
 
 export function App() {
+    const language = useLanguageStore((state) => state.language)
+
+    // Keep the demo products' texts in the selected language
+    useEffect(() => {
+        sampleDataService.localizeSampleProducts(language).catch(console.error)
+    }, [language])
+
     useEffect(() => {
         companyService.initTheme()
 
