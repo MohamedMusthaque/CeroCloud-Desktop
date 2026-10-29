@@ -21,8 +21,7 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
-        /* Paths */
-        "baseUrl": ".",
+        /* Paths (resolved relative to this file; baseUrl is deprecated) */
         "paths": {
             "@/*": [
                 "./src/*"

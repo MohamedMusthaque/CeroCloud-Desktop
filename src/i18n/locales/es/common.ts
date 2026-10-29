@@ -36,6 +36,7 @@ export const common = {
 
     // Product units
     'unit.unidad': 'Unidad (Pieza)',
+    'unit.ton': 'Tonelada (t)',
     'unit.kg': 'Kilogramo (kg)',
     'unit.g': 'Gramo (g)',
     'unit.l': 'Litro (l)',
@@ -44,6 +45,7 @@ export const common = {
     'unit.caja': 'Caja',
     'unit.paquete': 'Paquete',
     'unitShort.unidad': 'unidad',
+    'unitShort.ton': 't',
     'unitShort.kg': 'kg',
     'unitShort.g': 'g',
     'unitShort.l': 'l',

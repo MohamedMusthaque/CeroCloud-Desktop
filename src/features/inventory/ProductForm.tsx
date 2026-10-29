@@ -272,6 +272,7 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                         className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none cursor-pointer"
                                     >
                                         <option value="unidad">{t('unit.unidad')}</option>
+                                        <option value="ton">{t('unit.ton')}</option>
                                         <option value="kg">{t('unit.kg')}</option>
                                         <option value="g">{t('unit.g')}</option>
                                         <option value="l">{t('unit.l')}</option>

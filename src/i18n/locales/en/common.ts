@@ -38,6 +38,7 @@ export const common: Record<keyof typeof es, string> = {
 
     // Product units
     'unit.unidad': 'Unit (Piece)',
+    'unit.ton': 'Ton (t)',
     'unit.kg': 'Kilogram (kg)',
     'unit.g': 'Gram (g)',
     'unit.l': 'Liter (l)',
@@ -46,6 +47,7 @@ export const common: Record<keyof typeof es, string> = {
     'unit.caja': 'Box',
     'unit.paquete': 'Pack',
     'unitShort.unidad': 'unit',
+    'unitShort.ton': 't',
     'unitShort.kg': 'kg',
     'unitShort.g': 'g',
     'unitShort.l': 'l',

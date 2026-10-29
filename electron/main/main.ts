@@ -52,8 +52,23 @@ protocol.registerSchemesAsPrivileged([
     { scheme: 'cerocloud-image', privileges: { secure: true, supportFetchAPI: true, standard: true, bypassCSP: true, stream: true } }
 ])
 
+// Prevent multiple instances: a second instance quits before touching the database or cache
+const gotTheLock = app.requestSingleInstanceLock()
+if (!gotTheLock) {
+    app.quit()
+} else {
+    app.on('second-instance', () => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore()
+            mainWindow.focus()
+        }
+    })
+}
+
 // App lifecycle
 app.whenReady().then(() => {
+    if (!gotTheLock) return
+
     // Initialize database and IPC handlers
     initializeDatabase()
     registerIpcHandlers()
@@ -137,15 +152,3 @@ app.on('window-all-closed', () => {
     }
 })
 
-// Prevent multiple instances
-const gotTheLock = app.requestSingleInstanceLock()
-if (!gotTheLock) {
-    app.quit()
-} else {
-    app.on('second-instance', () => {
-        if (mainWindow) {
-            if (mainWindow.isMinimized()) mainWindow.restore()
-            mainWindow.focus()
-        }
-    })
-}

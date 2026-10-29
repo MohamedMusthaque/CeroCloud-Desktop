@@ -88,7 +88,7 @@ export function paymentMethodLabel(method: string): string {
 }
 
 // Label for a stored product unit value ('unidad', 'kg', ...); unknown values pass through
-const productUnits = ['unidad', 'kg', 'g', 'l', 'ml', 'm', 'caja', 'paquete'] as const
+const productUnits = ['unidad', 'ton', 'kg', 'g', 'l', 'ml', 'm', 'caja', 'paquete'] as const
 type ProductUnit = typeof productUnits[number]
 
 export function unitLabel(unit: string, variant: 'long' | 'short' = 'short'): string {

@@ -34,7 +34,7 @@
         "preview": "vite preview",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "type-check": "tsc --noEmit",
-        "electron:dev": "concurrently \"npm run dev\" \"wait-on tcp:5173 && electron .\"",
+        "electron:dev": "vite",
         "electron:build": "vite build && electron-builder",
         "rebuild": "electron-rebuild -f -w better-sqlite3",
         "postinstall": "npm run rebuild"

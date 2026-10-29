@@ -273,6 +273,22 @@ export function Sales() {
         updateStoreQuantity(productId, delta, settings.pos?.allowNegativeStock)
     }
 
+    // Typed quantity: 0 removes the item; above available stock is capped unless negative stock is allowed
+    const handleSetQuantity = (productId: number, quantity: number) => {
+        const item = cart.find(i => i.product.id === productId)
+        if (!item) return
+
+        let target = Math.max(0, Math.floor(quantity))
+        if (!settings.pos?.allowNegativeStock && target > item.product.stock) {
+            toast.error(t('pos.insufficientStock', { count: item.product.stock }))
+            target = item.product.stock
+        }
+
+        if (target !== item.quantity) {
+            updateStoreQuantity(productId, target - item.quantity, settings.pos?.allowNegativeStock)
+        }
+    }
+
     // Totals Calculation
     const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
     const discountAmount = subtotal * (activeTab.discount / 100)
@@ -554,6 +570,7 @@ export function Sales() {
                                     key={item.product.id}
                                     item={item}
                                     onUpdate={handleUpdateQuantity}
+                                    onSetQuantity={handleSetQuantity}
                                     onRemove={removeItem}
                                     currencySymbol={settings.currencySymbol}
                                 />
@@ -880,7 +897,7 @@ function ProductCard({ product, settings, onClick }: { product: Product; setting
     )
 }
 
-function CartItemRow({ item, onUpdate, onRemove, currencySymbol }: { item: CartItem; onUpdate: (id: number, delta: number) => void; onRemove: (id: number) => void; currencySymbol: string }) {
+function CartItemRow({ item, onUpdate, onSetQuantity, onRemove, currencySymbol }: { item: CartItem; onUpdate: (id: number, delta: number) => void; onSetQuantity: (id: number, quantity: number) => void; onRemove: (id: number) => void; currencySymbol: string }) {
     return (
         <motion.div
             layout
@@ -910,7 +927,7 @@ function CartItemRow({ item, onUpdate, onRemove, currencySymbol }: { item: CartI
                 <button onClick={() => onUpdate(item.product.id!, -1)} className="w-7 h-7 flex items-center justify-center bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-gray-100 border border-gray-200 dark:border-gray-600">
                     <Minus className="w-3 h-3" />
                 </button>
-                <span className="font-semibold text-sm w-4 text-center">{item.quantity}</span>
+                <QuantityInput value={item.quantity} onCommit={(quantity) => onSetQuantity(item.product.id!, quantity)} />
                 <button onClick={() => onUpdate(item.product.id!, 1)} className="w-7 h-7 flex items-center justify-center bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-gray-100 border border-gray-200 dark:border-gray-600">
                     <Plus className="w-3 h-3" />
                 </button>
@@ -924,6 +941,52 @@ function CartItemRow({ item, onUpdate, onRemove, currencySymbol }: { item: CartI
                 </button>
             </div>
         </motion.div>
+    )
+}
+
+// Editable cart quantity: applied on Enter or blur, Escape restores the current value
+function QuantityInput({ value, onCommit }: { value: number; onCommit: (quantity: number) => void }) {
+    const [draft, setDraft] = useState(String(value))
+    const cancelRef = useRef(false)
+
+    useEffect(() => {
+        setDraft(String(value))
+    }, [value])
+
+    const commit = () => {
+        if (cancelRef.current) {
+            cancelRef.current = false
+            setDraft(String(value))
+            return
+        }
+        const quantity = parseInt(draft, 10)
+        if (!Number.isNaN(quantity) && quantity !== value) onCommit(quantity)
+        // Show the stored value again; if it changed, the effect above updates it
+        setDraft(String(value))
+    }
+
+    return (
+        <input
+            type="number"
+            min={0}
+            step={1}
+            inputMode="numeric"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            onBlur={commit}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault()
+                    e.currentTarget.blur()
+                }
+                if (e.key === 'Escape') {
+                    cancelRef.current = true
+                    e.currentTarget.blur()
+                }
+            }}
+            className="w-10 h-7 font-semibold text-sm text-center rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        />
     )
 }
 

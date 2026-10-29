@@ -12,7 +12,7 @@ export const productSchema = z.object({
     cost: z.coerce.number().min(0, 'validation.costNegative').optional().default(0),
     stock: z.coerce.number().int().min(0, 'validation.stockNegative'),
     min_stock: z.coerce.number().int().min(0, 'validation.minStockNegative').default(0),
-    unit: z.enum(['unidad', 'kg', 'g', 'l', 'ml', 'm', 'caja', 'paquete']).default('unidad'),
+    unit: z.enum(['unidad', 'ton', 'kg', 'g', 'l', 'ml', 'm', 'caja', 'paquete']).default('unidad'),
     supplier_id: z.coerce.number().optional(),
 })
 
