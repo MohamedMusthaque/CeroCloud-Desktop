@@ -9,7 +9,7 @@ export const printTexts: Record<keyof typeof es, string> = {
     'print.nit': 'Tax ID: {id}',
     'print.rfc': 'Tax ID: {id}',
     'print.nitRfc': 'Tax ID: {id}',
-    'print.ticketNumber': 'Ticket #{id}',
+    'print.ticketNumber': 'Bill #{id}',
     'print.client': 'Client:',
     'print.counter': 'Walk-in',
     'print.desc': 'Item',

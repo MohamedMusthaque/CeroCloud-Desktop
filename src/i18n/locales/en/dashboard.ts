@@ -13,7 +13,7 @@ export const dashboard: Record<keyof typeof es, string> = {
     'dash.inventory': 'Inventory',
     'dash.lowCount': '{count} low',
     'dash.healthyStock': 'Healthy stock',
-    'dash.avgTicket': 'Average Ticket',
+    'dash.avgTicket': 'Average Bill',
     'dash.general': 'Overall',
     'dash.revenue7d': 'Revenue (7 days)',
     'dash.dailyTrend': 'Daily sales trend',

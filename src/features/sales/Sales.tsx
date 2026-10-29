@@ -65,6 +65,12 @@ export function Sales() {
     const activeTab = useMemo(() => tabs.find(tab => tab.id === activeTabId) || tabs[0], [tabs, activeTabId])
     const cart = activeTab.items
 
+    // Auto-generated tab names ("Ticket 2", stored by the cart store) follow the UI language; custom names show as typed
+    const tabLabel = (name: string) => {
+        const match = /^(?:Ticket|Bill) (\d+)$/.exec(name)
+        return match ? t('pos.tabName', { number: match[1] }) : name
+    }
+
     // Checkout State
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
     const [receivedAmount, setReceivedAmount] = useState('')
@@ -478,10 +484,10 @@ export function Sales() {
                                     ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-t border-x border-gray-300 dark:border-gray-700 relative top-[1px] z-10"
                                     : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200 border border-transparent opacity-80"
                             )}
-                            title={tab.name}
+                            title={tabLabel(tab.name)}
                         >
                             <TicketIcon className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate flex-1 text-[10px] sm:text-xs">{tab.name}</span>
+                            <span className="truncate flex-1 text-[10px] sm:text-xs">{tabLabel(tab.name)}</span>
                             {/* Close button: visible in active or group hover */}
                             {tabs.length > 1 && (
                                 <button
@@ -526,7 +532,7 @@ export function Sales() {
                         <div>
                             <input
                                 type="text"
-                                value={activeTab.name}
+                                value={tabLabel(activeTab.name)}
                                 onChange={(e) => updateTabName(activeTab.id, e.target.value)}
                                 className="font-bold text-gray-900 dark:text-white bg-transparent border-none p-0 focus:ring-0 w-full truncate text-sm"
                             />

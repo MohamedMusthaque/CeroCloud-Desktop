@@ -22,6 +22,7 @@ export const pos = {
     'pos.maxTickets': 'Máximo 5 tickets simultáneos',
     'pos.limitReached': 'Límite alcanzado',
     'pos.newTicket': 'Nuevo Ticket',
+    'pos.tabName': 'Ticket {number}',
     'pos.productCount': '{count} productos',
     'pos.clear': 'Limpiar',
     'pos.customerPlaceholder': 'Cliente (Público General)',
