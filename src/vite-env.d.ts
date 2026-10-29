@@ -11,6 +11,9 @@ interface ImportMeta {
 
 // Electron API Types
 interface ElectronAPI {
+    auth: {
+        login: (username: string, password: string) => Promise<{ success: boolean; user?: { id: number; username: string; role: string } }>
+    }
     products: {
         getAll: () => Promise<any[]>
         getById: (id: number) => Promise<any>

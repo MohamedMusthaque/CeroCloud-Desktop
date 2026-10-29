@@ -2,6 +2,7 @@ import Database from 'better-sqlite3'
 import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
+import crypto from 'crypto'
 import { Product, Category, Sale, Supplier, SaleItem, Client } from '../../src/types/database'
 
 // Configuración de la Base de Datos
@@ -21,6 +22,49 @@ function addColumnIfMissing(table: string, column: string, definition: string) {
   const columns = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
   if (!columns.some(c => c.name === column)) {
     db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
+  }
+}
+
+// ==========================================
+// Autenticación: contraseñas con scrypt + salt aleatorio ("salt:hash" en hex)
+// ==========================================
+
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16)
+  const hash = crypto.scryptSync(password, salt, 64)
+  return `${salt.toString('hex')}:${hash.toString('hex')}`
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [saltHex, hashHex] = stored.split(':')
+  if (!saltHex || !hashHex) return false
+  const expected = Buffer.from(hashHex, 'hex')
+  const actual = crypto.scryptSync(password, Buffer.from(saltHex, 'hex'), expected.length)
+  return crypto.timingSafeEqual(actual, expected)
+}
+
+// Crea el usuario por defecto (admin / admin) si no existe ningún usuario
+function seedDefaultUser() {
+  const { count } = db.prepare('SELECT COUNT(*) AS count FROM users').get() as { count: number }
+  if (count === 0) {
+    db.prepare('INSERT INTO users(username, password_hash, role, created_at) VALUES(?, ?, ?, ?)')
+      .run('admin', hashPassword('admin'), 'admin', new Date().toISOString())
+    console.log('👤 Usuario por defecto creado: admin')
+  }
+}
+
+export interface AuthUser {
+  id: number
+  username: string
+  role: string
+}
+
+export const userQueries = {
+  authenticate: (username: string, password: string): AuthUser | null => {
+    const row = db.prepare('SELECT id, username, role, password_hash FROM users WHERE username = ?')
+      .get(username.trim()) as (AuthUser & { password_hash: string }) | undefined
+    if (!row || !verifyPassword(password, row.password_hash)) return null
+    return { id: row.id, username: row.username, role: row.role }
   }
 }
 
@@ -113,6 +157,17 @@ function initSchema() {
 
 
 
+
+  // Tabla: Usuarios (login local)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'admin',
+        created_at TEXT
+    )`)
+  seedDefaultUser()
 
   // Columnas agregadas después de la versión inicial (bases de datos existentes)
   addColumnIfMissing('clients', 'credit_limit', 'REAL DEFAULT 0')

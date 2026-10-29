@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Moon, Sun, Bell, User, Search } from 'lucide-react'
+import { Moon, Sun, Bell, User, Search, LogOut } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { cn } from '@/lib/utils'
 import { companyService } from '@/services/companyService'
 import { useTranslation } from '@/i18n'
+import { useAuthStore } from '@/stores/authStore'
 
 export function Header() {
     const { t } = useTranslation()
     const [darkMode, setDarkMode] = useState(false)
     const { setCommandPaletteOpen } = useUIStore()
+    const { user, logout } = useAuthStore()
+    const [showUserMenu, setShowUserMenu] = useState(false)
 
     useEffect(() => {
         // Initialize state based on current settings
@@ -178,16 +181,33 @@ export function Header() {
                     <div className="relative pl-3 border-l border-gray-200 dark:border-gray-700">
                         <button
                             className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors group"
-                            onClick={() => {/* Toggle dropdown */ }}
+                            onClick={() => setShowUserMenu(!showUserMenu)}
                         >
                             <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-gray-900 dark:text-white">{t('header.user')}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('header.admin')}</p>
+                                <p className="text-sm font-bold text-gray-900 dark:text-white">{user?.username ?? t('header.user')}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                    {user?.role === 'admin' ? t('auth.role.admin') : (user?.role ?? t('header.admin'))}
+                                </p>
                             </div>
                             <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:shadow-lg transition-all border border-gray-200 dark:border-gray-700 group-hover:border-gray-300">
                                 <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                             </div>
                         </button>
+
+                        {showUserMenu && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50">
+                                    <button
+                                        onClick={() => { setShowUserMenu(false); logout() }}
+                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        {t('auth.logout')}
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

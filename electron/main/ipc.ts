@@ -1,7 +1,7 @@
 import { ipcMain, app } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, saleQueries, supplierQueries, clientQueries, cancelSale, clearAll, restoreDatabase } from './database'
+import { productQueries, categoryQueries, saleQueries, supplierQueries, clientQueries, userQueries, cancelSale, clearAll, restoreDatabase } from './database'
 import { logger } from './logger'
 
 export function registerIpcHandlers() {
@@ -251,6 +251,17 @@ export function registerIpcHandlers() {
 
     ipcMain.handle('clients:getCreditBalance', (_event, id: number) => {
         return clientQueries.getCreditBalance(id)
+    })
+
+    // Auth
+    ipcMain.handle('auth:login', (_event, username: string, password: string) => {
+        try {
+            const user = userQueries.authenticate(String(username ?? ''), String(password ?? ''))
+            return user ? { success: true, user } : { success: false }
+        } catch (error) {
+            logger.error('Auth Login', error)
+            return { success: false }
+        }
     })
 
     // Inventory Logs handlers REMOVED

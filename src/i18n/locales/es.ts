@@ -1,4 +1,5 @@
 import { common } from './es/common'
+import { auth } from './es/auth'
 import { imageUpload } from './es/imageUpload'
 import { restoreWizard } from './es/restoreWizard'
 import { backupWizard } from './es/backupWizard'
@@ -17,6 +18,7 @@ import { exportTexts } from './es/exports'
 
 export const es = {
     ...common,
+    ...auth,
     ...imageUpload,
     ...restoreWizard,
     ...backupWizard,

@@ -1,5 +1,6 @@
 import type { TranslationKey } from './es'
 import { common } from './en/common'
+import { auth } from './en/auth'
 import { imageUpload } from './en/imageUpload'
 import { restoreWizard } from './en/restoreWizard'
 import { backupWizard } from './en/backupWizard'
@@ -18,6 +19,7 @@ import { exportTexts } from './en/exports'
 
 export const en: Record<TranslationKey, string> = {
     ...common,
+    ...auth,
     ...imageUpload,
     ...restoreWizard,
     ...backupWizard,

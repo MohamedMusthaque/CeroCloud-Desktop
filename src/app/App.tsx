@@ -11,9 +11,12 @@ import { companyService } from '@/services/companyService'
 import { backupService } from '@/services/backupService'
 import { t, useLanguageStore } from '@/i18n'
 import { sampleDataService } from '@/services/sampleDataService'
+import { useAuthStore } from '@/stores/authStore'
+import { Login } from '@/features/auth/Login'
 
 export function App() {
     const language = useLanguageStore((state) => state.language)
+    const user = useAuthStore((state) => state.user)
 
     // Keep the demo products' texts in the selected language
     useEffect(() => {
@@ -42,8 +45,14 @@ export function App() {
     return (
         <Router>
             <QueryClientProvider client={queryClient}>
-                <AppRoutes />
-                <CommandPalette />
+                {user ? (
+                    <>
+                        <AppRoutes />
+                        <CommandPalette />
+                    </>
+                ) : (
+                    <Login />
+                )}
                 <Toaster position="top-right" richColors closeButton />
             </QueryClientProvider>
         </Router>
