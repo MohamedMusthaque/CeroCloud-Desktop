@@ -7,6 +7,7 @@ import pkg from '../../../../package.json'
 import { Switch } from '@/components/ui/switch'
 import { CompanySettings } from '@/types/database'
 import { updaterService } from '@/services/updaterService'
+import { useTranslation } from '@/i18n'
 
 interface UpdatesTabProps {
     settings: CompanySettings
@@ -14,6 +15,7 @@ interface UpdatesTabProps {
 }
 
 export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
+    const { t } = useTranslation()
     const [currentVersion, setCurrentVersion] = useState<string>('...')
     const [checking, setChecking] = useState(false)
     const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date'>('idle')
@@ -38,15 +40,15 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
 
             if (result.success && result.data) {
                 setUpdateStatus('available')
-                toast.info('Nueva actualización disponible')
+                toast.info(t('updates.available'))
             } else {
                 setUpdateStatus('up-to-date')
-                toast.success('El sistema está actualizado')
+                toast.success(t('updates.upToDate'))
             }
         } catch (error) {
             setChecking(false)
             setUpdateStatus('idle')
-            toast.error('Error al buscar actualizaciones')
+            toast.error(t('updates.checkError'))
         }
     }
 
@@ -60,12 +62,12 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
         try {
             await updaterService.setAutoCheck(checked)
             if (checked) {
-                toast.success('Descargas automáticas habilitadas')
+                toast.success(t('updates.autoEnabled'))
             } else {
-                toast.info('Descargas automáticas deshabilitadas')
+                toast.info(t('updates.autoDisabled'))
             }
         } catch (error) {
-            toast.error('No se pudo cambiar la configuración de actualización')
+            toast.error(t('updates.autoError'))
             // Revert on error could be implemented here if strictly needed
         }
     }
@@ -74,8 +76,8 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
             <div className="text-left">
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Sistema y Actualizaciones</h2>
-                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">Mantén tu sistema CeroCloud al día con las últimas mejoras.</p>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{t('updates.title')}</h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">{t('updates.subtitle')}</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -101,14 +103,14 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
                             </div>
                             <div>
                                 <h3 className="text-3xl font-black tracking-tight mb-2">
-                                    {updateStatus === 'checking' ? 'Buscando...' :
-                                        updateStatus === 'up-to-date' ? 'Todo está al día' :
-                                            updateStatus === 'available' ? 'Actualización Disponible' :
+                                    {updateStatus === 'checking' ? t('updates.status.checking') :
+                                        updateStatus === 'up-to-date' ? t('updates.status.upToDate') :
+                                            updateStatus === 'available' ? t('updates.status.available') :
                                                 'CeroCloud Desktop'}
                                 </h3>
                                 <div className="flex items-center gap-3">
                                     <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-bold font-mono border border-white/10">v{currentVersion}</span>
-                                    <span className="text-sm text-slate-400">Canal Estable</span>
+                                    <span className="text-sm text-slate-400">{t('updates.stableChannel')}</span>
                                 </div>
                             </div>
                         </div>
@@ -121,12 +123,12 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
                             {checking ? (
                                 <>
                                     <RefreshCw className="w-5 h-5 animate-spin" />
-                                    <span>Verificando...</span>
+                                    <span>{t('updates.verifying')}</span>
                                 </>
                             ) : (
                                 <>
                                     <RefreshCw className="w-5 h-5" />
-                                    <span>Buscar Actualizaciones</span>
+                                    <span>{t('updates.check')}</span>
                                 </>
                             )}
                         </button>
@@ -141,8 +143,8 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
                                 <Zap className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Novedades</h3>
-                                <p className="text-sm text-gray-500 dark:text-slate-400">Últimos cambios en esta versión</p>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('updates.whatsNew')}</h3>
+                                <p className="text-sm text-gray-500 dark:text-slate-400">{t('updates.whatsNewDesc')}</p>
                             </div>
                         </div>
                     </div>
@@ -150,13 +152,13 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
                     <div className="space-y-4 pl-4 border-l-2 border-gray-100 dark:border-slate-700">
                         <div className="relative">
                             <div className="absolute -left-[21px] top-1.5 w-3 h-3 rounded-full bg-blue-500 text-white ring-4 ring-white dark:ring-slate-900" />
-                            <h4 className="text-sm font-bold text-gray-900 dark:text-white">Mejoras de Rendimiento</h4>
-                            <p className="text-xs text-gray-500 mt-1">Optimización general del sistema de inventario y ventas.</p>
+                            <h4 className="text-sm font-bold text-gray-900 dark:text-white">{t('updates.perf')}</h4>
+                            <p className="text-xs text-gray-500 mt-1">{t('updates.perfDesc')}</p>
                         </div>
                         <div className="relative">
                             <div className="absolute -left-[21px] top-1.5 w-3 h-3 rounded-full bg-gray-300 dark:bg-slate-600 ring-4 ring-white dark:ring-slate-900" />
-                            <h4 className="text-sm font-bold text-gray-900 dark:text-white">Corrección de Errores</h4>
-                            <p className="text-xs text-gray-500 mt-1">Solucionados problemas menores en la visualización de reportes.</p>
+                            <h4 className="text-sm font-bold text-gray-900 dark:text-white">{t('updates.fixes')}</h4>
+                            <p className="text-xs text-gray-500 mt-1">{t('updates.fixesDesc')}</p>
                         </div>
                     </div>
                 </div>
@@ -168,20 +170,20 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
                             <Download className="w-6 h-6" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Actualización Automática</h3>
-                            <p className="text-sm text-gray-500 dark:text-slate-400">Descargar parches en segundo plano</p>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('updates.auto')}</h3>
+                            <p className="text-sm text-gray-500 dark:text-slate-400">{t('updates.autoDesc')}</p>
                         </div>
                     </div>
 
                     <div className="bg-gray-50 dark:bg-slate-900/50 rounded-xl p-4 flex items-center justify-between border border-gray-100 dark:border-slate-700">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Habilitar descargas automáticas</span>
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('updates.enableAuto')}</span>
                         <Switch
                             checked={settings.updates?.autoCheck ?? true}
                             onChange={handleToggleAutoUpdate}
                         />
                     </div>
                     <p className="text-xs text-gray-400 mt-4 text-center">
-                        Se recomendará reiniciar cuando la actualización esté lista.
+                        {t('updates.restartHint')}
                     </p>
                 </div>
 

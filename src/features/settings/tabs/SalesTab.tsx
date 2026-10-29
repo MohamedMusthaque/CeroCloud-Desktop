@@ -20,6 +20,7 @@ import {
     Palette
 } from 'lucide-react'
 import { BannerUpload } from '../components/BannerUpload'
+import { useTranslation } from '@/i18n'
 
 interface SalesTabProps {
     settings: CompanySettings
@@ -27,51 +28,52 @@ interface SalesTabProps {
 }
 
 export function SalesTab({ settings, setSettings }: SalesTabProps) {
+    const { t } = useTranslation()
 
     const paymentMethods = [
-        { id: 'cash', icon: Banknote, label: 'Efectivo', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { id: 'card', icon: CreditCard, label: 'Tarjeta', color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { id: 'transfer', icon: QrCode, label: 'Transfer.', color: 'text-purple-500', bg: 'bg-purple-500/10' },
-        { id: 'other', icon: MoreHorizontal, label: 'Otros', color: 'text-gray-500', bg: 'bg-gray-500/10' }
+        { id: 'cash', icon: Banknote, label: t('sales.payment.cash'), color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { id: 'card', icon: CreditCard, label: t('sales.payment.card'), color: 'text-blue-500', bg: 'bg-blue-500/10' },
+        { id: 'transfer', icon: QrCode, label: t('sales.payment.transfer'), color: 'text-purple-500', bg: 'bg-purple-500/10' },
+        { id: 'other', icon: MoreHorizontal, label: t('sales.payment.other'), color: 'text-gray-500', bg: 'bg-gray-500/10' }
     ]
 
     const posFeatures = [
         {
             key: 'autoConfirm',
-            label: 'Confirmación Rápida',
-            desc: 'Omitir vista previa tras cobrar',
+            label: t('sales.pos.autoConfirm'),
+            desc: t('sales.pos.autoConfirmDesc'),
             icon: Check,
             color: 'text-blue-500',
             bg: 'bg-blue-500/10'
         },
         {
             key: 'showChangeCalculation',
-            label: 'Calculadora de Vuelto',
-            desc: 'Mostrar cambio a entregar',
+            label: t('sales.pos.showChange'),
+            desc: t('sales.pos.showChangeDesc'),
             icon: Calculator,
             color: 'text-emerald-500',
             bg: 'bg-emerald-500/10'
         },
         {
             key: 'allowNegativeStock',
-            label: 'Stock Negativo',
-            desc: 'Permitir venta sin existencias',
+            label: t('sales.pos.negativeStock'),
+            desc: t('sales.pos.negativeStockDesc'),
             icon: AlertCircle,
             color: 'text-red-500',
             bg: 'bg-red-500/10'
         },
         {
             key: 'discounts', // mapped manually
-            label: 'Descuentos Manuales',
-            desc: 'Habilitar descuentos en POS',
+            label: t('sales.pos.discounts'),
+            desc: t('sales.pos.discountsDesc'),
             icon: Percent,
             color: 'text-purple-500',
             bg: 'bg-purple-500/10'
         },
         {
             key: 'customer', // mapped manually
-            label: 'Cliente Obligatorio',
-            desc: 'Exigir cliente para vender',
+            label: t('sales.pos.customer'),
+            desc: t('sales.pos.customerDesc'),
             icon: User,
             color: 'text-amber-500',
             bg: 'bg-amber-500/10'
@@ -92,8 +94,8 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
 
             {/* Header Text */}
             <div className="text-left">
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Ventas y POS</h2>
-                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">Configura tu punto de venta y facturación.</p>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{t('sales.title')}</h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">{t('sales.subtitle')}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -104,7 +106,7 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
                     <div className="bg-white dark:bg-slate-800/40 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-700/50 shadow-sm relative overflow-hidden">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                             <Banknote className="w-5 h-5 text-emerald-500" />
-                            Métodos de Pago
+                            {t('sales.paymentMethods')}
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
                             {paymentMethods.map((pm) => {
@@ -139,7 +141,7 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
 
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2 relative z-10">
                             <Store className="w-5 h-5 text-emerald-500" />
-                            Experiencia POS
+                            {t('sales.posExperience')}
                         </h3>
 
                         <div className="space-y-4 relative z-10">
@@ -186,14 +188,14 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
 
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2 relative z-10">
                             <Receipt className="w-5 h-5 text-indigo-500" />
-                            Facturación
+                            {t('sales.billing')}
                         </h3>
 
                         <div className="space-y-5 relative z-10">
                             {/* Numbering */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider pl-1">Prefijo</label>
+                                    <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider pl-1">{t('sales.prefix')}</label>
                                     <div className="relative">
                                         <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                                         <input
@@ -206,7 +208,7 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider pl-1">Próximo No.</label>
+                                    <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider pl-1">{t('sales.nextNumber')}</label>
                                     <div className="relative">
                                         <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                                         <input
@@ -221,7 +223,7 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
 
                             {/* Paper Size */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider pl-1">Tamaño de Papel</label>
+                                <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider pl-1">{t('sales.paperSize')}</label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div
                                         onClick={() => setSettings({ ...settings, invoice: { ...settings.invoice, paperSize: 'a4' } })}
@@ -236,8 +238,8 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
                                             <FileText className="w-4 h-4" />
                                         </div>
                                         <div className="flex-1">
-                                            <div className="text-xs font-bold dark:text-white">Carta (A4)</div>
-                                            <div className="text-[9px] text-gray-400">PDF Estándar</div>
+                                            <div className="text-xs font-bold dark:text-white">{t('sales.paperA4')}</div>
+                                            <div className="text-[9px] text-gray-400">{t('sales.paperA4Desc')}</div>
                                         </div>
                                         {settings.invoice?.paperSize !== 'ticket80mm' && <Check className="w-3.5 h-3.5 text-indigo-500" />}
                                     </div>
@@ -255,8 +257,8 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
                                             <Receipt className="w-4 h-4" />
                                         </div>
                                         <div className="flex-1">
-                                            <div className="text-xs font-bold dark:text-white">Ticket</div>
-                                            <div className="text-[9px] text-gray-400">Termico 80mm</div>
+                                            <div className="text-xs font-bold dark:text-white">{t('sales.paperTicket')}</div>
+                                            <div className="text-[9px] text-gray-400">{t('sales.paperTicketDesc')}</div>
                                         </div>
                                         {settings.invoice?.paperSize === 'ticket80mm' && <Check className="w-3.5 h-3.5 text-indigo-500" />}
                                     </div>
@@ -269,18 +271,18 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
                     <div className="bg-white dark:bg-slate-800/40 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-700/50 shadow-sm relative overflow-hidden">
                         <div className="flex items-center gap-2 mb-6">
                             <Palette className="w-5 h-5 text-purple-500" />
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Personalización Visual</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('sales.visualCustomization')}</h3>
                         </div>
                         <div className="space-y-6">
                             <BannerUpload
-                                label="Banner Superior"
+                                label={t('sales.headerBanner')}
                                 recommendedSize="800x200px"
                                 currentImage={settings.invoice?.headerImage}
                                 onUpload={(base64) => setSettings({ ...settings, invoice: { ...settings.invoice, headerImage: base64 } })}
                                 onRemove={() => setSettings({ ...settings, invoice: { ...settings.invoice, headerImage: undefined } })}
                             />
                             <BannerUpload
-                                label="Banner Inferior"
+                                label={t('sales.footerBanner')}
                                 recommendedSize="800x150px"
                                 currentImage={settings.invoice?.footerImage}
                                 onUpload={(base64) => setSettings({ ...settings, invoice: { ...settings.invoice, footerImage: base64 } })}

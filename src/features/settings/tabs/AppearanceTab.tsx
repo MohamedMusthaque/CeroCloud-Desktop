@@ -7,9 +7,18 @@ import {
     Monitor,
     Type,
     Layout,
-    Palette
+    Palette,
+    Languages,
+    Check
 } from 'lucide-react'
 import { companyService } from '@/services/companyService'
+import { useTranslation, Language } from '@/i18n'
+
+// Language names are shown in their own language so they are recognizable either way
+const languages: { id: Language, label: string }[] = [
+    { id: 'es', label: 'Español' },
+    { id: 'en', label: 'English' }
+]
 
 interface AppearanceTabProps {
     settings: CompanySettings
@@ -17,12 +26,66 @@ interface AppearanceTabProps {
 }
 
 export function AppearanceTab({ settings, setSettings }: AppearanceTabProps) {
+    const { t, language, setLanguage } = useTranslation()
+
+    const fontSizes = [
+        { id: 'small', label: 'Aa', sub: t('appearance.font.small'), class: 'text-xs' },
+        { id: 'normal', label: 'Aa', sub: t('appearance.font.normal'), class: 'text-sm' },
+        { id: 'large', label: 'Aa', sub: t('appearance.font.large'), class: 'text-lg' },
+        { id: 'xlarge', label: 'Aa', sub: t('appearance.font.xlarge'), class: 'text-xl' }
+    ]
+
+    const radii = [
+        { id: 'none', radius: '0px', label: t('appearance.radius.none') },
+        { id: 'small', radius: '4px', label: t('appearance.radius.small') },
+        { id: 'normal', radius: '8px', label: t('appearance.radius.normal') },
+        { id: 'large', radius: '16px', label: t('appearance.radius.large') }
+    ]
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
             <div className="text-left">
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Personalización Visual</h2>
-                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">Adapta la interfaz a tu estilo de trabajo y preferencias.</p>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{t('appearance.title')}</h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">{t('appearance.subtitle')}</p>
+            </div>
+
+            {/* Language Selection */}
+            <div className="bg-white dark:bg-slate-800/40 rounded-[2rem] p-8 border border-gray-100 dark:border-slate-700/50 shadow-sm relative overflow-hidden">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                            <Languages className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('appearance.language')}</h3>
+                            <p className="text-sm text-gray-500 dark:text-slate-400">{t('appearance.languageDesc')}</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 md:w-80">
+                        {languages.map((lang) => {
+                            const isActive = language === lang.id
+                            return (
+                                <button
+                                    key={lang.id}
+                                    onClick={() => setLanguage(lang.id)}
+                                    className={cn(
+                                        "flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all",
+                                        isActive
+                                            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 shadow-md"
+                                            : "border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800/50"
+                                    )}
+                                >
+                                    <span className="text-[10px] font-black font-mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">
+                                        {lang.id.toUpperCase()}
+                                    </span>
+                                    <span className="text-sm font-bold">{lang.label}</span>
+                                    {isActive && <Check className="w-4 h-4 ml-auto text-emerald-500" />}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -34,16 +97,16 @@ export function AppearanceTab({ settings, setSettings }: AppearanceTabProps) {
                             <Palette className="w-6 h-6" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Tema de la Aplicación</h3>
-                            <p className="text-sm text-gray-500 dark:text-slate-400">Elige entre modo claro, oscuro o automático.</p>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('appearance.theme')}</h3>
+                            <p className="text-sm text-gray-500 dark:text-slate-400">{t('appearance.themeDesc')}</p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-6">
                         {[
-                            { id: 'light', label: 'Claro', icon: Sun },
-                            { id: 'dark', label: 'Oscuro', icon: Moon },
-                            { id: 'system', label: 'Sistema', icon: Monitor }
+                            { id: 'light', label: t('appearance.theme.light'), icon: Sun },
+                            { id: 'dark', label: t('appearance.theme.dark'), icon: Moon },
+                            { id: 'system', label: t('appearance.theme.system'), icon: Monitor }
                         ].map((mode) => {
                             const isActive = settings.theme?.mode === mode.id
                             return (
@@ -87,23 +150,18 @@ export function AppearanceTab({ settings, setSettings }: AppearanceTabProps) {
                             <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400">
                                 <Type className="w-5 h-5" />
                             </div>
-                            <h3 className="text-base font-bold text-gray-900 dark:text-white">Escala y Texto</h3>
+                            <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('appearance.scale')}</h3>
                         </div>
 
                         <div className="space-y-6">
                             {/* Font Size */}
                             <div>
                                 <div className="flex justify-between mb-3 text-xs font-bold text-gray-400 uppercase tracking-wide">
-                                    <span>Tamaño de fuente</span>
-                                    <span className="text-gray-900 dark:text-white capitalize">{settings.theme?.fontSize}</span>
+                                    <span>{t('appearance.fontSize')}</span>
+                                    <span className="text-gray-900 dark:text-white">{fontSizes.find(s => s.id === settings.theme?.fontSize)?.sub}</span>
                                 </div>
                                 <div className="grid grid-cols-4 gap-2">
-                                    {[
-                                        { id: 'small', label: 'Aa', sub: 'Pequeño', class: 'text-xs' },
-                                        { id: 'normal', label: 'Aa', sub: 'Normal', class: 'text-sm' },
-                                        { id: 'large', label: 'Aa', sub: 'Grande', class: 'text-lg' },
-                                        { id: 'xlarge', label: 'Aa', sub: 'Extra', class: 'text-xl' }
-                                    ].map((size) => {
+                                    {fontSizes.map((size) => {
                                         const isActive = settings.theme?.fontSize === size.id
                                         return (
                                             <button
@@ -131,16 +189,11 @@ export function AppearanceTab({ settings, setSettings }: AppearanceTabProps) {
                             {/* Border Radius */}
                             <div>
                                 <div className="flex justify-between mb-3 text-xs font-bold text-gray-400 uppercase tracking-wide">
-                                    <span>Redondeo de esquinas</span>
-                                    <span className="text-gray-900 dark:text-white capitalize">{settings.theme?.borderRadius}</span>
+                                    <span>{t('appearance.borderRadius')}</span>
+                                    <span className="text-gray-900 dark:text-white">{radii.find(r => r.id === settings.theme?.borderRadius)?.label}</span>
                                 </div>
                                 <div className="grid grid-cols-4 gap-2">
-                                    {[
-                                        { id: 'none', radius: '0px' },
-                                        { id: 'small', radius: '4px' },
-                                        { id: 'normal', radius: '8px' },
-                                        { id: 'large', radius: '16px' }
-                                    ].map((rad) => {
+                                    {radii.map((rad) => {
                                         const isActive = settings.theme?.borderRadius === rad.id
                                         return (
                                             <button
@@ -188,8 +241,8 @@ export function AppearanceTab({ settings, setSettings }: AppearanceTabProps) {
                                 <Layout className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Modo Compacto</h3>
-                                <p className="text-xs text-gray-500 dark:text-slate-400">Reduce el espaciado para mostrar más información.</p>
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t('appearance.compact')}</h3>
+                                <p className="text-xs text-gray-500 dark:text-slate-400">{t('appearance.compactDesc')}</p>
                             </div>
                         </div>
                         <div className={cn(

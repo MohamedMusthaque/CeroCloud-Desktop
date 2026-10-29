@@ -22,8 +22,10 @@ import { InventoryTab } from './tabs/InventoryTab'
 import { BackupsTab } from './tabs/BackupsTab'
 import { AppearanceTab } from './tabs/AppearanceTab'
 import { UpdatesTab } from './tabs/UpdatesTab'
+import { useTranslation } from '@/i18n'
 
 export function Settings() {
+    const { t } = useTranslation()
     const [settings, setSettings] = useState<CompanySettings>(companyService.getSettings())
     const [logoPreview, setLogoPreview] = useState(settings.logo || '')
     const [activeTab, setActiveTab] = useState<'general' | 'sales' | 'inventory' | 'backups' | 'appearance' | 'updates'>('general')
@@ -42,7 +44,7 @@ export function Settings() {
         const file = e.target.files?.[0]
         if (file) {
             if (file.size > 2 * 1024 * 1024) {
-                toast.error('El logo debe ser menor a 2MB')
+                toast.error(t('settings.logoTooLarge'))
                 return
             }
             const reader = new FileReader()
@@ -65,9 +67,9 @@ export function Settings() {
         setTimeout(() => {
             const success = companyService.saveSettings(settings)
             if (success) {
-                toast.success('Configuración guardada exitosamente')
+                toast.success(t('settings.saveSuccess'))
             } else {
-                toast.error('Error al guardar configuración')
+                toast.error(t('settings.saveError'))
             }
             setSaving(false)
         }, 800)
@@ -75,12 +77,12 @@ export function Settings() {
 
     // Tabs definition
     const tabs = [
-        { id: 'general', label: 'General', icon: Building2, desc: 'Identidad y locación' },
-        { id: 'sales', label: 'Ventas y POS', icon: CreditCard, desc: 'Métodos de pago y facturas' },
-        { id: 'inventory', label: 'Inventario', icon: Package, desc: 'Stock y alertas' },
-        { id: 'backups', label: 'Respaldos', icon: Database, desc: 'Copias de seguridad' },
-        { id: 'appearance', label: 'Apariencia', icon: Palette, desc: 'Tema y diseño' },
-        { id: 'updates', label: 'Sistema', icon: RefreshCw, desc: 'Versión y actualizaciones' },
+        { id: 'general', label: t('settings.tabs.general'), icon: Building2, desc: t('settings.tabs.generalDesc') },
+        { id: 'sales', label: t('settings.tabs.sales'), icon: CreditCard, desc: t('settings.tabs.salesDesc') },
+        { id: 'inventory', label: t('settings.tabs.inventory'), icon: Package, desc: t('settings.tabs.inventoryDesc') },
+        { id: 'backups', label: t('settings.tabs.backups'), icon: Database, desc: t('settings.tabs.backupsDesc') },
+        { id: 'appearance', label: t('settings.tabs.appearance'), icon: Palette, desc: t('settings.tabs.appearanceDesc') },
+        { id: 'updates', label: t('settings.tabs.updates'), icon: RefreshCw, desc: t('settings.tabs.updatesDesc') },
     ]
 
     return (
@@ -92,10 +94,10 @@ export function Settings() {
                     <div className="flex items-end justify-between mb-8">
                         <div>
                             <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                                Configuración
+                                {t('settings.title')}
                             </h1>
                             <p className="text-gray-500 dark:text-gray-400 mt-1">
-                                Gestiona y personaliza cada aspecto de tu negocio.
+                                {t('settings.subtitle')}
                             </p>
                         </div>
                         <div className="text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md mb-2">
@@ -195,7 +197,7 @@ export function Settings() {
                                     ) : (
                                         <Save className="w-5 h-5" />
                                     )}
-                                    <span className="text-sm font-bold tracking-wide">{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
+                                    <span className="text-sm font-bold tracking-wide">{saving ? t('settings.saving') : t('settings.saveChanges')}</span>
                                 </button>
                             </motion.div>
                         )}

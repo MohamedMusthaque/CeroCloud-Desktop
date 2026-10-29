@@ -4,8 +4,10 @@ import { useUIStore } from '@/stores/uiStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { cn } from '@/lib/utils'
 import { companyService } from '@/services/companyService'
+import { useTranslation } from '@/i18n'
 
 export function Header() {
+    const { t } = useTranslation()
     const [darkMode, setDarkMode] = useState(false)
     const { setCommandPaletteOpen } = useUIStore()
 
@@ -62,7 +64,7 @@ export function Header() {
                     <div className="flex items-center gap-3 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 group-hover:shadow-sm">
                         <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300 transition-colors" />
                         <span className="text-sm text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200 font-medium">
-                            Buscar productos, ventas, reportes...
+                            {t('header.searchPlaceholder')}
                         </span>
                         <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-xs text-gray-400 dark:text-gray-400 font-mono font-bold shadow-sm group-hover:text-gray-600 dark:group-hover:text-gray-200">
                             <span className="text-xs">⌘</span>K
@@ -79,7 +81,7 @@ export function Header() {
                             "p-2.5 rounded-full transition-all duration-300 relative group overflow-hidden border",
                             "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600"
                         )}
-                        title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                        title={darkMode ? t('header.switchToLight') : t('header.switchToDark')}
                     >
                         <div className="relative w-5 h-5">
                             <Sun className={cn(
@@ -100,7 +102,7 @@ export function Header() {
                                 "p-2 rounded-lg transition-colors relative",
                                 showNotifications ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white" : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
                             )}
-                            title="Notificaciones"
+                            title={t('header.notifications')}
                             onClick={() => setShowNotifications(!showNotifications)}
                         >
                             <Bell className="w-5 h-5 transition-colors" />
@@ -118,13 +120,13 @@ export function Header() {
                                 />
                                 <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 z-20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                                     <div className="p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
-                                        <h3 className="font-bold text-sm text-gray-900 dark:text-white">Notificaciones</h3>
+                                        <h3 className="font-bold text-sm text-gray-900 dark:text-white">{t('header.notifications')}</h3>
                                         {notifications.length > 0 && (
                                             <button
                                                 onClick={clearAll}
                                                 className="text-[10px] font-medium text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
                                             >
-                                                Borrar todas
+                                                {t('header.clearAll')}
                                             </button>
                                         )}
                                     </div>
@@ -132,7 +134,7 @@ export function Header() {
                                         {notifications.length === 0 ? (
                                             <div className="p-8 text-center text-gray-400">
                                                 <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                                                <p className="text-xs">Sin notificaciones nuevas</p>
+                                                <p className="text-xs">{t('header.noNotifications')}</p>
                                             </div>
                                         ) : (
                                             <div className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -179,8 +181,8 @@ export function Header() {
                             onClick={() => {/* Toggle dropdown */ }}
                         >
                             <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-gray-900 dark:text-white">Usuario</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Administrador</p>
+                                <p className="text-sm font-bold text-gray-900 dark:text-white">{t('header.user')}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('header.admin')}</p>
                             </div>
                             <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:shadow-lg transition-all border border-gray-200 dark:border-gray-700 group-hover:border-gray-300">
                                 <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />

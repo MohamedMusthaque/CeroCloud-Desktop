@@ -2,6 +2,7 @@
 import { CompanySettings } from '@/types/database'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/i18n'
 import {
     Shield,
     Monitor,
@@ -17,12 +18,13 @@ interface InventoryTabProps {
 }
 
 export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
+    const { t } = useTranslation()
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Section */}
             <div className="text-left">
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Automatización de Inventario</h2>
-                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">Configura cuándo y cómo quieres recibir alertas de stock bajo.</p>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{t('inventory.title')}</h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 font-medium">{t('inventory.subtitle')}</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -39,8 +41,8 @@ export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
                                     <Shield className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Límite Crítico</h3>
-                                    <p className="text-gray-500 dark:text-indigo-200/70 text-xs max-w-[150px]">Alerta global de bajo stock</p>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('inventory.criticalLimit')}</h3>
+                                    <p className="text-gray-500 dark:text-indigo-200/70 text-xs max-w-[150px]">{t('inventory.criticalLimitDesc')}</p>
                                 </div>
                             </div>
 
@@ -55,7 +57,7 @@ export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
                                     })}
                                     className="w-20 bg-transparent border-b-2 border-indigo-500/30 dark:border-indigo-400/50 focus:border-indigo-500 dark:focus:border-white text-4xl font-black text-center focus:outline-none transition-colors text-gray-900 dark:text-white"
                                 />
-                                <span className="text-xs font-bold text-gray-400 dark:text-indigo-300 uppercase tracking-widest">Unds.</span>
+                                <span className="text-xs font-bold text-gray-400 dark:text-indigo-300 uppercase tracking-widest">{t('inventory.unitsShort')}</span>
                             </div>
                         </div>
                     </div>
@@ -67,9 +69,9 @@ export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
                                 <Palette className="w-5 h-5" />
                             </div>
                             <div>
-                                <h4 className="font-bold text-gray-900 dark:text-white text-sm">Alertas Visuales</h4>
+                                <h4 className="font-bold text-gray-900 dark:text-white text-sm">{t('inventory.visualAlerts')}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    Resaltar filas en rojo
+                                    {t('inventory.visualAlertsDesc')}
                                 </p>
                             </div>
                         </div>
@@ -86,7 +88,7 @@ export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
                     <div className="bg-gray-50 dark:bg-slate-800/20 rounded-[2rem] p-4 border-2 border-dashed border-gray-100 dark:border-slate-800 flex items-center justify-center text-center opacity-70 hover:opacity-100 transition-opacity">
                         <div className="flex items-center gap-2">
                             <Database className="w-4 h-4 text-gray-300 dark:text-slate-600" />
-                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Más opciones próximamente</p>
+                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">{t('inventory.moreSoon')}</p>
                         </div>
                     </div>
                 </div>
@@ -95,7 +97,7 @@ export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
                 <div className="bg-white dark:bg-slate-800/40 rounded-[2rem] p-8 border border-gray-100 dark:border-slate-700/50 shadow-sm flex flex-col justify-center h-full">
                     <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-8 uppercase tracking-wider">
                         <Monitor className="w-4 h-4 text-gray-400" />
-                        Vista Previa
+                        {t('inventory.preview')}
                     </h3>
 
                     <div className="flex flex-col justify-center gap-6">
@@ -116,7 +118,7 @@ export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
                                     <Package className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <div className="text-base font-bold text-gray-900 dark:text-white">Producto Ejemplo</div>
+                                    <div className="text-base font-bold text-gray-900 dark:text-white">{t('inventory.sampleProduct')}</div>
                                     <div className="text-xs text-gray-400 font-medium">REF-001</div>
                                 </div>
                             </div>
@@ -126,7 +128,7 @@ export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
                                     ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300"
                                     : "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-gray-400"
                             )}>
-                                2 Unidades
+                                {t('inventory.sampleUnits')}
                             </span>
                         </div>
 
@@ -134,10 +136,10 @@ export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
                             {(settings.inventory?.showVisualAlerts && (settings.inventory?.lowStockThreshold > 2)) ? (
                                 <>
                                     <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                                    <span className="text-gray-500 dark:text-slate-400">El sistema resaltará el producto por bajo stock.</span>
+                                    <span className="text-gray-500 dark:text-slate-400">{t('inventory.previewHighlighted')}</span>
                                 </>
                             ) : (
-                                <span className="text-gray-400 dark:text-slate-500">El producto se verá normal.</span>
+                                <span className="text-gray-400 dark:text-slate-500">{t('inventory.previewNormal')}</span>
                             )}
                         </div>
                     </div>
