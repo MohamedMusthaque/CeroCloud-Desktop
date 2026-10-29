@@ -1,0 +1,31 @@
+import type { inventoryPage as es } from '../es/inventory'
+
+export const inventoryPage: Record<keyof typeof es, string> = {
+    // Inventory page
+    'inv.loadError': 'Error loading products',
+    'inv.deleted': 'Product deleted successfully',
+    'inv.deleteError': 'Error deleting product',
+    'inv.noCategory': 'Uncategorized',
+    'inv.title': 'Inventory',
+    'inv.subtitle': 'Manage your {count} products',
+    'inv.import': 'Import',
+    'inv.newProduct': 'New Product',
+    'inv.searchPlaceholder': 'Search by name, code, category...',
+    'inv.all': 'All',
+    'inv.allCategories': 'All Categories',
+    'inv.listView': 'List View',
+    'inv.gridView': 'Grid View',
+    'inv.col.product': 'Product',
+    'inv.col.category': 'Category',
+    'inv.col.price': 'Price',
+    'inv.col.stock': 'Stock',
+    'inv.col.actions': 'Actions',
+    'inv.col.image': 'Image',
+    'inv.empty': 'No products found',
+    'inv.emptyDesc': 'Try another search or add a new product.',
+    'inv.deleteTitle': 'Delete product?',
+    'inv.deleteDesc': 'This action cannot be undone. The product will be permanently removed from the inventory.',
+    'inv.deleteConfirm': 'Yes, delete',
+    'inv.unitsShort': '{count} u.',
+    'inv.cost': 'Cost: {amount}',
+}

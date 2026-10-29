@@ -1,0 +1,32 @@
+import type { dashboard as es } from '../es/dashboard'
+
+export const dashboard: Record<keyof typeof es, string> = {
+    // Dashboard
+    'dash.heroDateFormat': 'EEEE, MMMM d',
+    'dash.hello': 'Hello,',
+    'dash.admin': 'Administrator',
+    'dash.summary': 'Your business overview in real time.',
+    'dash.salesTodayPrefix': 'You have',
+    'dash.salesTodaySuffix': 'new sales today.',
+    'dash.totalRevenue': 'Total Revenue',
+    'dash.totalSales': 'Total Sales',
+    'dash.inventory': 'Inventory',
+    'dash.lowCount': '{count} low',
+    'dash.healthyStock': 'Healthy stock',
+    'dash.avgTicket': 'Average Ticket',
+    'dash.general': 'Overall',
+    'dash.revenue7d': 'Revenue (7 days)',
+    'dash.dailyTrend': 'Daily sales trend',
+    'dash.revenue': 'Revenue',
+    'dash.noActivity': 'No recent activity',
+    'dash.noActivityDesc': 'Your revenue chart will come to life once you record your first sale.',
+    'dash.topProducts': 'Top Products',
+    'dash.unitsSold': '{count} units sold',
+    'dash.noSales': 'No sales recorded',
+    'dash.quickPos': 'Quick POS',
+    'dash.newSale': 'New Sale',
+    'dash.catalog': 'Catalog',
+    'dash.addProduct': 'Add Product',
+    'dash.analysis': 'Analytics',
+    'dash.viewReports': 'View Reports',
+}

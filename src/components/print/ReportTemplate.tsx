@@ -4,7 +4,7 @@
 import { forwardRef } from 'react'
 import { Sale, CompanySettings, Product } from '@/types/database'
 import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { useTranslation, paymentMethodLabel } from '@/i18n'
 
 interface ReportTemplateProps {
     title: string
@@ -18,6 +18,7 @@ interface ReportTemplateProps {
 }
 
 export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({ title, subtitle, data, allData, pageInfo, type, settings, range }, ref) => {
+    const { t, dateLocale } = useTranslation()
 
     // --- RENDER HELPERS ---
 
@@ -25,12 +26,12 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
         <table className="w-full text-sm">
             <thead>
                 <tr className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
-                    <th className="py-3 px-4 text-left">ID</th>
-                    <th className="py-3 px-4 text-left">Fecha</th>
-                    <th className="py-3 px-4 text-left">Cliente</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.id')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.date')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.client')}</th>
                     {/* <th className="py-3 px-4 text-center">Items</th> */} {/* count replaced by detail row */}
-                    <th className="py-3 px-4 text-center">Pago</th>
-                    <th className="py-3 px-4 text-right">Total</th>
+                    <th className="py-3 px-4 text-center">{t('print.col.payment')}</th>
+                    <th className="py-3 px-4 text-right">{t('print.total')}</th>
                 </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -39,9 +40,9 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="py-3 px-4 font-mono font-bold text-gray-500 align-top">#{sale.id}</td>
                             <td className="py-3 px-4 align-top">{format(new Date(sale.created_at!), 'dd/MM/yy HH:mm')}</td>
-                            <td className="py-3 px-4 truncate max-w-[150px] align-top">{sale.customer_name || 'Mostrador'}</td>
+                            <td className="py-3 px-4 truncate max-w-[150px] align-top">{sale.customer_name || t('print.counter')}</td>
                             {/* <td className="py-2 px-4 text-center">{sale.items.length}</td> */}
-                            <td className="py-3 px-4 text-center capitalize align-top">{sale.payment_method}</td>
+                            <td className="py-3 px-4 text-center capitalize align-top">{paymentMethodLabel(sale.payment_method)}</td>
                             <td className="py-3 px-4 text-right font-bold align-top">{settings.currencySymbol}{sale.total.toFixed(2)}</td>
                         </tr>
                         {/* Detail Row - Improved readability */}
@@ -50,7 +51,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                                 <div className="ml-10 bg-indigo-50/50 rounded-lg p-3 text-sm border border-indigo-100 shadow-sm">
                                     <p className="font-bold text-indigo-400 mb-2 text-[10px] uppercase tracking-wider flex items-center gap-2">
                                         <div className="h-px bg-indigo-200 flex-1"></div>
-                                        Productos Vendidos
+                                        {t('print.productsSold')}
                                         <div className="h-px bg-indigo-200 flex-1"></div>
                                     </p>
                                     <div className="grid grid-cols-1 gap-2">
@@ -77,13 +78,13 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
         <table className="w-full text-sm">
             <thead>
                 <tr className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
-                    <th className="py-3 px-4 text-left">Código</th>
-                    <th className="py-3 px-4 text-left">Producto</th>
-                    <th className="py-3 px-4 text-left">Categoría</th>
-                    <th className="py-3 px-4 text-right">Costo</th>
-                    <th className="py-3 px-4 text-right">Precio</th>
-                    <th className="py-3 px-4 text-center">Stock</th>
-                    <th className="py-3 px-4 text-right">Valor Total</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.code')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.product')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.category')}</th>
+                    <th className="py-3 px-4 text-right">{t('print.col.cost')}</th>
+                    <th className="py-3 px-4 text-right">{t('print.price')}</th>
+                    <th className="py-3 px-4 text-center">{t('print.col.stock')}</th>
+                    <th className="py-3 px-4 text-right">{t('print.col.totalValue')}</th>
                 </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -147,7 +148,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                     />
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-2">{settings.name}</h1>
-                        <p className="text-gray-500 font-medium text-sm">Reporte Generado: {format(new Date(), "dd 'de' MMMM, yyyy - HH:mm", { locale: es })}</p>
+                        <p className="text-gray-500 font-medium text-sm">{t('print.reportGenerated', { date: format(new Date(), t('print.longDateTimeFormat'), { locale: dateLocale }) })}</p>
                     </div>
                 </div>
                 <div className="text-right">
@@ -163,15 +164,15 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                 {(type === 'sales' || type === 'daily-closing') && (
                     <>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <p className="text-xs font-bold text-gray-500 uppercase">Transacciones</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.transactions')}</p>
                             <p className="text-3xl font-black text-gray-900">{stats.count}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <p className="text-xs font-bold text-gray-500 uppercase">Ventas Totales</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalSales')}</p>
                             <p className="text-3xl font-black text-indigo-600">{settings.currencySymbol}{stats.total?.toLocaleString()}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <p className="text-xs font-bold text-gray-500 uppercase">Efectivo</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.cash')}</p>
                             <p className="text-3xl font-black text-green-600">{settings.currencySymbol}{stats.cash?.toLocaleString()}</p>
                         </div>
                     </>
@@ -180,11 +181,11 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                 {(type === 'inventory' || type === 'low-stock') && (
                     <>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <p className="text-xs font-bold text-gray-500 uppercase">Total Productos</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalProducts')}</p>
                             <p className="text-3xl font-black text-gray-900">{stats.count}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <p className="text-xs font-bold text-gray-500 uppercase">Valor Inventario</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.inventoryValue')}</p>
                             <p className="text-3xl font-black text-indigo-600">{settings.currencySymbol}{stats.totalValue?.toLocaleString()}</p>
                         </div>
                     </>
@@ -199,11 +200,11 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
             {/* Footer */}
             <div className="mt-auto pt-8 text-center border-t border-gray-100">
                 <div className="w-16 h-1 bg-gradient-to-r from-indigo-500 to-purple-600 mx-auto mb-4 rounded-full"></div>
-                <p className="text-gray-400 text-xs font-medium uppercase tracking-widest">Documento interno confidencial</p>
-                <p className="text-gray-300 text-[10px] mt-1">Generado por CeroCloud</p>
+                <p className="text-gray-400 text-xs font-medium uppercase tracking-widest">{t('print.confidential')}</p>
+                <p className="text-gray-300 text-[10px] mt-1">{t('print.generatedByShort')}</p>
                 {pageInfo && (
                     <p className="text-gray-400 text-xs mt-2 font-mono">
-                        Página {pageInfo.current} de {pageInfo.total}
+                        {t('print.page', { current: pageInfo.current, total: pageInfo.total })}
                     </p>
                 )}
             </div>

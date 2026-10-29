@@ -9,6 +9,7 @@ const queryClient = new QueryClient()
 import { useEffect } from 'react'
 import { companyService } from '@/services/companyService'
 import { backupService } from '@/services/backupService'
+import { t } from '@/i18n'
 
 export function App() {
     useEffect(() => {
@@ -17,12 +18,12 @@ export function App() {
         // Check for Auto Backup
         const checkBackup = async () => {
             if (backupService.shouldAutoBackup()) {
-                toast.info('Iniciando respaldo automático...')
+                toast.info(t('app.autoBackupStarting'))
                 const result = await backupService.performAutoBackup()
                 if (result.success) {
-                    toast.success('Respaldo automático generado correctamente')
+                    toast.success(t('app.autoBackupSuccess'))
                 } else {
-                    toast.error('Error al generar respaldo automático')
+                    toast.error(t('app.autoBackupError'))
                 }
             }
         }

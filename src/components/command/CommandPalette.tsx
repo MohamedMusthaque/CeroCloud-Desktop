@@ -14,9 +14,11 @@ import {
 } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from '@/i18n'
 
 export function CommandPalette() {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const { commandPaletteOpen, setCommandPaletteOpen } = useUIStore()
 
     useEffect(() => {
@@ -67,7 +69,7 @@ export function CommandPalette() {
                                 <Search className="w-5 h-5 text-gray-400 mr-2" />
                                 <Command.Input
                                     autoFocus
-                                    placeholder="Buscar o ejecutar comando..."
+                                    placeholder={t('cmd.placeholder')}
                                     className="flex-1 py-4 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none text-sm"
                                 />
                                 <button
@@ -80,17 +82,17 @@ export function CommandPalette() {
 
                             <Command.List className="max-h-[400px] overflow-y-auto p-2">
                                 <Command.Empty className="py-6 text-center text-sm text-gray-500">
-                                    No se encontraron resultados
+                                    {t('cmd.noResults')}
                                 </Command.Empty>
 
                                 {/* Navegación */}
-                                <Command.Group heading="Navegación" className="px-2 pt-2 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                <Command.Group heading={t('cmd.navigation')} className="px-2 pt-2 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
                                     <Command.Item
                                         onSelect={() => runCommand(() => navigate('/'))}
                                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
                                     >
                                         <Home className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Ir a Dashboard</span>
+                                        <span className="text-sm font-medium">{t('cmd.goDashboard')}</span>
                                         <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">D</kbd>
                                     </Command.Item>
 
@@ -99,7 +101,7 @@ export function CommandPalette() {
                                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
                                     >
                                         <Package className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Ir a Inventario</span>
+                                        <span className="text-sm font-medium">{t('cmd.goInventory')}</span>
                                         <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">I</kbd>
                                     </Command.Item>
 
@@ -108,7 +110,7 @@ export function CommandPalette() {
                                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
                                     >
                                         <ShoppingCart className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Ir a Ventas (POS)</span>
+                                        <span className="text-sm font-medium">{t('cmd.goSales')}</span>
                                         <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">V</kbd>
                                     </Command.Item>
 
@@ -117,7 +119,7 @@ export function CommandPalette() {
                                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
                                     >
                                         <FileText className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Ir a Reportes</span>
+                                        <span className="text-sm font-medium">{t('cmd.goReports')}</span>
                                         <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">R</kbd>
                                     </Command.Item>
 
@@ -126,19 +128,19 @@ export function CommandPalette() {
                                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
                                     >
                                         <Settings className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Ir a Configuración</span>
+                                        <span className="text-sm font-medium">{t('cmd.goSettings')}</span>
                                         <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">S</kbd>
                                     </Command.Item>
                                 </Command.Group>
 
                                 {/* Acciones Rápidas */}
-                                <Command.Group heading="Acciones" className="px-2 pt-3 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 mt-2">
+                                <Command.Group heading={t('cmd.actions')} className="px-2 pt-3 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 mt-2">
                                     <Command.Item
                                         onSelect={() => runCommand(() => navigate('/inventory'))}
                                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-green-500/10 data-[selected=true]:text-green-600 transition-colors"
                                     >
                                         <Plus className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Crear Producto</span>
+                                        <span className="text-sm font-medium">{t('cmd.createProduct')}</span>
                                         <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">⌘N</kbd>
                                     </Command.Item>
 
@@ -147,7 +149,7 @@ export function CommandPalette() {
                                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-blue-500/10 data-[selected=true]:text-blue-600 transition-colors"
                                     >
                                         <ShoppingCart className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Nueva Venta</span>
+                                        <span className="text-sm font-medium">{t('cmd.newSale')}</span>
                                         <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">⌘V</kbd>
                                     </Command.Item>
 
@@ -156,7 +158,7 @@ export function CommandPalette() {
                                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white mb-1 data-[selected=true]:bg-purple-500/10 data-[selected=true]:text-purple-600 transition-colors"
                                     >
                                         <BarChart3 className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Ver Reportes</span>
+                                        <span className="text-sm font-medium">{t('cmd.viewReports')}</span>
                                         <kbd className="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">⌘R</kbd>
                                     </Command.Item>
                                 </Command.Group>
@@ -168,15 +170,15 @@ export function CommandPalette() {
                                     <div className="flex items-center gap-4">
                                         <span className="flex items-center gap-1">
                                             <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded">↑↓</kbd>
-                                            Navegar
+                                            {t('cmd.navigate')}
                                         </span>
                                         <span className="flex items-center gap-1">
                                             <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded">↵</kbd>
-                                            Seleccionar
+                                            {t('cmd.select')}
                                         </span>
                                         <span className="flex items-center gap-1">
                                             <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded">ESC</kbd>
-                                            Cerrar
+                                            {t('cmd.close')}
                                         </span>
                                     </div>
                                 </div>

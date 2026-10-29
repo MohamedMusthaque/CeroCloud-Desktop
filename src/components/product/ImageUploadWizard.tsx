@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, Image as ImageIcon, Upload, Cloud, ExternalLink, CheckCircle, ArrowRight } from 'lucide-react'
+import { useTranslation } from '@/i18n'
 
 interface ImageUploadWizardProps {
     onComplete: (imageUrl: string) => void
@@ -10,6 +11,7 @@ interface ImageUploadWizardProps {
 type Step = 'upload' | 'choose' | 'guide-drive' | 'guide-dropbox' | 'enter-url' | 'complete'
 
 export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUploadWizardProps) {
+    const { t } = useTranslation()
     const [step, setStep] = useState<Step>('upload')
     const [selectedImage, setSelectedImage] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string>(currentImage || '')
@@ -49,7 +51,7 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                 {/* Header */}
                 <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Imagen del Producto
+                        {t('img.title')}
                     </h2>
                     <button
                         onClick={onClose}
@@ -68,10 +70,10 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                     <ImageIcon className="w-10 h-10 text-white" />
                                 </div>
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                    Agregar Imagen del Producto
+                                    {t('img.addTitle')}
                                 </h3>
                                 <p className="text-gray-600 dark:text-gray-400">
-                                    Selecciona una imagen desde tu computadora
+                                    {t('img.addDesc')}
                                 </p>
                             </div>
 
@@ -90,10 +92,10 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                     <div className="text-center space-y-2">
                                         <Upload className="w-12 h-12 text-gray-400 mx-auto" />
                                         <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
-                                            Click para seleccionar imagen
+                                            {t('img.clickToSelect')}
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            PNG, JPG, GIF hasta 10MB
+                                            {t('img.formats')}
                                         </p>
                                     </div>
                                     <input
@@ -110,7 +112,7 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                     onClick={() => setStep('enter-url')}
                                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    Ya tengo una URL de imagen
+                                    {t('img.haveUrl')}
                                 </button>
                             )}
                         </div>
@@ -122,7 +124,7 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                             <div className="text-center">
                                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                    ✅ Imagen Seleccionada
+                                    {t('img.selected')}
                                 </h3>
                                 <p className="text-gray-600 dark:text-gray-400">
                                     {selectedImage?.name}
@@ -141,7 +143,7 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
 
                             <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                                 <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
-                                    ¿Dónde deseas guardar la imagen?
+                                    {t('img.whereToSave')}
                                 </h4>
 
                                 <div className="grid gap-4">
@@ -155,10 +157,10 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                             </div>
                                             <div className="flex-1 text-left">
                                                 <h5 className="font-semibold text-gray-900 dark:text-white mb-1">
-                                                    ☁ Subir a Google Drive
+                                                    {t('img.uploadDrive')}
                                                 </h5>
                                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                    CeroCloud te guiará paso a paso
+                                                    {t('img.stepByStep')}
                                                 </p>
                                             </div>
                                             <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary" />
@@ -175,10 +177,10 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                             </div>
                                             <div className="flex-1 text-left">
                                                 <h5 className="font-semibold text-gray-900 dark:text-white mb-1">
-                                                    ☁ Subir a Dropbox
+                                                    {t('img.uploadDropbox')}
                                                 </h5>
                                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                    CeroCloud te guiará paso a paso
+                                                    {t('img.stepByStep')}
                                                 </p>
                                             </div>
                                             <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary" />
@@ -189,7 +191,7 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                         onClick={() => setStep('enter-url')}
                                         className="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
                                     >
-                                        Ya subí la imagen, ingresar URL manualmente
+                                        {t('img.alreadyUploaded')}
                                     </button>
                                 </div>
                             </div>
@@ -204,10 +206,10 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                     <Cloud className="w-8 h-8 text-blue-600" />
                                 </div>
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                    Guía para Google Drive
+                                    {t('img.driveGuide')}
                                 </h3>
                                 <p className="text-gray-600 dark:text-gray-400">
-                                    Sigue estos pasos para subir tu imagen
+                                    {t('img.followSteps')}
                                 </p>
                             </div>
 
@@ -227,12 +229,12 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                         1
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Abre Google Drive</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{t('img.openDrive')}</h4>
                                         <button
                                             onClick={openDrive}
                                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm mt-2"
                                         >
-                                            Abrir Google Drive
+                                            {t('img.openDriveButton')}
                                             <ExternalLink className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -243,9 +245,9 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                         2
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Sube la imagen</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{t('img.uploadImage')}</h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Arrastra la imagen desde tu carpeta de Descargas o haz click en "Nuevo" → "Subir archivo"
+                                            {t('img.driveUploadDesc')}
                                         </p>
                                     </div>
                                 </div>
@@ -255,12 +257,12 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                         3
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Obtén el enlace compartido</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{t('img.getShareLink')}</h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                            Click derecho en la imagen → "Compartir" → "Obtener enlace compartido"
+                                            {t('img.driveShareDesc')}
                                         </p>
                                         <p className="text-xs text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/30 p-2 rounded">
-                                            💡 Importante: Cambia los permisos a "Cualquier persona con el enlace"
+                                            {t('img.drivePermissions')}
                                         </p>
                                     </div>
                                 </div>
@@ -270,9 +272,9 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                         4
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Copia el enlace</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{t('img.copyLink')}</h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Copia la URL completa y pégala en CeroCloud
+                                            {t('img.copyLinkDesc')}
                                         </p>
                                     </div>
                                 </div>
@@ -283,13 +285,13 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                     onClick={() => setStep('choose')}
                                     className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    Volver
+                                    {t('img.back')}
                                 </button>
                                 <button
                                     onClick={() => setStep('enter-url')}
                                     className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                                 >
-                                    Ya tengo el enlace →
+                                    {t('img.haveLink')}
                                 </button>
                             </div>
                         </div>
@@ -303,10 +305,10 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                     <Cloud className="w-8 h-8 text-cyan-600" />
                                 </div>
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                    Guía para Dropbox
+                                    {t('img.dropboxGuide')}
                                 </h3>
                                 <p className="text-gray-600 dark:text-gray-400">
-                                    Sigue estos pasos para subir tu imagen
+                                    {t('img.followSteps')}
                                 </p>
                             </div>
 
@@ -326,12 +328,12 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                         1
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Abre Dropbox</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{t('img.openDropbox')}</h4>
                                         <button
                                             onClick={openDropbox}
                                             className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors flex items-center gap-2 text-sm mt-2"
                                         >
-                                            Abrir Dropbox
+                                            {t('img.openDropboxButton')}
                                             <ExternalLink className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -342,9 +344,9 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                         2
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Sube la imagen</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{t('img.uploadImage')}</h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Arrastra la imagen o haz click en "Subir" → "Archivos"
+                                            {t('img.dropboxUploadDesc')}
                                         </p>
                                     </div>
                                 </div>
@@ -354,12 +356,12 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                         3
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Obtén el enlace compartido</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{t('img.getShareLink')}</h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                            Click en "Compartir" → "Crear enlace"
+                                            {t('img.dropboxShareDesc')}
                                         </p>
                                         <p className="text-xs text-cyan-700 dark:text-cyan-300 bg-cyan-100 dark:bg-cyan-900/30 p-2 rounded">
-                                            💡 Importante: Cambia el final del enlace de ?dl=0 a ?raw=1 para imagen directa
+                                            {t('img.dropboxRawHint')}
                                         </p>
                                     </div>
                                 </div>
@@ -369,9 +371,9 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                         4
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Copia el enlace</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{t('img.copyLink')}</h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Copia la URL completa y pégala en CeroCloud
+                                            {t('img.copyLinkDesc')}
                                         </p>
                                     </div>
                                 </div>
@@ -382,13 +384,13 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                     onClick={() => setStep('choose')}
                                     className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    Volver
+                                    {t('img.back')}
                                 </button>
                                 <button
                                     onClick={() => setStep('enter-url')}
                                     className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                                 >
-                                    Ya tengo el enlace →
+                                    {t('img.haveLink')}
                                 </button>
                             </div>
                         </div>
@@ -402,39 +404,39 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                     <ImageIcon className="w-8 h-8 text-purple-600" />
                                 </div>
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                    Pegar URL de la Imagen
+                                    {t('img.pasteUrlTitle')}
                                 </h3>
                                 <p className="text-gray-600 dark:text-gray-400">
-                                    Pega el enlace compartido de tu imagen
+                                    {t('img.pasteUrlDesc')}
                                 </p>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    URL de la Imagen
+                                    {t('img.urlLabel')}
                                 </label>
                                 <input
                                     type="url"
                                     value={imageUrl}
                                     onChange={(e) => setImageUrl(e.target.value)}
-                                    placeholder="https://drive.google.com/... o https://dropbox.com/..."
+                                    placeholder={t('img.urlPlaceholder')}
                                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary"
                                 />
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    Asegúrate de que el enlace sea público y accesible
+                                    {t('img.publicHint')}
                                 </p>
                             </div>
 
                             {imageUrl && (
                                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vista previa:</p>
+                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('img.preview')}</p>
                                     <div className="flex justify-center bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
                                         <img
                                             src={imageUrl}
                                             alt="Preview from URL"
                                             className="max-w-xs max-h-48 rounded shadow object-cover"
                                             onError={(e) => {
-                                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999"%3ENo se puede cargar%3C/text%3E%3C/svg%3E'
+                                                (e.target as HTMLImageElement).src = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999"%3E${encodeURIComponent(t('img.cannotLoad'))}%3C/text%3E%3C/svg%3E`
                                             }}
                                         />
                                     </div>
@@ -446,14 +448,14 @@ export function ImageUploadWizard({ onComplete, onClose, currentImage }: ImageUp
                                     onClick={() => setStep(selectedImage ? 'choose' : 'upload')}
                                     className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    Volver
+                                    {t('img.back')}
                                 </button>
                                 <button
                                     onClick={handleComplete}
                                     disabled={!imageUrl.trim()}
                                     className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                                 >
-                                    Guardar Imagen ✓
+                                    {t('img.save')}
                                 </button>
                             </div>
                         </div>

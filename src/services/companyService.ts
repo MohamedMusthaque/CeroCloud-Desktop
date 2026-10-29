@@ -40,7 +40,7 @@ const defaultSettings: CompanySettings = {
     invoice: {
         prefix: 'FAC-',
         nextNumber: 1,
-        disclaimer: 'Gracias por su compra. -- CeroCloud --'
+        disclaimer: '' // Empty uses the translated default thank-you message
     },
 
     inventory: {

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Calendar, DollarSign, ShoppingBag, Loader2, Package, Search } from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
 import type { Client, Sale } from '@/types/database'
+import { useTranslation } from '@/i18n'
 
 interface ClientHistoryModalProps {
     isOpen: boolean
@@ -13,6 +14,7 @@ interface ClientHistoryModalProps {
 }
 
 export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryModalProps) {
+    const { t, locale } = useTranslation()
     const [sales, setSales] = useState<Sale[]>([])
     const [loading, setLoading] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
@@ -35,7 +37,7 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
     // Calcular estadísticas
     const totalSpent = sales.reduce((acc, sale) => acc + (sale.status === 'completed' ? sale.total : 0), 0)
     const totalPurchases = sales.filter(s => s.status === 'completed').length
-    const lastPurchase = sales.length > 0 ? new Date(sales[0].created_at!).toLocaleDateString() : 'N/A'
+    const lastPurchase = sales.length > 0 ? new Date(sales[0].created_at!).toLocaleDateString(locale) : t('common.na')
 
     // Filtrar ventas
     const filteredSales = sales.filter(s =>
@@ -67,7 +69,7 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
                             <div>
                                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                     <ShoppingBag className="w-5 h-5 text-indigo-400" />
-                                    Historial de Compras
+                                    {t('cliHistory.title')}
                                 </h2>
                                 <p className="text-slate-400 text-sm mt-1">{client.name}</p>
                             </div>
@@ -86,7 +88,7 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
                                     <DollarSign className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Gastado</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('cliHistory.totalSpent')}</p>
                                     <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(totalSpent)}</p>
                                 </div>
                             </div>
@@ -95,7 +97,7 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
                                     <ShoppingBag className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Compras Totales</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('cliHistory.totalPurchases')}</p>
                                     <p className="text-lg font-bold text-gray-900 dark:text-white">{totalPurchases}</p>
                                 </div>
                             </div>
@@ -104,7 +106,7 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
                                     <Calendar className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Última Compra</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('cliHistory.lastPurchase')}</p>
                                     <p className="text-lg font-bold text-gray-900 dark:text-white">{lastPurchase}</p>
                                 </div>
                             </div>
@@ -117,7 +119,7 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                     <input
                                         type="text"
-                                        placeholder="Buscar por ID de venta, producto o fecha..."
+                                        placeholder={t('cliHistory.searchPlaceholder')}
                                         className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -129,15 +131,15 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
                                 {loading ? (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
                                         <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                                        <p>Cargando historial...</p>
+                                        <p>{t('cliHistory.loading')}</p>
                                     </div>
                                 ) : filteredSales.length === 0 ? (
                                     <div className="text-center py-10">
                                         <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                                             <ShoppingBag className="w-6 h-6 text-gray-400" />
                                         </div>
-                                        <h3 className="text-gray-900 dark:text-white font-medium">No se encontraron compras</h3>
-                                        <p className="text-gray-500 text-sm">Este cliente no tiene compras registradas con este nombre.</p>
+                                        <h3 className="text-gray-900 dark:text-white font-medium">{t('cliHistory.empty')}</h3>
+                                        <p className="text-gray-500 text-sm">{t('cliHistory.emptyDesc')}</p>
                                     </div>
                                 ) : (
                                     filteredSales.map((sale) => (
@@ -147,7 +149,7 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
                                                     <span className="font-mono text-sm font-bold text-gray-700 dark:text-gray-300">#{sale.id}</span>
                                                     <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                                         <Calendar className="w-3 h-3" />
-                                                        {new Date(sale.created_at!).toLocaleString()}
+                                                        {new Date(sale.created_at!).toLocaleString(locale)}
                                                     </span>
                                                     <span className={cn(
                                                         "px-2 py-0.5 rounded-full text-xs font-medium capitalize border",
@@ -155,7 +157,7 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
                                                             ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
                                                             : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
                                                     )}>
-                                                        {sale.status === 'completed' ? 'Completado' : 'Cancelado'}
+                                                        {sale.status === 'completed' ? t('cliHistory.completed') : t('cliHistory.cancelled')}
                                                     </span>
                                                 </div>
                                                 <span className="font-bold text-gray-900 dark:text-white">
@@ -166,10 +168,10 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
                                                 <table className="w-full text-sm">
                                                     <thead>
                                                         <tr className="text-left text-xs text-gray-400 border-b border-gray-100 dark:border-gray-700">
-                                                            <th className="font-medium pb-2 pl-8">Producto</th>
-                                                            <th className="font-medium pb-2 text-right">Cant.</th>
-                                                            <th className="font-medium pb-2 text-right">Precio</th>
-                                                            <th className="font-medium pb-2 text-right">Subtotal</th>
+                                                            <th className="font-medium pb-2 pl-8">{t('cliHistory.product')}</th>
+                                                            <th className="font-medium pb-2 text-right">{t('cliHistory.qty')}</th>
+                                                            <th className="font-medium pb-2 text-right">{t('cliHistory.price')}</th>
+                                                            <th className="font-medium pb-2 text-right">{t('cliHistory.subtotal')}</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">

@@ -14,8 +14,10 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { SupplierForm } from './SupplierForm'
 import { cn, getImageSrc } from '@/lib/utils'
 import { companyService } from '@/services/companyService'
+import { useTranslation, unitLabel, t as translateNow } from '@/i18n'
 
 export function Suppliers() {
+    const { t } = useTranslation()
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
     const [allProducts, setAllProducts] = useState<Product[]>([])
     const [searchTerm, setSearchTerm] = useState('')
@@ -47,7 +49,8 @@ export function Suppliers() {
             setAllProducts(productsData)
         } catch (error) {
             console.error('Error loading data:', error)
-            toast.error('Error al cargar datos')
+            // Non-reactive translate keeps the load function free of hook dependencies
+            toast.error(translateNow('sup.loadError'))
         } finally {
             setLoading(false)
         }
@@ -63,10 +66,10 @@ export function Suppliers() {
             try {
                 await supplierService.delete(supplierToDelete)
                 setSuppliers(prev => prev.filter(s => s.id !== supplierToDelete))
-                toast.success('Proveedor eliminado correctamente')
+                toast.success(t('sup.deleted'))
             } catch (error) {
                 console.error('Error deleting supplier:', error)
-                toast.error('Error al eliminar proveedor')
+                toast.error(t('sup.deleteError'))
             } finally {
                 setConfirmOpen(false)
                 setSupplierToDelete(null)
@@ -92,10 +95,10 @@ export function Suppliers() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                        Proveedores
+                        {t('sup.title')}
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-1">
-                        Gestión de cadena de suministro y contactos
+                        {t('sup.subtitle')}
                     </p>
                 </div>
                 <button
@@ -103,32 +106,32 @@ export function Suppliers() {
                     className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all font-semibold shadow-lg shadow-indigo-500/25 active:scale-95"
                 >
                     <Plus className="w-5 h-5" />
-                    Nuevo Proveedor
+                    {t('sup.new')}
                 </button>
             </div>
 
             {/* Stats Overview */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard
-                    label="Total Proveedores"
+                    label={t('sup.statTotal')}
                     value={totalSuppliers}
                     icon={User}
                     color="bg-blue-500"
                 />
                 <StatCard
-                    label="Productos Vinculados"
+                    label={t('sup.statLinked')}
                     value={totalProductsSourced}
                     icon={Package}
                     color="bg-purple-500"
                 />
                 <StatCard
-                    label="Proveedores Activos"
+                    label={t('sup.statActive')}
                     value={totalSuppliers} // Placeholder logic
                     icon={Globe}
                     color="bg-green-500"
                 />
                 <StatCard
-                    label="Alertas Stock"
+                    label={t('sup.statAlerts')}
                     value={0} // Placeholder
                     icon={ShoppingBag}
                     color="bg-orange-500"
@@ -141,7 +144,7 @@ export function Suppliers() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, contacto, email..."
+                        placeholder={t('sup.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-transparent border-none focus:ring-0 text-gray-900 dark:text-white placeholder-gray-400"
@@ -182,7 +185,7 @@ export function Suppliers() {
                         className="flex flex-col items-center justify-center h-64 gap-4"
                     >
                         <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                        <p className="text-gray-500">Cargando proveedores...</p>
+                        <p className="text-gray-500">{t('sup.loading')}</p>
                     </motion.div>
                 ) : filteredSuppliers.length === 0 ? (
                     <motion.div
@@ -193,8 +196,8 @@ export function Suppliers() {
                         <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                             <User className="w-10 h-10 text-gray-400" />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Sin Resultados</h3>
-                        <p className="text-gray-500 mt-2">No se encontraron proveedores activos con ese criterio.</p>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('sup.noResults')}</h3>
+                        <p className="text-gray-500 mt-2">{t('sup.noResultsDesc')}</p>
                     </motion.div>
                 ) : (
                     <div className={cn(
@@ -238,9 +241,9 @@ export function Suppliers() {
 
             <ConfirmDialog
                 isOpen={confirmOpen}
-                title="¿Eliminar proveedor?"
-                description="Esta acción eliminará al proveedor, pero mantendrá los productos asociados (sin proveedor)."
-                confirmText="Eliminar Definitivamente"
+                title={t('sup.deleteTitle')}
+                description={t('sup.deleteDesc')}
+                confirmText={t('sup.deleteConfirm')}
                 variant="danger"
                 onConfirm={confirmDelete}
                 onCancel={() => setConfirmOpen(false)}
@@ -279,6 +282,7 @@ interface SupplierCardProps {
 }
 
 function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: SupplierCardProps) {
+    const { t } = useTranslation()
     // Diseño tipo "Business Card" moderno y compacto
     return (
         <motion.div
@@ -352,12 +356,12 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
                         className="group/btn flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 rounded-lg text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all"
                     >
                         <Package className="w-3.5 h-3.5 transition-transform group-hover/btn:scale-110" />
-                        <span>Ver {supplier.products_count || 0} Productos</span>
+                        <span>{t('sup.viewProductsCount', { count: supplier.products_count || 0 })}</span>
                     </button>
 
                     {/* Botones de acción móvil o extra si se necesitan, pero ya están arriba */}
                     <div className="text-xs text-gray-400 font-medium">
-                        {supplier.address ? 'Con dirección' : 'Sin dirección'}
+                        {supplier.address ? t('sup.withAddress') : t('sup.withoutAddress')}
                     </div>
                 </div>
             )}
@@ -368,7 +372,7 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
                     <button
                         onClick={onViewProducts}
                         className="p-2 text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                        title="Ver Productos"
+                        title={t('sup.viewProducts')}
                     >
                         <Package className="w-4 h-4" />
                     </button>
@@ -387,6 +391,7 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
 
 
 function ProductsListModal({ supplier, products, onClose, currencySymbol }: { supplier: Supplier, products: Product[], onClose: () => void, currencySymbol: string }) {
+    const { t } = useTranslation()
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
@@ -406,9 +411,9 @@ function ProductsListModal({ supplier, products, onClose, currencySymbol }: { su
                     <div>
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             <Package className="w-5 h-5 text-indigo-500" />
-                            Productos de {supplier.name}
+                            {t('sup.productsOf', { name: supplier.name })}
                         </h2>
-                        <p className="text-sm text-gray-500">{products.length} productos registrados</p>
+                        <p className="text-sm text-gray-500">{t('sup.registeredProducts', { count: products.length })}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
                         <span className="text-2xl leading-none">&times;</span>
@@ -418,7 +423,7 @@ function ProductsListModal({ supplier, products, onClose, currencySymbol }: { su
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {products.length === 0 ? (
                         <div className="text-center py-10 text-gray-500">
-                            Este proveedor no tiene productos asignados.
+                            {t('sup.noProducts')}
                         </div>
                     ) : (
                         products.map(product => (
@@ -432,14 +437,14 @@ function ProductsListModal({ supplier, products, onClose, currencySymbol }: { su
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h4 className="font-bold text-gray-900 dark:text-white truncate">{product.name}</h4>
-                                    <p className="text-xs text-gray-500">{product.code} • {product.category || 'Sin categoría'}</p>
+                                    <p className="text-xs text-gray-500">{product.code} • {product.category || t('sup.noCategory')}</p>
                                 </div>
                                 <div className="text-right">
                                     <div className="font-bold text-indigo-600 dark:text-indigo-400">
                                         {currencySymbol}{product.price.toFixed(2)}
                                     </div>
                                     <div className={cn("text-xs font-medium", product.stock > product.min_stock ? "text-green-500" : "text-red-500")}>
-                                        {product.stock} {product.unit}s
+                                        {product.stock} {unitLabel(product.unit)}
                                     </div>
                                 </div>
                             </div>
@@ -449,7 +454,7 @@ function ProductsListModal({ supplier, products, onClose, currencySymbol }: { su
 
                 <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-center">
                     <button onClick={onClose} className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                        Cerrar
+                        {t('common.close')}
                     </button>
                 </div>
             </motion.div>

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { productService } from '@/services/productService'
 import { saleService } from '@/services/saleService'
 import { Product, Sale } from '@/types/database'
+import { useTranslation } from '@/i18n'
 
 type SearchResult = {
     id: string
@@ -21,6 +22,7 @@ export function GlobalSearch() {
     const [products, setProducts] = useState<Product[]>([])
     const [sales, setSales] = useState<Sale[]>([])
     const navigate = useNavigate()
+    const { t, locale } = useTranslation()
     const searchRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -69,7 +71,7 @@ export function GlobalSearch() {
                     id: `product-${product.id}`,
                     type: 'product',
                     title: product.name,
-                    subtitle: `${product.code} · ${product.stock} en stock · $${product.price}`,
+                    subtitle: t('search.productSubtitle', { code: product.code, stock: product.stock, price: `$${product.price}` }),
                     icon: Package,
                     action: () => {
                         navigate('/inventory')
@@ -90,8 +92,8 @@ export function GlobalSearch() {
                 searchResults.push({
                     id: `sale-${sale.id}`,
                     type: 'sale',
-                    title: `Venta #${sale.id}`,
-                    subtitle: `${sale.customer_name || 'Cliente general'} · $${sale.total} · ${new Date(sale.created_at!).toLocaleDateString()}`,
+                    title: t('search.saleTitle', { id: sale.id ?? '' }),
+                    subtitle: `${sale.customer_name || t('common.walkInCustomer')} · $${sale.total} · ${new Date(sale.created_at!).toLocaleDateString(locale)}`,
                     icon: ShoppingCart,
                     action: () => {
                         navigate('/sales')
@@ -106,8 +108,8 @@ export function GlobalSearch() {
             searchResults.push({
                 id: 'reports',
                 type: 'report',
-                title: 'Reportes y Análisis',
-                subtitle: 'Ver reportes de ventas e inventario',
+                title: t('search.reportsTitle'),
+                subtitle: t('search.reportsSubtitle'),
                 icon: FileText,
                 action: () => {
                     navigate('/reports')
@@ -121,8 +123,8 @@ export function GlobalSearch() {
             searchResults.push({
                 id: 'inventory',
                 type: 'product',
-                title: 'Inventario',
-                subtitle: 'Gestionar productos y stock',
+                title: t('search.inventoryTitle'),
+                subtitle: t('search.inventorySubtitle'),
                 icon: Package,
                 action: () => {
                     navigate('/inventory')
@@ -136,8 +138,8 @@ export function GlobalSearch() {
             searchResults.push({
                 id: 'sales',
                 type: 'sale',
-                title: 'Ventas',
-                subtitle: 'Punto de venta y historial',
+                title: t('search.salesTitle'),
+                subtitle: t('search.salesSubtitle'),
                 icon: TrendingUp,
                 action: () => {
                     navigate('/sales')
@@ -148,7 +150,7 @@ export function GlobalSearch() {
         }
 
         setResults(searchResults)
-    }, [query, products, sales, navigate])
+    }, [query, products, sales, navigate, t, locale])
 
     const handleResultClick = (result: SearchResult) => {
         result.action()
@@ -169,7 +171,7 @@ export function GlobalSearch() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                     type="text"
-                    placeholder="Buscar productos, ventas, reportes... (Ctrl+K)"
+                    placeholder={t('search.placeholder')}
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value)
@@ -226,7 +228,7 @@ export function GlobalSearch() {
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-8 text-center z-50">
                     <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                     <p className="text-gray-500 dark:text-gray-400">
-                        No se encontraron resultados para "<span className="font-medium">{query}</span>"
+                        {t('search.noResultsFor')} "<span className="font-medium">{query}</span>"
                     </p>
                 </div>
             )}

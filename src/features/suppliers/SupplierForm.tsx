@@ -9,11 +9,12 @@ import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslation, type TranslationKey } from '@/i18n'
 
 const supplierSchema = z.object({
-    name: z.string().min(1, 'El nombre es requerido'),
+    name: z.string().min(1, 'validation.nameRequired'),
     contact: z.string().optional(),
-    email: z.string().email('Email inválido').optional().or(z.literal('')),
+    email: z.string().email('validation.invalidEmail').optional().or(z.literal('')),
     phone: z.string().optional(),
     address: z.string().optional(),
 })
@@ -26,6 +27,7 @@ interface SupplierFormProps {
 }
 
 export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
+    const { t } = useTranslation()
     const {
         register,
         handleSubmit,
@@ -58,15 +60,15 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
         try {
             if (supplier?.id) {
                 await supplierService.update(supplier.id, data)
-                toast.success('Proveedor actualizado correctamente')
+                toast.success(t('supForm.updated'))
             } else {
                 await supplierService.create(data)
-                toast.success('Proveedor creado correctamente')
+                toast.success(t('supForm.created'))
             }
             onClose()
         } catch (error) {
             console.error('Error saving supplier:', error)
-            toast.error('Error al guardar el proveedor')
+            toast.error(t('supForm.saveError'))
         }
     }
 
@@ -93,10 +95,10 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                     <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                {supplier ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+                                {supplier ? t('supForm.editTitle') : t('supForm.newTitle')}
                             </h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {supplier ? 'Modifica los datos del proveedor' : 'Agrega un nuevo proveedor'}
+                                {supplier ? t('supForm.editSubtitle') : t('supForm.newSubtitle')}
                             </p>
                         </div>
                         <button
@@ -113,54 +115,54 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                             {/* Nombre del proveedor */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                    Nombre del Proveedor <span className="text-red-500">*</span>
+                                    {t('supForm.name')} <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     {...register('name')}
-                                    placeholder="Ej. Distribuidora XYZ S.A."
+                                    placeholder={t('supForm.namePlaceholder')}
                                     className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border ${errors.name
                                         ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
                                         : 'border-gray-200 dark:border-gray-700 focus:ring-primary/20 focus:border-primary'
                                         } focus:ring-2 transition-all outline-none`}
                                 />
-                                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+                                {errors.name && <p className="text-red-500 text-sm mt-1">{t(errors.name.message as TranslationKey)}</p>}
                             </div>
 
                             {/* Contacto y Email */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                        Nombre del Contacto
+                                        {t('supForm.contact')}
                                     </label>
                                     <input
                                         type="text"
                                         {...register('contact')}
-                                        placeholder="Ej. Juan Pérez"
+                                        placeholder={t('supForm.contactPlaceholder')}
                                         className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                        Email
+                                        {t('supForm.email')}
                                     </label>
                                     <input
                                         type="email"
                                         {...register('email')}
-                                        placeholder="contacto@proveedor.com"
+                                        placeholder={t('supForm.emailPlaceholder')}
                                         className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border ${errors.email
                                             ? 'border-red-300 focus:border-red-500'
                                             : 'border-gray-200 dark:border-gray-700 focus:border-primary'
                                             } focus:ring-2 focus:ring-primary/20 transition-all outline-none`}
                                     />
-                                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+                                    {errors.email && <p className="text-red-500 text-sm mt-1">{t(errors.email.message as TranslationKey)}</p>}
                                 </div>
                             </div>
 
                             {/* Teléfono */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                    Teléfono
+                                    {t('supForm.phone')}
                                 </label>
                                 <input
                                     type="tel"
@@ -173,12 +175,12 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                             {/* Dirección */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                    Dirección
+                                    {t('supForm.address')}
                                 </label>
                                 <textarea
                                     {...register('address')}
                                     rows={2}
-                                    placeholder="Calle, número, colonia, ciudad..."
+                                    placeholder={t('supForm.addressPlaceholder')}
                                     className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none resize-none"
                                 />
                             </div>
@@ -194,7 +196,7 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                             onClick={onClose}
                             className="px-5 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors"
                         >
-                            Cancelar
+                            {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
@@ -207,7 +209,7 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                             ) : (
                                 <Save className="w-4 h-4" />
                             )}
-                            {supplier ? 'Guardar Cambios' : 'Crear Proveedor'}
+                            {supplier ? t('supForm.saveChanges') : t('supForm.create')}
                         </button>
                     </div>
                 </motion.div>

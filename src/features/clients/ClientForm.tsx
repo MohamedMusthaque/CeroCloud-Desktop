@@ -5,6 +5,7 @@ import { X, Save, Loader2 } from 'lucide-react'
 import { clientService, type Client } from '@/services/clientService'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { useTranslation } from '@/i18n'
 
 interface ClientFormProps {
     isOpen: boolean
@@ -14,6 +15,7 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientFormProps) {
+    const { t } = useTranslation()
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState<Partial<Client>>({
         name: '',
@@ -54,23 +56,23 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
 
         try {
             if (!formData.name?.trim()) {
-                toast.error('El nombre es requerido')
+                toast.error(t('cliForm.nameRequired'))
                 setLoading(false)
                 return
             }
 
             if (clientToEdit?.id) {
                 await clientService.update(clientToEdit.id, formData)
-                toast.success('Cliente actualizado correctamente')
+                toast.success(t('cliForm.updated'))
             } else {
                 await clientService.create(formData as Client)
-                toast.success('Cliente creado correctamente')
+                toast.success(t('cliForm.created'))
             }
             onSuccess()
             onClose()
         } catch (error) {
             console.error(error)
-            toast.error('Error al guardar el cliente')
+            toast.error(t('cliForm.saveError'))
         } finally {
             setLoading(false)
         }
@@ -99,7 +101,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                         {/* Header */}
                         <div className="bg-slate-900 dark:bg-slate-950 px-6 py-4 flex items-center justify-between">
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                {clientToEdit ? 'Editar Cliente' : 'Nuevo Cliente'}
+                                {clientToEdit ? t('cliForm.editTitle') : t('cliForm.newTitle')}
                             </h2>
                             <button
                                 onClick={onClose}
@@ -115,35 +117,35 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                 {/* Nombre */}
                                 <div className="col-span-2 md:col-span-1">
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        Nombre Completo *
+                                        {t('cliForm.fullName')}
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        placeholder="Ej. Juan Pérez"
+                                        placeholder={t('cliForm.namePlaceholder')}
                                     />
                                 </div>
 
                                 {/* NIT/RUC */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        NIT / RUC / DNI
+                                        {t('cliForm.taxId')}
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.tax_id}
                                         onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
                                         className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        placeholder="Identificación fiscal"
+                                        placeholder={t('cliForm.taxIdPlaceholder')}
                                     />
                                 </div>
 
                                 {/* Teléfono */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        Teléfono
+                                        {t('cliForm.phone')}
                                     </label>
                                     <input
                                         type="text"
@@ -157,42 +159,42 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                 {/* Email */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        Correo Electrónico
+                                        {t('cliForm.email')}
                                     </label>
                                     <input
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        placeholder="cliente@ejemplo.com"
+                                        placeholder={t('cliForm.emailPlaceholder')}
                                     />
                                 </div>
 
                                 {/* Dirección */}
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        Dirección
+                                        {t('cliForm.address')}
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.address}
                                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                         className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        placeholder="Dirección física completa"
+                                        placeholder={t('cliForm.addressPlaceholder')}
                                     />
                                 </div>
 
                                 {/* Notas */}
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        Notas Adicionales
+                                        {t('cliForm.notes')}
                                     </label>
                                     <textarea
                                         value={formData.notes}
                                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                         rows={3}
                                         className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
-                                        placeholder="Información extra..."
+                                        placeholder={t('cliForm.notesPlaceholder')}
                                     />
                                 </div>
                             </div>
@@ -204,7 +206,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                     onClick={onClose}
                                     className="px-4 py-2 text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
                                 >
-                                    Cancelar
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     type="submit"
@@ -214,12 +216,12 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                     {loading ? (
                                         <>
                                             <Loader2 className="w-4 h-4 animate-spin" />
-                                            Guardando...
+                                            {t('cliForm.saving')}
                                         </>
                                     ) : (
                                         <>
                                             <Save className="w-4 h-4" />
-                                            Guardar Cliente
+                                            {t('cliForm.save')}
                                         </>
                                     )}
                                 </button>

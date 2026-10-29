@@ -36,7 +36,7 @@ import { pdfGenerator } from '@/services/pdfGenerator'
 import { companyService } from '@/services/companyService'
 import { Product, Sale } from '@/types/database'
 import { format, subDays, startOfDay } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { useTranslation, paymentMethodLabel, t as translateNow } from '@/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn, getImageSrc } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -48,6 +48,7 @@ export function Reports() {
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'sales' | 'inventory' | 'export' | 'transactions'>('sales')
     const [settings] = useState(companyService.getSettings())
+    const { t, dateLocale, locale } = useTranslation()
 
     // UI States
     const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null)
@@ -62,7 +63,7 @@ export function Reports() {
             const lowerTerm = searchTerm.toLowerCase()
             sortableSales = sortableSales.filter(s =>
                 s.id?.toString().includes(lowerTerm) ||
-                (s.customer_name || 'Público General').toLowerCase().includes(lowerTerm) ||
+                (s.customer_name || t('rep.walkIn')).toLowerCase().includes(lowerTerm) ||
                 s.status?.toLowerCase().includes(lowerTerm)
             )
         }
@@ -73,8 +74,8 @@ export function Reports() {
                 let bValue = b[sortConfig.key]
 
                 if (sortConfig.key === 'customer_name') {
-                    aValue = a.customer_name || 'Público General'
-                    bValue = b.customer_name || 'Público General'
+                    aValue = a.customer_name || t('rep.walkIn')
+                    bValue = b.customer_name || t('rep.walkIn')
                 }
                 if (sortConfig.key === 'created_at') {
                     aValue = new Date(a.created_at || 0).getTime()
@@ -98,7 +99,7 @@ export function Reports() {
             sortableSales.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
         }
         return sortableSales
-    }, [sales, sortConfig, searchTerm])
+    }, [sales, sortConfig, searchTerm, t])
 
     const requestSort = (key: string) => {
         let direction: 'asc' | 'desc' = 'asc'
@@ -123,7 +124,8 @@ export function Reports() {
             setSales(salesData)
         } catch (error) {
             console.error('Error loading data:', error)
-            toast.error('Error cargando reportes')
+            // Non-reactive translate keeps the load function free of hook dependencies
+            toast.error(translateNow('rep.loadError'))
         } finally {
             setLoading(false)
         }
@@ -150,7 +152,7 @@ export function Reports() {
             return saleDate.getTime() === dayStart.getTime()
         })
         return {
-            date: format(date, 'dd MMM', { locale: es }),
+            date: format(date, 'dd MMM', { locale: dateLocale }),
             ventas: daySales.reduce((sum, sale) => sum + sale.total, 0),
             cantidad: daySales.length
         }
@@ -245,12 +247,12 @@ export function Reports() {
 
         try {
             await window.electronAPI.sales.cancel(saleToCancel.id!)
-            toast.success('Venta cancelada', { description: 'El stock ha sido restaurado correctamente.' })
+            toast.success(t('rep.saleCancelled'), { description: t('rep.stockRestored') })
             setSaleToCancel(null)
             loadData() // Refresh data
         } catch (error) {
             console.error(error)
-            toast.error('Error al cancelar venta')
+            toast.error(t('rep.cancelError'))
         }
     }
 
@@ -281,17 +283,17 @@ export function Reports() {
             <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                    <p className="text-gray-500 font-medium">Analizando datos...</p>
+                    <p className="text-gray-500 font-medium">{t('rep.analyzing')}</p>
                 </div>
             </div>
         )
     }
 
     const tabs = [
-        { id: 'sales', label: 'Ventas', icon: DollarSign },
-        { id: 'inventory', label: 'Inventario', icon: Package },
-        { id: 'transactions', label: 'Transacciones', icon: Calendar },
-        { id: 'export', label: 'Exportar', icon: Download },
+        { id: 'sales', label: t('rep.tab.sales'), icon: DollarSign },
+        { id: 'inventory', label: t('rep.tab.inventory'), icon: Package },
+        { id: 'transactions', label: t('rep.tab.transactions'), icon: Calendar },
+        { id: 'export', label: t('rep.tab.export'), icon: Download },
     ]
 
     return (
@@ -299,8 +301,8 @@ export function Reports() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Reportes</h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">Análisis detallado de tu negocio</p>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">{t('rep.title')}</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">{t('rep.subtitle')}</p>
                 </div>
 
                 {/* Modern Tabs */}
@@ -336,23 +338,23 @@ export function Reports() {
                             {/* Key Metrics */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <MetricCard
-                                    title="Ventas de Hoy"
+                                    title={t('rep.salesToday')}
                                     value={`${settings.currencySymbol}${totalSalesToday.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
-                                    subtitle={`${salesToday.length} transacciones`}
+                                    subtitle={t('rep.transactionsCount', { count: salesToday.length })}
                                     icon={DollarSign}
                                     color="green"
                                 />
                                 <MetricCard
-                                    title="Ventas Totales"
+                                    title={t('rep.totalSales')}
                                     value={`${settings.currencySymbol}${totalSales.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
-                                    subtitle="Histórico acumulado"
+                                    subtitle={t('rep.cumulative')}
                                     icon={TrendingUp}
                                     color="blue"
                                 />
                                 <MetricCard
-                                    title="Ticket Promedio"
+                                    title={t('rep.avgTicket')}
                                     value={`${settings.currencySymbol}${sales.length > 0 ? (totalSales / sales.length).toFixed(2) : '0.00'}`}
-                                    subtitle="Por venta realizada"
+                                    subtitle={t('rep.perSale')}
                                     icon={Activity}
                                     color="purple"
                                 />
@@ -365,38 +367,38 @@ export function Reports() {
                                         <TrendingUp className="w-6 h-6 text-white" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Análisis de Rentabilidad</h3>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">Utilidad bruta y márgenes</p>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('rep.profitAnalysis')}</h3>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">{t('rep.profitAnalysisDesc')}</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Ingresos</p>
+                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('rep.revenue')}</p>
                                         <p className="text-2xl font-black text-gray-900 dark:text-white">
                                             {settings.currencySymbol}{totalRevenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-1">Ventas totales</p>
+                                        <p className="text-xs text-gray-500 mt-1">{t('rep.revenueDesc')}</p>
                                     </div>
 
                                     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Costo</p>
+                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('rep.cost')}</p>
                                         <p className="text-2xl font-black text-red-600 dark:text-red-400">
                                             {settings.currencySymbol}{totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-1">Productos vendidos</p>
+                                        <p className="text-xs text-gray-500 mt-1">{t('rep.costDesc')}</p>
                                     </div>
 
                                     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-emerald-500 dark:border-emerald-600 ring-2 ring-emerald-500/20">
-                                        <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase mb-1">Utilidad Bruta</p>
+                                        <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase mb-1">{t('rep.grossProfit')}</p>
                                         <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                                             {settings.currencySymbol}{grossProfit.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-1">Ganancia neta</p>
+                                        <p className="text-xs text-gray-500 mt-1">{t('rep.netGain')}</p>
                                     </div>
 
                                     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Margen</p>
+                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('rep.margin')}</p>
                                         <p className={cn(
                                             "text-2xl font-black",
                                             profitMargin >= 30 ? "text-green-600 dark:text-green-400" :
@@ -405,14 +407,14 @@ export function Reports() {
                                         )}>
                                             {profitMargin.toFixed(1)}%
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-1">% de ganancia</p>
+                                        <p className="text-xs text-gray-500 mt-1">{t('rep.marginDesc')}</p>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-300 dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Tendencia (7 días)</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('rep.trend7d')}</h3>
                                     <ResponsiveContainer width="100%" height={300}>
                                         <AreaChart data={last7Days}>
                                             <defs>
@@ -453,7 +455,7 @@ export function Reports() {
                                                 labelStyle={{ color: '#9ca3af', marginBottom: '0.5rem', fontSize: '0.875rem' }}
                                                 formatter={(value: number, name: string) => [
                                                     name === 'ventas' ? `${settings.currencySymbol}${Number(value).toLocaleString()}` : value,
-                                                    name === 'ventas' ? 'Ventas' : 'Transacciones'
+                                                    name === 'ventas' ? t('rep.chartSales') : t('rep.chartTransactions')
                                                 ]}
                                             />
                                             <Area
@@ -470,7 +472,7 @@ export function Reports() {
                                 </div>
 
                                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-300 dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Horas Pico de Actividad</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('rep.peakHours')}</h3>
                                     <ResponsiveContainer width="100%" height={300}>
                                         <BarChart data={hourlyTraffic} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" strokeOpacity={0.2} />
@@ -502,7 +504,7 @@ export function Reports() {
                                                 labelStyle={{ color: '#9ca3af', marginBottom: '0.5rem', fontSize: '0.875rem' }}
                                                 formatter={(value: number, name: string) => [
                                                     name === 'sales' ? `${settings.currencySymbol}${Number(value).toLocaleString()}` : value,
-                                                    name === 'sales' ? 'Ventas' : 'Transacciones'
+                                                    name === 'sales' ? t('rep.chartSales') : t('rep.chartTransactions')
                                                 ]}
                                             />
                                             <Bar
@@ -522,7 +524,7 @@ export function Reports() {
                                 {/* Most Profitable Products */}
                                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-300 dark:border-gray-700">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Productos Más Rentables</h3>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('rep.mostProfitable')}</h3>
                                         <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
                                             <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
                                         </div>
@@ -552,11 +554,11 @@ export function Reports() {
                                                         <p className="text-sm font-black text-green-600 dark:text-green-400">
                                                             {settings.currencySymbol}{item.profit.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                                         </p>
-                                                        <p className="text-xs text-gray-500">{item.quantity} vendidos</p>
+                                                        <p className="text-xs text-gray-500">{t('rep.soldCount', { count: item.quantity })}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                                                    <span className="text-gray-500">Margen:</span>
+                                                    <span className="text-gray-500">{t('rep.marginLabel')}</span>
                                                     <span className={cn(
                                                         "font-bold",
                                                         item.margin >= 40 ? "text-green-600" :
@@ -570,7 +572,7 @@ export function Reports() {
                                         ))}
                                         {topProfitableProducts.length === 0 && (
                                             <div className="text-center py-10 text-gray-400 text-sm">
-                                                No hay datos suficientes aún.
+                                                {t('rep.notEnoughData')}
                                             </div>
                                         )}
                                     </div>
@@ -579,7 +581,7 @@ export function Reports() {
                                 {/* Low Margin Products - Warning */}
                                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-amber-300 dark:border-amber-700">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Productos de Bajo Margen</h3>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('rep.lowMargin')}</h3>
                                         <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
                                             <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                                         </div>
@@ -587,7 +589,7 @@ export function Reports() {
                                     <div className="flex items-start gap-3 p-3 mb-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
                                         <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                                         <p className="text-xs font-medium leading-relaxed">
-                                            Productos con margen de ganancia inferior al 20%. Se recomienda revisar la estructura de costos o ajustar precios de venta.
+                                            {t('rep.lowMarginHint')}
                                         </p>
                                     </div>
                                     <div className="space-y-3 max-h-[350px] overflow-y-auto">
@@ -607,24 +609,24 @@ export function Reports() {
                                                         )}>
                                                             {item.margin.toFixed(1)}%
                                                         </p>
-                                                        <p className="text-xs text-gray-500">margen</p>
+                                                        <p className="text-xs text-gray-500">{t('rep.marginLower')}</p>
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-amber-200 dark:border-amber-800/50 text-xs">
                                                     <div>
-                                                        <p className="text-gray-500">Venta</p>
+                                                        <p className="text-gray-500">{t('rep.sale')}</p>
                                                         <p className="font-semibold text-gray-900 dark:text-white">
                                                             {settings.currencySymbol}{item.revenue.toFixed(2)}
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-gray-500">Costo</p>
+                                                        <p className="text-gray-500">{t('rep.cost')}</p>
                                                         <p className="font-semibold text-red-600 dark:text-red-400">
                                                             {settings.currencySymbol}{item.cost.toFixed(2)}
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-gray-500">Ganancia</p>
+                                                        <p className="text-gray-500">{t('rep.profit')}</p>
                                                         <p className="font-semibold text-green-600 dark:text-green-400">
                                                             {settings.currencySymbol}{item.profit.toFixed(2)}
                                                         </p>
@@ -635,8 +637,8 @@ export function Reports() {
                                         {lowMarginProducts.length === 0 && (
                                             <div className="text-center py-10 text-green-600 dark:text-green-400">
                                                 <CheckCircle2 className="w-12 h-12 mx-auto mb-2" />
-                                                <p className="text-sm font-medium">¡Excelente!</p>
-                                                <p className="text-xs text-gray-500 mt-1">Todos los productos tienen buenos márgenes.</p>
+                                                <p className="text-sm font-medium">{t('rep.excellent')}</p>
+                                                <p className="text-xs text-gray-500 mt-1">{t('rep.goodMargins')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -653,23 +655,23 @@ export function Reports() {
                             {/* Key Metrics Row */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <MetricCard
-                                    title="Total Productos"
+                                    title={t('rep.totalProducts')}
                                     value={products.length.toString()}
-                                    subtitle="En catálogo"
+                                    subtitle={t('rep.inCatalog')}
                                     icon={Package}
                                     color="blue"
                                 />
                                 <MetricCard
-                                    title="Valor Inventario"
+                                    title={t('rep.inventoryValue')}
                                     value={`${settings.currencySymbol}${inventoryValue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
-                                    subtitle="Costo total estimado"
+                                    subtitle={t('rep.estimatedCost')}
                                     icon={DollarSign}
                                     color="green"
                                 />
                                 <MetricCard
-                                    title="Stock Bajo"
+                                    title={t('rep.lowStock')}
                                     value={lowStockProducts.length.toString()}
-                                    subtitle="Requieren reabastecimiento"
+                                    subtitle={t('rep.needRestock')}
                                     icon={AlertCircle}
                                     color={lowStockProducts.length > 0 ? "red" : "gray"}
                                 />
@@ -679,14 +681,14 @@ export function Reports() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Category Value Chart */}
                                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-300 dark:border-gray-700 flex flex-col">
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Valor de Inventario por Categoría</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('rep.valueByCategory')}</h3>
                                     <div className="flex flex-col md:flex-row items-center justify-center gap-8 h-full">
                                         <div className="h-[260px] w-[260px] relative shrink-0">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <PieChart>
                                                     <Pie
                                                         data={Object.entries(products.reduce((acc, p) => {
-                                                            const cat = p.category || 'Sin Categoría'
+                                                            const cat = p.category || t('rep.noCategory')
                                                             acc[cat] = (acc[cat] || 0) + (p.price * p.stock)
                                                             return acc
                                                         }, {} as Record<string, number>))
@@ -716,14 +718,14 @@ export function Reports() {
                                                             color: '#fff',
                                                             padding: '12px'
                                                         }}
-                                                        formatter={(value: number) => [`${settings.currencySymbol}${value.toLocaleString()}`, 'Valor Total']}
+                                                        formatter={(value: number) => [`${settings.currencySymbol}${value.toLocaleString()}`, t('rep.totalValue')]}
                                                         itemStyle={{ color: '#fff', fontWeight: 600 }}
                                                     />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                             {/* Centered Total Label */}
                                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Total</span>
+                                                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">{t('rep.total')}</span>
                                                 <span className="text-2xl font-black text-gray-900 dark:text-white mt-1">
                                                     {settings.currencySymbol}{(inventoryValue / 1000).toFixed(1)}k
                                                 </span>
@@ -733,7 +735,7 @@ export function Reports() {
                                         {/* Detailed Side Legend */}
                                         <div className="flex flex-col gap-3 w-full md:w-auto overflow-y-auto max-h-[260px] pr-2">
                                             {Object.entries(products.reduce((acc, p) => {
-                                                const cat = p.category || 'Sin Categoría'
+                                                const cat = p.category || t('rep.noCategory')
                                                 acc[cat] = (acc[cat] || 0) + (p.price * p.stock)
                                                 return acc
                                             }, {} as Record<string, number>))
@@ -762,7 +764,7 @@ export function Reports() {
 
                                 {/* Top Value Products List */}
                                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-300 dark:border-gray-700 flex flex-col">
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Mayor Inversión (Top 5)</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{t('rep.topInvestment')}</h3>
                                     <div className="flex-grow space-y-4 overflow-y-auto">
                                         {products
                                             .map(p => ({ ...p, totalValue: p.price * p.stock }))
@@ -776,21 +778,21 @@ export function Reports() {
                                                         </span>
                                                         <div>
                                                             <p className="font-medium text-sm text-gray-900 dark:text-white truncate max-w-[180px]">{product.name}</p>
-                                                            <p className="text-xs text-gray-500">{product.stock} unidades</p>
+                                                            <p className="text-xs text-gray-500">{t('rep.unitsCount', { count: product.stock })}</p>
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="font-bold text-sm text-indigo-600 dark:text-indigo-400">
                                                             {settings.currencySymbol}{(product.price * product.stock).toLocaleString()}
                                                         </p>
-                                                        <p className="text-[10px] text-gray-400">Total valor</p>
+                                                        <p className="text-[10px] text-gray-400">{t('rep.totalValueLower')}</p>
                                                     </div>
                                                 </div>
                                             ))}
                                     </div>
                                     <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-500">Valor Promedio por Item</span>
+                                            <span className="text-gray-500">{t('rep.avgValuePerItem')}</span>
                                             <span className="font-mono font-bold text-gray-700 dark:text-gray-300">
                                                 {products.length > 0
                                                     ? `${settings.currencySymbol}${(inventoryValue / products.length).toFixed(2)}`
@@ -807,23 +809,23 @@ export function Reports() {
                                 <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                                     <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                         <AlertCircle className={cn("w-5 h-5", lowStockProducts.length > 0 ? "text-red-500" : "text-green-500")} />
-                                        Alertas de Stock
+                                        {t('rep.stockAlerts')}
                                     </h3>
                                     <span className={cn("px-3 py-1 rounded-full text-xs font-bold", lowStockProducts.length > 0 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600")}>
-                                        {lowStockProducts.length} productos
+                                        {t('rep.productsCount', { count: lowStockProducts.length })}
                                     </span>
                                 </div>
                                 {lowStockProducts.length > 0 ? (
                                     <div>
                                         {/* List Header */}
                                         <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-900/50 text-xs font-semibold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700">
-                                            <div className="col-span-1">Imagen</div>
+                                            <div className="col-span-1">{t('rep.col.image')}</div>
                                             <div className="col-span-4 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1" onClick={() => {/* Add sort logic later if needed */ }}>
-                                                Producto
+                                                {t('rep.col.product')}
                                             </div>
-                                            <div className="col-span-2 text-center">Categoría</div>
-                                            <div className="col-span-2 text-right">Precio</div>
-                                            <div className="col-span-3 text-right">Stock Actual</div>
+                                            <div className="col-span-2 text-center">{t('rep.col.category')}</div>
+                                            <div className="col-span-2 text-right">{t('rep.col.price')}</div>
+                                            <div className="col-span-3 text-right">{t('rep.col.currentStock')}</div>
                                         </div>
 
                                         {/* List Items */}
@@ -869,7 +871,7 @@ export function Reports() {
                                                             {settings.currencySymbol}{p.price.toFixed(2)}
                                                         </p>
                                                         <p className="text-[10px] text-gray-400">
-                                                            Costo: {settings.currencySymbol}{p.cost.toFixed(2)}
+                                                            {t('rep.costLabel', { amount: `${settings.currencySymbol}${p.cost.toFixed(2)}` })}
                                                         </p>
                                                     </div>
 
@@ -877,7 +879,7 @@ export function Reports() {
                                                     <div className="col-span-3 flex flex-col items-end gap-1">
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
-                                                                {p.stock} unidad{p.stock !== 1 ? 'es' : ''}
+                                                                {t(p.stock !== 1 ? 'rep.unitMany' : 'rep.unitOne', { count: p.stock })}
                                                             </span>
                                                         </div>
                                                         <div className="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -897,8 +899,8 @@ export function Reports() {
                                         <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                             <Package className="w-8 h-8 text-green-500" />
                                         </div>
-                                        <h4 className="text-gray-900 font-bold mb-1">¡Todo en orden!</h4>
-                                        <p className="text-gray-500 text-sm">No hay productos con stock bajo en este momento.</p>
+                                        <h4 className="text-gray-900 font-bold mb-1">{t('rep.allGood')}</h4>
+                                        <p className="text-gray-500 text-sm">{t('rep.noLowStock')}</p>
                                     </div>
                                 )}
                             </div>
@@ -912,20 +914,20 @@ export function Reports() {
                     {activeTab === 'transactions' && (
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-300 dark:border-gray-700 overflow-hidden">
                             <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <h3 className="font-bold text-gray-900 dark:text-white">Historial de Transacciones</h3>
+                                <h3 className="font-bold text-gray-900 dark:text-white">{t('rep.transactionHistory')}</h3>
                                 <div className="flex items-center gap-4 w-full sm:w-auto">
                                     <div className="relative w-full sm:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                         <input
                                             type="text"
-                                            placeholder="Buscar por ID, cliente..."
+                                            placeholder={t('rep.searchPlaceholder')}
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                                         />
                                     </div>
                                     <span className="text-xs text-gray-500 whitespace-nowrap hidden sm:inline-block">
-                                        {sortedSales.length} registros
+                                        {t('rep.recordsCount', { count: sortedSales.length })}
                                     </span>
                                 </div>
                             </div>
@@ -936,25 +938,25 @@ export function Reports() {
                                     className="col-span-3 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1 transition-colors group"
                                     onClick={() => requestSort('created_at')}
                                 >
-                                    Fecha / ID
+                                    {t('rep.col.dateId')}
                                     <ArrowUpDown className={cn("w-3 h-3 text-gray-300 group-hover:text-gray-500", sortConfig?.key === 'created_at' && "text-cyan-500")} />
                                 </div>
                                 <div
                                     className="col-span-3 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1 transition-colors group"
                                     onClick={() => requestSort('customer_name')}
                                 >
-                                    Cliente
+                                    {t('rep.col.client')}
                                     <ArrowUpDown className={cn("w-3 h-3 text-gray-300 group-hover:text-gray-500", sortConfig?.key === 'customer_name' && "text-cyan-500")} />
                                 </div>
-                                <div className="col-span-2 text-center">Items</div>
+                                <div className="col-span-2 text-center">{t('rep.col.items')}</div>
                                 <div
                                     className="col-span-2 text-right cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 flex items-center justify-end gap-1 transition-colors group"
                                     onClick={() => requestSort('total')}
                                 >
-                                    Total
+                                    {t('rep.col.total')}
                                     <ArrowUpDown className={cn("w-3 h-3 text-gray-300 group-hover:text-gray-500", sortConfig?.key === 'total' && "text-cyan-500")} />
                                 </div>
-                                <div className="col-span-2 text-right">Acciones</div>
+                                <div className="col-span-2 text-right">{t('rep.col.actions')}</div>
                             </div>
 
                             {/* List Content */}
@@ -968,12 +970,12 @@ export function Reports() {
                                                 <span className="font-bold text-gray-900 dark:text-white">#{sale.id}</span>
                                                 {sale.status === 'cancelled' && (
                                                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                                                        CANCELADA
+                                                        {t('rep.cancelledBadge')}
                                                     </span>
                                                 )}
                                             </div>
                                             <div className="text-xs text-gray-400 mt-0.5">
-                                                {sale.created_at ? new Date(sale.created_at).toLocaleString('es-MX', {
+                                                {sale.created_at ? new Date(sale.created_at).toLocaleString(locale, {
                                                     day: '2-digit', month: '2-digit', year: 'numeric',
                                                     hour: '2-digit', minute: '2-digit'
                                                 }) : '-'}
@@ -983,7 +985,7 @@ export function Reports() {
                                         {/* Client */}
                                         <div className="col-span-3">
                                             <div className="font-medium text-gray-700 dark:text-gray-200 truncate pr-4">
-                                                {sale.customer_name || 'Público General'}
+                                                {sale.customer_name || t('rep.walkIn')}
                                             </div>
                                             <div className="flex items-center gap-1.5 mt-0.5">
                                                 <span className={cn(
@@ -993,8 +995,7 @@ export function Reports() {
                                                             "bg-green-500"
                                                 )} />
                                                 <span className="text-xs text-gray-400 capitalize">
-                                                    {sale.payment_method === 'card' ? 'Tarjeta' :
-                                                        sale.payment_method === 'transfer' ? 'Transferencia' : 'Efectivo'}
+                                                    {paymentMethodLabel(sale.payment_method)}
                                                 </span>
                                             </div>
                                         </div>
@@ -1002,7 +1003,7 @@ export function Reports() {
                                         {/* Items Count badge */}
                                         <div className="col-span-2 flex justify-center">
                                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                                {sale.items.length} prod.
+                                                {t('rep.itemsShort', { count: sale.items.length })}
                                             </span>
                                         </div>
 
@@ -1021,7 +1022,7 @@ export function Reports() {
                                             <button
                                                 onClick={() => pdfGenerator.generateInvoice(sale, settings)}
                                                 className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
-                                                title="Reimprimir Ticket"
+                                                title={t('rep.reprint')}
                                             >
                                                 <Download className="w-4 h-4" />
                                             </button>
@@ -1030,7 +1031,7 @@ export function Reports() {
                                                 <button
                                                     onClick={() => setSaleToCancel(sale)}
                                                     className="p-1.5 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-                                                    title="Cancelar Venta"
+                                                    title={t('rep.cancelSale')}
                                                 >
                                                     <X className="w-4 h-4" />
                                                 </button>
@@ -1040,7 +1041,7 @@ export function Reports() {
                                 ))}
                                 {sortedSales.length === 0 && (
                                     <div className="p-12 text-center text-gray-400">
-                                        No hay transacciones registradas.
+                                        {t('rep.noTransactions')}
                                     </div>
                                 )}
                             </div>
@@ -1053,10 +1054,10 @@ export function Reports() {
                 isOpen={!!saleToCancel}
                 onCancel={() => setSaleToCancel(null)}
                 onConfirm={handleCancelSale}
-                title={`Cancelar Venta #${saleToCancel?.id}`}
-                description="¿Estás seguro de que deseas cancelar esta venta? Esta acción restaurará el stock de los productos vendidos y marcará la transacción como cancelada. Esta acción no se puede deshacer."
-                confirmText="Sí, cancelar venta"
-                cancelText="No, mantener"
+                title={t('rep.cancelTitle', { id: saleToCancel?.id ?? '' })}
+                description={t('rep.cancelDesc')}
+                confirmText={t('rep.cancelConfirm')}
+                cancelText={t('rep.cancelKeep')}
                 variant="danger"
             />
         </div>
@@ -1087,6 +1088,7 @@ function MetricCard({ title, value, subtitle, icon: Icon, color }: any) {
 }
 
 function ExportSection({ sales, products, settings }: { sales: Sale[]; products: Product[]; settings: any }) {
+    const { t } = useTranslation()
     const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all'>('today')
 
     // Filter Logic
@@ -1119,16 +1121,16 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
 
     const handleExport = (type: 'sales' | 'inventory' | 'low-stock' | 'daily-closing') => {
         const titleMap = {
-            'sales': 'Reporte de Ventas',
-            'inventory': 'Inventario Valorado',
-            'low-stock': 'Alerta de Stock Bajo',
-            'daily-closing': 'Cierre de Caja'
+            'sales': t('rep.export.salesTitle'),
+            'inventory': t('rep.export.inventoryTitle'),
+            'low-stock': t('rep.export.lowStockTitle'),
+            'daily-closing': t('rep.export.closingTitle')
         }
         const subtitleMap = {
-            'sales': 'Historial de Transacciones',
-            'inventory': 'Catálogo Completo',
-            'low-stock': 'Productos que requieren atención',
-            'daily-closing': 'Resumen de Turno/Día'
+            'sales': t('rep.export.salesSubtitle'),
+            'inventory': t('rep.export.inventorySubtitle'),
+            'low-stock': t('rep.export.lowStockSubtitle'),
+            'daily-closing': t('rep.export.closingSubtitle')
         }
 
         let dataToExport: any[] = []
@@ -1145,10 +1147,10 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
         if (type === 'low-stock') dataToExport = lowStock
 
         const rangeLabel = {
-            'today': 'Hoy',
-            'week': 'Última Semana',
-            'month': 'Último Mes',
-            'all': 'Histórico Completo'
+            'today': t('rep.range.today'),
+            'week': t('rep.range.week'),
+            'month': t('rep.range.month'),
+            'all': t('rep.range.all')
         }[timeRange]
 
         toast.promise(
@@ -1161,9 +1163,9 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
                 type === 'inventory' || type === 'low-stock' ? undefined : rangeLabel
             ),
             {
-                loading: 'Generando PDF...',
-                success: 'Reporte descargado correctamente',
-                error: 'Error al generar reporte'
+                loading: t('rep.export.generating'),
+                success: t('rep.export.success'),
+                error: t('rep.export.error')
             }
         )
     }
@@ -1174,7 +1176,7 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
             <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-md border border-gray-300 dark:border-gray-700">
                 <span className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-indigo-500" />
-                    Periodo del Reporte
+                    {t('rep.export.period')}
                 </span>
                 <div className="flex bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl">
                     {(['today', 'week', 'month', 'all'] as const).map((range) => (
@@ -1188,7 +1190,7 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
                                     : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                             )}
                         >
-                            {range === 'today' ? 'Hoy' : range === 'week' ? 'Semana' : range === 'month' ? 'Mes' : 'Todo'}
+                            {t(`rep.filter.${range}`)}
                         </button>
                     ))}
                 </div>
@@ -1197,8 +1199,8 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Sales Report Card */}
                 <NewExportCard
-                    title="Reporte de Ventas"
-                    description={`Generar reporte de ingresos y transacciones (${timeRange === 'today' ? 'Hoy' : timeRange === 'all' ? 'Histórico' : 'Periodo'}).`}
+                    title={t('rep.export.salesTitle')}
+                    description={t('rep.export.salesDesc', { range: timeRange === 'today' ? t('rep.export.descToday') : timeRange === 'all' ? t('rep.export.descAll') : t('rep.export.descPeriod') })}
                     count={filteredSales.length}
                     total={filteredSales.reduce((s, x) => s + x.total, 0)}
                     currencySymbol={settings.currencySymbol}
@@ -1215,8 +1217,8 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
 
                 {/* Inventory Card (Static snapshot) */}
                 <NewExportCard
-                    title="Inventario Valorado"
-                    description="Reporte completo de existencias y valoración de almacén."
+                    title={t('rep.export.inventoryTitle')}
+                    description={t('rep.export.inventoryDesc')}
                     count={products.length}
                     total={products.reduce((s, p) => s + (p.price * p.stock), 0)}
                     currencySymbol={settings.currencySymbol}
@@ -1226,20 +1228,20 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
                     previewData={products.slice(0, 3).map(p => (
                         <div key={p.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="truncate max-w-[150px] text-gray-500">{p.name}</span>
-                            <span className="font-medium text-gray-900 dark:text-white">{p.stock} u.</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{t('rep.unitsShort', { count: p.stock })}</span>
                         </div>
                     ))}
                 />
 
                 {/* Low Stock Card */}
                 <NewExportCard
-                    title="Alertas de Stock"
-                    description="Productos por debajo del nivel mínimo configurado."
+                    title={t('rep.export.lowStockCardTitle')}
+                    description={t('rep.export.lowStockDesc')}
                     count={lowStock.length}
                     icon={AlertCircle}
                     color="red"
                     onClick={() => handleExport('low-stock')}
-                    previewData={lowStock.length === 0 ? [<span key="ok" className="text-xs text-green-500">¡Todo en orden!</span>] : lowStock.slice(0, 3).map(p => (
+                    previewData={lowStock.length === 0 ? [<span key="ok" className="text-xs text-green-500">{t('rep.allGood')}</span>] : lowStock.slice(0, 3).map(p => (
                         <div key={p.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="text-red-500 truncate max-w-[150px]">{p.name}</span>
                             <span className="font-bold text-red-600">{p.stock} / {Math.max(p.min_stock, settings.inventory?.lowStockThreshold || 0)}</span>
@@ -1249,14 +1251,14 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
 
                 {/* Daily Closing Card (Always today) */}
                 <NewExportCard
-                    title="Cierre de Caja (Hoy)"
-                    description="Arqueo de caja y resumen operativo del día en curso."
+                    title={t('rep.export.closingCardTitle')}
+                    description={t('rep.export.closingDesc')}
                     icon={Calendar}
                     color="purple"
                     onClick={() => handleExport('daily-closing')}
                     customMetric={
                         <div className="text-right">
-                            <div className="text-xs text-gray-400 uppercase font-bold">Ventas Hoy</div>
+                            <div className="text-xs text-gray-400 uppercase font-bold">{t('rep.export.salesTodayLabel')}</div>
                             <div className="text-xl font-black text-gray-900 dark:text-white">
                                 {settings.currencySymbol}
                                 {sales.filter(s => new Date(s.created_at!).toDateString() === new Date().toDateString())
@@ -1273,6 +1275,7 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
 }
 
 function NewExportCard({ title, description, count, total, currencySymbol, icon: Icon, color, onClick, previewData, customMetric }: any) {
+    const { t } = useTranslation()
     const colors = {
         blue: "text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800",
         green: "text-green-600 bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800",
@@ -1299,7 +1302,7 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
                 </div>
                 {customMetric ? customMetric : (total !== undefined && (
                     <div className="text-right">
-                        <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total</div>
+                        <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">{t('rep.total')}</div>
                         <div className="text-xl font-black text-gray-900 dark:text-white">{currencySymbol}{total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
                     </div>
                 ))}
@@ -1312,20 +1315,20 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
             {previewData && (
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Vista Previa</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('rep.export.preview')}</span>
                         <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] font-bold text-gray-500 dark:text-gray-300">
-                            {count} registros
+                            {t('rep.recordsCount', { count })}
                         </span>
                     </div>
                     <div className="bg-gray-100 dark:bg-gray-900/30 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
                         {count === 0 ? (
-                            <div className="p-4 text-center text-xs text-gray-400 italic">No hay datos para mostrar</div>
+                            <div className="p-4 text-center text-xs text-gray-400 italic">{t('rep.export.noData')}</div>
                         ) : (
                             <div className="space-y-0.5">
                                 {previewData}
                                 {(count > 3) && (
                                     <div className="text-[10px] text-center text-gray-400 py-1.5 font-medium border-t border-dashed border-gray-100 dark:border-gray-700">
-                                        + {count - 3} registros adicionales
+                                        {t('rep.export.moreRecords', { count: count - 3 })}
                                     </div>
                                 )}
                             </div>
@@ -1343,7 +1346,7 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
                     )}
                 >
                     <Download className="w-4 h-4" />
-                    Generar PDF
+                    {t('rep.export.generatePdf')}
                 </button>
             </div>
         </div>

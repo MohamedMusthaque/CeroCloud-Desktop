@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
 import { AlertTriangle } from 'lucide-react'
+import { useTranslation } from '@/i18n'
 
 interface ConfirmDialogProps {
     isOpen: boolean
@@ -17,12 +18,13 @@ export function ConfirmDialog({
     isOpen,
     title,
     description,
-    confirmText = 'Confirmar',
-    cancelText = 'Cancelar',
+    confirmText,
+    cancelText,
     variant = 'danger',
     onConfirm,
     onCancel
 }: ConfirmDialogProps) {
+    const { t } = useTranslation()
     const colors = {
         danger: {
             bg: 'bg-red-50 dark:bg-red-900/20',
@@ -81,13 +83,13 @@ export function ConfirmDialog({
                                     onClick={onCancel}
                                     className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                                 >
-                                    {cancelText}
+                                    {cancelText ?? t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={onConfirm}
                                     className={`flex-1 px-4 py-2.5 rounded-xl font-bold shadow-lg shadow-${variant}-500/20 transition-all ${style.button}`}
                                 >
-                                    {confirmText}
+                                    {confirmText ?? t('common.confirm')}
                                 </button>
                             </div>
                         </div>

@@ -4,6 +4,7 @@ import { X, Upload, FileSpreadsheet, Download, CheckCircle, AlertCircle, ArrowRi
 import { importService } from '@/services/importService'
 import { Product } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from '@/i18n'
 
 
 interface ImportWizardProps {
@@ -14,6 +15,7 @@ interface ImportWizardProps {
 type Step = 'select' | 'preview' | 'importing' | 'complete'
 
 export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
+    const { t, language } = useTranslation()
     const [step, setStep] = useState<Step>('select')
     const [previewData, setPreviewData] = useState<Partial<Product>[]>([])
     const [errors, setErrors] = useState<string[]>([])
@@ -30,7 +32,7 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
         } else if (fileExtension === 'csv') {
             result = await importService.parseCSV(selectedFile)
         } else {
-            setErrors(['Formato de archivo no soportado. Use Excel (.xlsx) o CSV (.csv)'])
+            setErrors([t('import.unsupported')])
             return
         }
 
@@ -41,7 +43,7 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
             setErrors(result.errors || [])
             setStep('preview')
         } else {
-            setErrors(result.errors || ['Error desconocido'])
+            setErrors(result.errors || [t('import.unknownError')])
         }
     }
 
@@ -64,7 +66,7 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
             setStep('complete')
             onSuccess()
         } catch (error) {
-            setErrors(['Error crítico durante la importación: ' + error])
+            setErrors([t('import.criticalError', { error: String(error) })])
             setStep('preview')
         }
     }
@@ -91,7 +93,7 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                         <div>
                             <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <Upload className="w-5 h-5 text-primary" />
-                                Asistente de Importación
+                                {t('import.title')}
                             </h2>
                         </div>
                         <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
@@ -114,10 +116,10 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                                             <FileSpreadsheet className="w-8 h-8 text-primary" />
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                            Sube tu inventario
+                                            {t('import.uploadTitle')}
                                         </h3>
                                         <p className="text-gray-500 text-sm">
-                                            Arrastra tu archivo Excel o CSV aquí para comenzar a importar tus productos masivamente.
+                                            {t('import.uploadDesc')}
                                         </p>
                                     </div>
 
@@ -126,25 +128,28 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                                             <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-4 border border-blue-100 dark:border-blue-800">
                                                 <h4 className="font-bold text-blue-900 dark:text-blue-100 mb-1 flex items-center gap-2 text-sm">
                                                     <Download className="w-4 h-4" />
-                                                    Plantilla Oficial
+                                                    {t('import.template')}
                                                 </h4>
                                                 <p className="text-xs text-blue-700 dark:text-blue-200 mb-3 leading-relaxed">
-                                                    Para asegurar una importación exitosa, te recomendamos usar nuestra plantilla.
+                                                    {t('import.templateDesc')}
                                                 </p>
                                                 <button
                                                     onClick={() => importService.downloadTemplate()}
                                                     className="w-full py-2 bg-white text-blue-600 font-semibold rounded-lg shadow-sm hover:shadow-md transition-all text-xs"
                                                 >
-                                                    Descargar Plantilla Excel
+                                                    {t('import.downloadTemplate')}
                                                 </button>
                                             </div>
 
                                             <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4">
                                                 <h4 className="font-semibold text-gray-900 dark:text-gray-200 mb-2 text-xs uppercase tracking-wide">
-                                                    Columnas Requeridas
+                                                    {t('import.requiredColumns')}
                                                 </h4>
                                                 <div className="grid grid-cols-2 gap-y-1 gap-x-2 text-xs">
-                                                    {['codigo', 'nombre', 'precio', 'stock', 'categoria', 'costo', 'unidad', 'min_stock'].map(col => (
+                                                    {(language === 'en'
+                                                        ? ['code', 'name', 'price', 'stock', 'category', 'cost', 'unit', 'min_stock']
+                                                        : ['codigo', 'nombre', 'precio', 'stock', 'categoria', 'costo', 'unidad', 'min_stock']
+                                                    ).map(col => (
                                                         <div key={col} className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
                                                             <CheckCircle className="w-2.5 h-2.5 text-green-500" />
                                                             {col}
@@ -160,8 +165,8 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                                                     <Upload className="w-6 h-6 text-gray-400 group-hover:text-primary transition-colors" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">Click para explorar</p>
-                                                    <p className="text-gray-400 text-xs mt-1">.xlsx, .xls, .csv soportados</p>
+                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{t('import.browse')}</p>
+                                                    <p className="text-gray-400 text-xs mt-1">{t('import.supported')}</p>
                                                 </div>
                                             </div>
                                             <input
@@ -180,7 +185,7 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                                         <div className="bg-red-50 text-red-700 p-4 rounded-xl flex items-start gap-3">
                                             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                                             <div>
-                                                <p className="font-bold">Error en el archivo</p>
+                                                <p className="font-bold">{t('import.fileError')}</p>
                                                 <p className="text-sm">{errors[0]}</p>
                                             </div>
                                         </div>
@@ -198,16 +203,16 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                                 >
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Vista Previa</h3>
-                                            <p className="text-gray-500 text-sm">Revisa los datos antes de importar</p>
+                                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('import.preview')}</h3>
+                                            <p className="text-gray-500 text-sm">{t('import.previewDesc')}</p>
                                         </div>
                                         <div className="flex gap-2 text-xs font-medium">
                                             <div className="px-2.5 py-1 bg-green-100 text-green-700 rounded-full flex items-center gap-1">
-                                                <CheckCircle className="w-3 h-3" /> {validCount} válidos
+                                                <CheckCircle className="w-3 h-3" /> {t('import.validCount', { count: validCount })}
                                             </div>
                                             {invalidCount > 0 && (
                                                 <div className="px-2.5 py-1 bg-red-100 text-red-700 rounded-full flex items-center gap-1">
-                                                    <AlertCircle className="w-3 h-3" /> {invalidCount} errores
+                                                    <AlertCircle className="w-3 h-3" /> {t('import.errorCount', { count: invalidCount })}
                                                 </div>
                                             )}
                                         </div>
@@ -218,7 +223,7 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                                             <table className="w-full text-xs">
                                                 <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
                                                     <tr>
-                                                        {['Código', 'Nombre', 'Categoría', 'Precio', 'Stock'].map(h => (
+                                                        {[t('import.col.code'), t('import.col.name'), t('import.col.category'), t('import.col.price'), t('import.col.stock')].map(h => (
                                                             <th key={h} className="px-4 py-2 text-left font-semibold text-gray-500">{h}</th>
                                                         ))}
                                                     </tr>
@@ -240,10 +245,10 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
 
                                     {errors.length > 0 && (
                                         <div className="p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-xl border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 text-xs">
-                                            <p className="font-bold mb-1">Advertencias:</p>
+                                            <p className="font-bold mb-1">{t('import.warnings')}</p>
                                             <ul className="list-disc list-inside opacity-80">
                                                 {errors.slice(0, 3).map((e, i) => <li key={i}>{e}</li>)}
-                                                {errors.length > 3 && <li>... y {errors.length - 3} más</li>}
+                                                {errors.length > 3 && <li>{t('import.andMore', { count: errors.length - 3 })}</li>}
                                             </ul>
                                         </div>
                                     )}
@@ -253,14 +258,14 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                                             onClick={() => { setStep('select'); setPreviewData([]) }}
                                             className="flex-1 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
                                         >
-                                            Atrás
+                                            {t('common.back')}
                                         </button>
                                         <button
                                             onClick={handleImport}
                                             disabled={validCount === 0}
                                             className="flex-[2] py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-bold shadow-lg shadow-primary/25 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 text-sm"
                                         >
-                                            Confirmar Importación
+                                            {t('import.confirm')}
                                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                         </button>
                                     </div>
@@ -284,8 +289,8 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                                         </div>
                                     </div>
                                     <div className="text-center">
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Importando productos...</h3>
-                                        <p className="text-gray-500 text-sm">{importedCount} de {validCount} completados</p>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{t('import.importing')}</h3>
+                                        <p className="text-gray-500 text-sm">{t('import.progress', { done: importedCount, total: validCount })}</p>
                                     </div>
                                 </motion.div>
                             )}
@@ -300,15 +305,15 @@ export function ImportWizard({ onClose, onSuccess }: ImportWizardProps) {
                                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-2 animate-bounce">
                                         <CheckCircle className="w-10 h-10 text-green-600" />
                                     </div>
-                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">¡Importación Exitosa!</h3>
+                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{t('import.success')}</h3>
                                     <p className="text-base text-gray-600 dark:text-gray-300 max-w-sm">
-                                        Se han agregado correctamente <strong>{importedCount}</strong> productos a tu inventario.
+                                        {t('import.successPrefix')} <strong>{importedCount}</strong> {t('import.successSuffix')}
                                     </p>
                                     <button
                                         onClick={onClose}
                                         className="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-lg font-bold hover:opacity-90 transition-opacity shadow-lg text-sm"
                                     >
-                                        Finalizar
+                                        {t('import.finish')}
                                     </button>
                                 </motion.div>
                             )}

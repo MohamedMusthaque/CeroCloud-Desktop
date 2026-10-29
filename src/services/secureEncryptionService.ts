@@ -8,6 +8,8 @@
  * - IV (Nonce) aleatorio único por operación
  */
 
+import { t } from '@/i18n'
+
 interface EncryptedData {
     version: number
     salt: string  // Base64
@@ -108,7 +110,7 @@ export const secureEncryptionService = {
             return JSON.stringify(encrypted)
         } catch (error) {
             console.error('Encryption error:', error)
-            throw new Error('Error al cifrar los datos')
+            throw new Error(t('encryption.encryptError'))
         }
     },
 
@@ -122,7 +124,7 @@ export const secureEncryptionService = {
 
             // 2. Validar versión
             if (encrypted.version !== 1) {
-                throw new Error('Versión de cifrado no soportada')
+                throw new Error(t('encryption.unsupportedVersion'))
             }
 
             // 3. Decodificar de Base64 (usando helper)
@@ -181,9 +183,9 @@ export const secureEncryptionService = {
             console.error('Decryption error:', error)
             // Error de autenticación = contraseña incorrecta
             if (error instanceof DOMException && error.name === 'OperationError') {
-                throw new Error('Contraseña incorrecta')
+                throw new Error(t('encryption.wrongPassword'))
             }
-            throw new Error('Error al descifrar los datos')
+            throw new Error(t('encryption.decryptError'))
         }
     },
 

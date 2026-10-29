@@ -1,4 +1,38 @@
+import { common } from './es/common'
+import { imageUpload } from './es/imageUpload'
+import { restoreWizard } from './es/restoreWizard'
+import { backupWizard } from './es/backupWizard'
+import { reports } from './es/reports'
+import { about } from './es/about'
+import { clients } from './es/clients'
+import { suppliers } from './es/suppliers'
+import { pos } from './es/pos'
+import { importWizard } from './es/importWizard'
+import { productForm } from './es/productForm'
+import { inventoryPage } from './es/inventory'
+import { dashboard } from './es/dashboard'
+import { printTexts } from './es/print'
+import { shell } from './es/shell'
+import { exportTexts } from './es/exports'
+
 export const es = {
+    ...common,
+    ...imageUpload,
+    ...restoreWizard,
+    ...backupWizard,
+    ...reports,
+    ...about,
+    ...clients,
+    ...suppliers,
+    ...pos,
+    ...importWizard,
+    ...productForm,
+    ...inventoryPage,
+    ...dashboard,
+    ...printTexts,
+    ...shell,
+    ...exportTexts,
+
     // Navigation
     'nav.dashboard': 'Dashboard',
     'nav.inventory': 'Inventario',

@@ -27,7 +27,7 @@ import { saleService } from '@/services/saleService'
 import { companyService } from '@/services/companyService'
 import { Product, Sale } from '@/types/database'
 import { format, subDays, startOfDay } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { useTranslation } from '@/i18n'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
@@ -36,6 +36,7 @@ export function Dashboard() {
     const [sales, setSales] = useState<Sale[]>([])
     const [loading, setLoading] = useState(true)
     const [settings] = useState(companyService.getSettings())
+    const { t, dateLocale } = useTranslation()
 
     const [currentTime, setCurrentTime] = useState(new Date())
 
@@ -84,8 +85,8 @@ export function Dashboard() {
             return saleDate.getTime() === dayStart.getTime()
         })
         return {
-            date: format(date, 'EEE', { locale: es }), // Mon, Tue...
-            fullDate: format(date, 'dd MMM', { locale: es }),
+            date: format(date, 'EEE', { locale: dateLocale }), // Mon, Tue...
+            fullDate: format(date, 'dd MMM', { locale: dateLocale }),
             ventas: daySales.reduce((sum, sale) => sum + sale.total, 0),
         }
     })
@@ -152,7 +153,7 @@ export function Dashboard() {
                             <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-sm ring-1 ring-white/5">
                                 <Calendar className="w-3.5 h-3.5 text-indigo-300" />
                                 <span className="text-sm font-medium text-slate-200 capitalize tracking-wide">
-                                    {format(currentTime, "EEEE, d 'de' MMMM", { locale: es })}
+                                    {format(currentTime, t('dash.heroDateFormat'), { locale: dateLocale })}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-sm ring-1 ring-white/5">
@@ -166,12 +167,12 @@ export function Dashboard() {
                         {/* Welcome Text */}
                         <div className="space-y-1.5">
                             <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-lg">
-                                Hola, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-white">{settings.name || "Administrador"}</span>
+                                {t('dash.hello')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-white">{settings.name || t('dash.admin')}</span>
                             </h1>
                             <p className="text-slate-400 text-base md:text-lg font-light max-w-lg leading-relaxed">
-                                Resumen de tu negocio en tiempo real.
+                                {t('dash.summary')}
                                 <span className="block mt-2 text-base">
-                                    Tienes <span className="font-bold text-white bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30">{salesToday.length}</span> nuevas ventas el día de hoy.
+                                    {t('dash.salesTodayPrefix')} <span className="font-bold text-white bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30">{salesToday.length}</span> {t('dash.salesTodaySuffix')}
                                 </span>
                             </p>
                         </div>
@@ -197,7 +198,7 @@ export function Dashboard() {
             {/* KPI CARDS - Clean & Neutral */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <KPICard
-                    title="Ingresos Totales"
+                    title={t('dash.totalRevenue')}
                     value={`${settings.currencySymbol}${totalRevenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
                     icon={DollarSign}
                     trend={revenueToday > 0 ? "+Hoy" : "Neutral"}
@@ -206,7 +207,7 @@ export function Dashboard() {
                 />
 
                 <KPICard
-                    title="Ventas Totales"
+                    title={t('dash.totalSales')}
                     value={totalSales.toString()}
                     icon={ShoppingCart}
                     trend={salesToday.length > 0 ? "+Hoy" : "Neutral"}
@@ -215,20 +216,20 @@ export function Dashboard() {
                 />
 
                 <KPICard
-                    title="Inventario"
+                    title={t('dash.inventory')}
                     value={totalProducts.toString()}
                     icon={Package}
                     trend={lowStockCount > 0 ? "Alerta" : "OK"}
-                    trendValue={lowStockCount > 0 ? `${lowStockCount} bajos` : "Stock sano"}
+                    trendValue={lowStockCount > 0 ? t('dash.lowCount', { count: lowStockCount }) : t('dash.healthyStock')}
                     color={lowStockCount > 0 ? "amber" : "indigo"}
                 />
 
                 <KPICard
-                    title="Ticket Promedio"
+                    title={t('dash.avgTicket')}
                     value={`${settings.currencySymbol}${totalSales > 0 ? (totalRevenue / totalSales).toFixed(2) : "0.00"}`}
                     icon={TrendingUp}
                     trend="Estable"
-                    trendValue="General"
+                    trendValue={t('dash.general')}
                     color="purple"
                 />
             </div >
@@ -239,8 +240,8 @@ export function Dashboard() {
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-300 dark:border-gray-700 shadow-md">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Ingresos (7 días)</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Tendencia de venta diaria</p>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('dash.revenue7d')}</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{t('dash.dailyTrend')}</p>
                         </div>
                         <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600">
                             <Activity className="w-5 h-5" />
@@ -277,6 +278,7 @@ export function Dashboard() {
                                 <Area
                                     type="monotone"
                                     dataKey="ventas"
+                                    name={t('dash.revenue')}
                                     stroke="#3b82f6"
                                     strokeWidth={2}
                                     fillOpacity={1}
@@ -295,9 +297,9 @@ export function Dashboard() {
                             >
                                 <Activity className="w-10 h-10 text-gray-400 dark:text-gray-500" />
                             </motion.div>
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-200 mb-2 text-center px-4">Sin actividad reciente</h4>
+                            <h4 className="font-semibold text-gray-900 dark:text-gray-200 mb-2 text-center px-4">{t('dash.noActivity')}</h4>
                             <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-[280px] leading-relaxed px-4">
-                                Tu gráfica de ingresos cobrará vida cuando registres tu primera venta.
+                                {t('dash.noActivityDesc')}
                             </p>
                         </div>
                     )}
@@ -308,7 +310,7 @@ export function Dashboard() {
                     {/* Top Products */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-300 dark:border-gray-700 shadow-md h-[420px] flex flex-col overflow-hidden">
                         <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 shrink-0">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Top Productos</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('dash.topProducts')}</h3>
                         </div>
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 relative">
@@ -330,7 +332,7 @@ export function Dashboard() {
                                                         {settings.currencySymbol}{product.ventas.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                                     </span>
                                                     <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
-                                                        {product.quantity} unidades vendidas
+                                                        {t('dash.unitsSold', { count: product.quantity })}
                                                     </span>
                                                 </div>
                                             </div>
@@ -355,7 +357,7 @@ export function Dashboard() {
                                     >
                                         <Package className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                                     </motion.div>
-                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No hay ventas registradas</p>
+                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('dash.noSales')}</p>
                                 </div>
                             )}
                         </div>
@@ -372,8 +374,8 @@ export function Dashboard() {
                     onClick={() => navigate('/sales')}
                 >
                     <div>
-                        <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">POS Rápido</p>
-                        <h3 className="text-xl font-bold">Nueva Venta</h3>
+                        <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">{t('dash.quickPos')}</p>
+                        <h3 className="text-xl font-bold">{t('dash.newSale')}</h3>
                     </div>
                     <div className="p-3 bg-white/10 rounded-full">
                         <ShoppingCart className="w-6 h-6" />
@@ -387,8 +389,8 @@ export function Dashboard() {
                     onClick={() => navigate('/inventory')}
                 >
                     <div>
-                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">Catálogo</p>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Agregar Producto</h3>
+                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">{t('dash.catalog')}</p>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('dash.addProduct')}</h3>
                     </div>
                     <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full">
                         <Package className="w-6 h-6 text-gray-600 dark:text-gray-300" />
@@ -402,8 +404,8 @@ export function Dashboard() {
                     onClick={() => navigate('/reports')}
                 >
                     <div>
-                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">Análisis</p>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Ver Reportes</h3>
+                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">{t('dash.analysis')}</p>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('dash.viewReports')}</h3>
                     </div>
                     <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full">
                         <Activity className="w-6 h-6 text-gray-600 dark:text-gray-300" />

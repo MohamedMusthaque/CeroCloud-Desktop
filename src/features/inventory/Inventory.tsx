@@ -28,6 +28,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ProductCardSkeleton, TableRowSkeleton } from '@/components/ui/Skeleton'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { LazyImage } from '@/components/ui/LazyImage'
+import { useTranslation, unitLabel, t as translateNow } from '@/i18n'
 // If button component doesn't exist, I'll use standard buttons with Tailwind
 
 type SortField = 'name' | 'price' | 'stock'
@@ -37,6 +38,7 @@ export function Inventory() {
     // Global UI State
     const { inventoryViewMode, setInventoryViewMode } = useUIStore()
     const [settings] = useState(companyService.getSettings())
+    const { t } = useTranslation()
 
     // Local State
     const [products, setProducts] = useState<Product[]>([])
@@ -67,7 +69,8 @@ export function Inventory() {
             setProducts(data)
         } catch (error) {
             console.error('Error loading products:', error)
-            toast.error('Error al cargar productos')
+            // Non-reactive translate keeps the load function free of hook dependencies
+            toast.error(translateNow('inv.loadError'))
         } finally {
             setLoading(false)
         }
@@ -84,10 +87,10 @@ export function Inventory() {
             try {
                 await productService.delete(productToDelete)
                 setProducts(prev => prev.filter(p => p.id !== productToDelete))
-                toast.success('Producto eliminado correctamente')
+                toast.success(t('inv.deleted'))
             } catch (error) {
                 console.error('Error deleting product:', error)
-                toast.error('Error al eliminar producto')
+                toast.error(t('inv.deleteError'))
             } finally {
                 setConfirmOpen(false)
                 setProductToDelete(null)
@@ -102,9 +105,9 @@ export function Inventory() {
 
     // filtering & Sorting
     const categories = useMemo(() => {
-        const cats = new Set(products.map(p => p.category || 'Sin Categoría'))
+        const cats = new Set(products.map(p => p.category || t('inv.noCategory')))
         return ['all', ...Array.from(cats)]
-    }, [products])
+    }, [products, t])
 
     const filteredAndSortedProducts = useMemo(() => {
         let result = [...products]
@@ -121,7 +124,7 @@ export function Inventory() {
 
         // 2. Category Filter
         if (selectedCategory !== 'all') {
-            result = result.filter(p => (p.category || 'Sin Categoría') === selectedCategory)
+            result = result.filter(p => (p.category || t('inv.noCategory')) === selectedCategory)
         }
 
         // 3. Sorting
@@ -138,7 +141,7 @@ export function Inventory() {
         })
 
         return result
-    }, [products, searchTerm, selectedCategory, sortField, sortOrder])
+    }, [products, searchTerm, selectedCategory, sortField, sortOrder, t])
 
     // Render Helpers
     const toggleSort = (field: SortField) => {
@@ -166,10 +169,10 @@ export function Inventory() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                        Inventario
+                        {t('inv.title')}
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-1">
-                        Gestiona tus {products.length} productos
+                        {t('inv.subtitle', { count: products.length })}
                     </p>
                 </div>
                 <div className="flex gap-3">
@@ -178,14 +181,14 @@ export function Inventory() {
                         className="flex items-center gap-2 px-4 py-2 border border-indigo-200 dark:border-gray-700 bg-indigo-50 dark:bg-gray-800 text-indigo-700 dark:text-gray-300 rounded-xl hover:bg-indigo-100 dark:hover:bg-gray-700 hover:border-indigo-300 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
                     >
                         <Upload className="w-4 h-4" />
-                        Importar
+                        {t('inv.import')}
                     </button>
                     <button
                         onClick={() => setIsFormOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"
                     >
                         <Plus className="w-5 h-5" />
-                        Nuevo Producto
+                        {t('inv.newProduct')}
                     </button>
                 </div>
             </div>
@@ -197,7 +200,7 @@ export function Inventory() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, código, categoría..."
+                        placeholder={t('inv.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200"
@@ -221,7 +224,7 @@ export function Inventory() {
                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
                                         )}
                                     >
-                                        {cat === 'all' ? 'Todos' : cat}
+                                        {cat === 'all' ? t('inv.all') : cat}
                                     </button>
                                 ))}
                             </div>
@@ -234,7 +237,7 @@ export function Inventory() {
                                 >
                                     {categories.map(cat => (
                                         <option key={cat} value={cat}>
-                                            {cat === 'all' ? 'Todas las Categorías' : cat}
+                                            {cat === 'all' ? t('inv.allCategories') : cat}
                                         </option>
                                     ))}
                                 </select>
@@ -257,7 +260,7 @@ export function Inventory() {
                                     ? "bg-white dark:bg-gray-800 text-primary shadow-sm"
                                     : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                             )}
-                            title="Vista Lista"
+                            title={t('inv.listView')}
                         >
                             <List className="w-4 h-4" />
                         </button>
@@ -269,7 +272,7 @@ export function Inventory() {
                                     ? "bg-white dark:bg-gray-800 text-primary shadow-sm"
                                     : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                             )}
-                            title="Vista Cuadrícula"
+                            title={t('inv.gridView')}
                         >
                             <LayoutGrid className="w-4 h-4" />
                         </button>
@@ -298,11 +301,11 @@ export function Inventory() {
                                     <table className="w-full">
                                         <thead className="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                                             <tr>
-                                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Producto</th>
-                                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Categoría</th>
-                                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Precio</th>
-                                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
-                                                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+                                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('inv.col.product')}</th>
+                                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('inv.col.category')}</th>
+                                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('inv.col.price')}</th>
+                                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('inv.col.stock')}</th>
+                                                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('inv.col.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -325,10 +328,10 @@ export function Inventory() {
                             <Package className="w-10 h-10 text-gray-400" />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                            No se encontraron productos
+                            {t('inv.empty')}
                         </h3>
                         <p className="text-gray-500 mt-2">
-                            Intenta con otra búsqueda o agrega un nuevo producto.
+                            {t('inv.emptyDesc')}
                         </p>
                     </motion.div>
                 ) : (
@@ -350,30 +353,30 @@ export function Inventory() {
                                 {/* Fixed Header - Outside scroll container */}
                                 <div className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
                                     <div className="grid grid-cols-[80px_1fr_150px_120px_120px_120px] gap-4 px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center justify-center">Imagen</div>
+                                        <div className="flex items-center justify-center">{t('inv.col.image')}</div>
                                         <div
                                             className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
                                             onClick={() => toggleSort('name')}
                                         >
-                                            Producto
+                                            {t('inv.col.product')}
                                             <ArrowUpDown className="w-3 h-3" />
                                         </div>
-                                        <div className="hidden md:flex items-center">Categoría</div>
+                                        <div className="hidden md:flex items-center">{t('inv.col.category')}</div>
                                         <div
                                             className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
                                             onClick={() => toggleSort('price')}
                                         >
-                                            Precio
+                                            {t('inv.col.price')}
                                             <ArrowUpDown className="w-3 h-3" />
                                         </div>
                                         <div
                                             className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
                                             onClick={() => toggleSort('stock')}
                                         >
-                                            Stock
+                                            {t('inv.col.stock')}
                                             <ArrowUpDown className="w-3 h-3" />
                                         </div>
-                                        <div className="flex items-center justify-end">Acciones</div>
+                                        <div className="flex items-center justify-end">{t('inv.col.actions')}</div>
                                     </div>
                                 </div>
 
@@ -438,9 +441,9 @@ export function Inventory() {
 
             <ConfirmDialog
                 isOpen={confirmOpen}
-                title="¿Eliminar producto?"
-                description="Esta acción no se puede deshacer. El producto será eliminado permanentemente del inventario."
-                confirmText="Sí, eliminar"
+                title={t('inv.deleteTitle')}
+                description={t('inv.deleteDesc')}
+                confirmText={t('inv.deleteConfirm')}
                 variant="danger"
                 onConfirm={confirmDelete}
                 onCancel={() => setConfirmOpen(false)}
@@ -452,6 +455,7 @@ export function Inventory() {
 // --- Subcomponents ---
 
 function ProductCard({ product, settings, onEdit, onDelete }: { product: Product; settings?: any; onEdit: () => void; onDelete: () => void }) {
+    const { t } = useTranslation()
     const isLowStock = product.stock <= (settings?.inventory?.lowStockThreshold ?? product.min_stock)
 
     return (
@@ -488,7 +492,7 @@ function ProductCard({ product, settings, onEdit, onDelete }: { product: Product
                         whileTap={{ scale: 0.9 }}
                         onClick={onEdit}
                         className="p-2.5 bg-white rounded-full text-gray-900 hover:bg-primary hover:text-white transition-colors shadow-lg"
-                        title="Editar"
+                        title={t('common.edit')}
                     >
                         <Edit2 className="w-4 h-4" />
                     </motion.button>
@@ -497,7 +501,7 @@ function ProductCard({ product, settings, onEdit, onDelete }: { product: Product
                         whileTap={{ scale: 0.9 }}
                         onClick={onDelete}
                         className="p-2.5 bg-white rounded-full text-red-600 hover:bg-red-500 hover:text-white transition-colors shadow-lg"
-                        title="Eliminar"
+                        title={t('common.delete')}
                     >
                         <Trash2 className="w-4 h-4" />
                     </motion.button>
@@ -531,7 +535,7 @@ function ProductCard({ product, settings, onEdit, onDelete }: { product: Product
                             : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                     )}>
                         {isLowStock ? <AlertTriangle className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
-                        {product.stock} un.
+                        {t('inv.unitsShort', { count: product.stock })}
                     </div>
                 </div>
             </div>
@@ -540,6 +544,7 @@ function ProductCard({ product, settings, onEdit, onDelete }: { product: Product
 }
 
 function ProductRow({ product, settings, onEdit, onDelete, virtualStyle }: { product: Product; settings?: any; onEdit: () => void; onDelete: () => void; virtualStyle?: React.CSSProperties }) {
+    const { t } = useTranslation()
     const isLowStock = product.stock <= (settings?.inventory?.lowStockThreshold ?? product.min_stock)
 
     return (
@@ -577,7 +582,7 @@ function ProductRow({ product, settings, onEdit, onDelete, virtualStyle }: { pro
             {/* Category */}
             <div className="hidden md:block">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                    {product.category || 'Sin Categoría'}
+                    {product.category || t('inv.noCategory')}
                 </span>
             </div>
 
@@ -587,7 +592,7 @@ function ProductRow({ product, settings, onEdit, onDelete, virtualStyle }: { pro
                     {settings?.currencySymbol || '$'}{product.price.toFixed(2)}
                 </p>
                 {product.cost && (
-                    <p className="text-xs text-gray-500">Costo: {settings?.currencySymbol || '$'}{product.cost.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">{t('inv.cost', { amount: `${settings?.currencySymbol || '$'}${product.cost.toFixed(2)}` })}</p>
                 )}
             </div>
 
@@ -602,7 +607,7 @@ function ProductRow({ product, settings, onEdit, onDelete, virtualStyle }: { pro
                         "text-sm font-medium",
                         isLowStock ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
                     )}>
-                        {product.stock} {product.unit}
+                        {product.stock} {unitLabel(product.unit)}
                     </span>
                 </div>
             </div>
@@ -612,14 +617,14 @@ function ProductRow({ product, settings, onEdit, onDelete, virtualStyle }: { pro
                 <button
                     onClick={onEdit}
                     className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                    title="Editar"
+                    title={t('common.edit')}
                 >
                     <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                     onClick={onDelete}
                     className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    title="Eliminar"
+                    title={t('common.delete')}
                 >
                     <Trash2 className="w-4 h-4" />
                 </button>

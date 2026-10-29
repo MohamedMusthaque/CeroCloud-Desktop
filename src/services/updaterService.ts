@@ -3,6 +3,8 @@
  * Maneja la verificación, descarga e instalación de actualizaciones
  */
 
+import { t } from '@/i18n'
+
 export interface UpdateInfo {
     version: string
     releaseDate?: string
@@ -38,7 +40,7 @@ class UpdaterService {
      */
     async checkForUpdates(): Promise<{ success: boolean; data?: UpdateInfo; error?: string }> {
         if (!window.electronAPI?.updater) {
-            return { success: false, error: 'API de actualización no disponible' }
+            return { success: false, error: t('updaterService.unavailable') }
         }
 
         try {
@@ -55,7 +57,7 @@ class UpdaterService {
      */
     async downloadUpdate(): Promise<{ success: boolean; error?: string }> {
         if (!window.electronAPI?.updater) {
-            return { success: false, error: 'API de actualización no disponible' }
+            return { success: false, error: t('updaterService.unavailable') }
         }
 
         try {
@@ -72,7 +74,7 @@ class UpdaterService {
      */
     async quitAndInstall(): Promise<void> {
         if (!window.electronAPI?.updater) {
-            throw new Error('API de actualización no disponible')
+            throw new Error(t('updaterService.unavailable'))
         }
 
         await window.electronAPI.updater.quitAndInstall()
@@ -102,7 +104,7 @@ class UpdaterService {
      */
     async setAutoCheck(enabled: boolean, intervalHours: number = 6): Promise<void> {
         if (!window.electronAPI?.updater) {
-            throw new Error('API de actualización no disponible')
+            throw new Error(t('updaterService.unavailable'))
         }
 
         await window.electronAPI.updater.setAutoCheck(enabled, intervalHours)

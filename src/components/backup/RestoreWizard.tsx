@@ -6,6 +6,7 @@ import { X, Upload, CheckCircle, AlertTriangle, FileArchive, Loader2, Lock, Eye,
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { zipBackupService } from '@/services/zipBackupService'
+import { useTranslation } from '@/i18n'
 
 interface RestoreWizardProps {
     onClose: () => void
@@ -15,6 +16,7 @@ interface RestoreWizardProps {
 type Step = 'upload-zip' | 'password' | 'confirm' | 'restoring' | 'complete'
 
 export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps) {
+    const { t, locale } = useTranslation()
     const [step, setStep] = useState<Step>('upload-zip')
     const [zipFile, setZipFile] = useState<File | null>(null)
     const [backupInfo, setBackupInfo] = useState<any>(null)
@@ -25,12 +27,12 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
 
     const handleZipUpload = async (file: File) => {
         if (!file.name.endsWith('.cerobak') && !file.name.endsWith('.cerobak')) {
-            toast.error('Por favor selecciona un archivo .cerobak válido')
+            toast.error(t('rw.invalidExt'))
             return
         }
 
         try {
-            const loadingToast = toast.loading('Analizando archivo de respaldo...')
+            const loadingToast = toast.loading(t('rw.analyzing'))
 
             // Simular un pequeño delay para UX
             await new Promise(resolve => setTimeout(resolve, 600))
@@ -39,7 +41,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
             toast.dismiss(loadingToast)
 
             if (!info.success) {
-                toast.error(info.error || 'Archivo de backup inválido')
+                toast.error(info.error || t('rw.invalidFile'))
                 return
             }
 
@@ -49,14 +51,14 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
             setIsEncrypted(encrypted)
 
             if (encrypted) {
-                toast.info('Este respaldo está protegido con contraseña')
+                toast.info(t('rw.protected'))
                 setStep('password')
             } else {
-                toast.success('Archivo validado correctamente')
+                toast.success(t('rw.validated'))
                 setStep('confirm')
             }
         } catch (error) {
-            toast.error('Error al leer el archivo')
+            toast.error(t('rw.readError'))
         }
     }
 
@@ -77,7 +79,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
             const result = await zipBackupService.restoreZipBackup(zipFile, isEncrypted ? password : undefined)
 
             if (!result.success || !result.data) {
-                toast.error(result.error || 'Error al leer el backup')
+                toast.error(result.error || t('rw.readBackupError'))
                 setStep('upload-zip')
                 return
             }
@@ -91,7 +93,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
             })
 
             if (!restoreResult.success) {
-                throw new Error(restoreResult.error || 'Error al restaurar la base de datos')
+                throw new Error(restoreResult.error || t('rw.restoreDbError'))
             }
 
             // Restore settings
@@ -100,10 +102,10 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
             }
 
             setStep('complete')
-            toast.success('Base de datos restaurada correctamente')
+            toast.success(t('rw.restored'))
         } catch (error) {
             console.error(error)
-            toast.error('Error crítico durante la restauración')
+            toast.error(t('rw.criticalError'))
             setStep('upload-zip')
         }
     }
@@ -138,7 +140,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                             )}
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <Upload className="w-5 h-5 text-primary" />
-                                Restaurar Copia
+                                {t('rw.title')}
                             </h2>
                         </div>
                         {step !== 'restoring' && (
@@ -170,10 +172,10 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                             </div>
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                                            Selecciona tu Respaldo
+                                            {t('rw.selectTitle')}
                                         </h3>
                                         <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                                            Sube el archivo <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-xs font-mono">.cerobak</code> para comenzar
+                                            {t('rw.uploadPrefix')} <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-xs font-mono">.cerobak</code> {t('rw.uploadSuffix')}
                                         </p>
                                     </div>
 
@@ -200,9 +202,9 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                                 <Upload className="w-6 h-6" />
                                             </div>
                                             <p className="text-base font-bold text-gray-900 dark:text-white mb-0.5">
-                                                Click para buscar archivo
+                                                {t('rw.browse')}
                                             </p>
-                                            <p className="text-xs text-gray-500">o arrástralo aquí dentro</p>
+                                            <p className="text-xs text-gray-500">{t('rw.dragHere')}</p>
                                         </div>
                                     </div>
 
@@ -211,9 +213,9 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                             <AlertTriangle className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-amber-800 dark:text-amber-200 text-xs mb-0.5">Advertencia Importante</h4>
+                                            <h4 className="font-bold text-amber-800 dark:text-amber-200 text-xs mb-0.5">{t('rw.warningTitle')}</h4>
                                             <p className="text-xs text-amber-700/80 dark:text-amber-300/70 leading-relaxed">
-                                                Al restaurar, <strong>todos los datos actuales serán eliminados</strong> y reemplazados. Asegúrate de tener una copia reciente.
+                                                {t('rw.warningPrefix')} <strong>{t('rw.warningStrong')}</strong> {t('rw.warningSuffix')}
                                             </p>
                                         </div>
                                     </div>
@@ -234,23 +236,23 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                             <Lock className="w-10 h-10 text-purple-600 dark:text-purple-400" />
                                         </div>
                                         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                                            Backup Protegido
+                                            {t('rw.protectedTitle')}
                                         </h3>
                                         <p className="text-gray-500 dark:text-gray-400">
-                                            Este archivo fue cifrado por seguridad
+                                            {t('rw.protectedDesc')}
                                         </p>
                                     </div>
 
                                     <div className="space-y-4">
                                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">
-                                            Contraseña de descifrado
+                                            {t('rw.password')}
                                         </label>
                                         <div className="relative group">
                                             <input
                                                 type={showPassword ? 'text' : 'password'}
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
-                                                placeholder="Ingresa la contraseña del respaldo"
+                                                placeholder={t('rw.passwordPlaceholder')}
                                                 className="w-full px-5 py-4 pr-12 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-lg"
                                                 autoFocus
                                             />
@@ -263,19 +265,19 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                             </button>
                                         </div>
                                         <p className="text-xs text-center text-gray-400">
-                                            Si has olvidado la contraseña, no será posible recuperar los datos.
+                                            {t('rw.forgotHint')}
                                         </p>
                                     </div>
 
                                     <button
                                         onClick={async () => {
                                             if (!password) {
-                                                toast.error('Por favor ingresa la contraseña')
+                                                toast.error(t('rw.enterPassword'))
                                                 return
                                             }
                                             if (!zipFile) return
 
-                                            const loadingToast = toast.loading('Verificando credenciales...')
+                                            const loadingToast = toast.loading(t('rw.verifying'))
                                             try {
                                                 const info = await zipBackupService.getBackupInfo(zipFile, password)
                                                 toast.dismiss(loadingToast)
@@ -284,17 +286,17 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                                     setBackupInfo(info)
                                                     setStep('confirm')
                                                 } else {
-                                                    toast.error(info.error || 'Contraseña incorrecta')
+                                                    toast.error(info.error || t('rw.wrongPassword'))
                                                 }
                                             } catch (error) {
                                                 toast.dismiss(loadingToast)
-                                                toast.error('Error al validar contraseña')
+                                                toast.error(t('rw.validateError'))
                                             }
                                         }}
                                         disabled={!password}
                                         className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold transition-all disabled:opacity-50 shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2"
                                     >
-                                        Desbloquear y Continuar
+                                        {t('rw.unlock')}
                                     </button>
                                 </motion.div>
                             )}
@@ -313,15 +315,15 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                             <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                                            ¿Confirmar Restauración?
+                                            {t('rw.confirmTitle')}
                                         </h3>
                                         <p className="text-sm text-red-500 dark:text-red-400 mt-0.5 font-medium">
-                                            Esta acción es irreversible y sobrescribirá tus datos
+                                            {t('rw.confirmDesc')}
                                         </p>
                                     </div>
 
                                     <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
-                                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 border-b border-gray-200 dark:border-gray-800 pb-1">Contenido de la Copia</h4>
+                                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 border-b border-gray-200 dark:border-gray-800 pb-1">{t('rw.contents')}</h4>
                                         <div className="grid grid-cols-2 gap-3">
                                             {backupInfo.metadata && (
                                                 <div className="col-span-2 flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
@@ -329,9 +331,9 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                                         <Calendar className="w-4 h-4" />
                                                     </div>
                                                     <div className="overflow-hidden">
-                                                        <p className="text-[10px] text-gray-500 uppercase">Fecha de Creación</p>
+                                                        <p className="text-[10px] text-gray-500 uppercase">{t('rw.createdAt')}</p>
                                                         <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                                                            {new Date(backupInfo.metadata.createdAt).toLocaleString()}
+                                                            {new Date(backupInfo.metadata.createdAt).toLocaleString(locale)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -344,7 +346,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                                             <Package className="w-4 h-4" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase">Productos</p>
+                                                            <p className="text-[10px] text-gray-500 uppercase">{t('rw.products')}</p>
                                                             <p className="text-sm font-bold text-gray-900 dark:text-white">
                                                                 {backupInfo.stats.productsCount}
                                                             </p>
@@ -355,7 +357,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                                             <ShoppingCart className="w-4 h-4" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase">Ventas</p>
+                                                            <p className="text-[10px] text-gray-500 uppercase">{t('rw.sales')}</p>
                                                             <p className="text-sm font-bold text-gray-900 dark:text-white">
                                                                 {backupInfo.stats.salesCount}
                                                             </p>
@@ -366,7 +368,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                                             <Users className="w-4 h-4" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase">Clientes</p>
+                                                            <p className="text-[10px] text-gray-500 uppercase">{t('rw.clients')}</p>
                                                             <p className="text-sm font-bold text-gray-900 dark:text-white">
                                                                 {backupInfo.stats.clientsCount}
                                                             </p>
@@ -377,7 +379,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                                             <Truck className="w-4 h-4" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase">Proveedores</p>
+                                                            <p className="text-[10px] text-gray-500 uppercase">{t('rw.suppliers')}</p>
                                                             <p className="text-sm font-bold text-gray-900 dark:text-white">
                                                                 {backupInfo.stats.suppliersCount}
                                                             </p>
@@ -393,14 +395,14 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                             onClick={() => setStep('upload-zip')}
                                             className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold transition-all text-sm"
                                         >
-                                            Cancelar
+                                            {t('common.cancel')}
                                         </button>
                                         <button
                                             onClick={handleConfirmRestore}
                                             className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-600/30 flex items-center justify-center gap-2 hover:-translate-y-0.5 text-sm"
                                         >
                                             <Database className="w-4 h-4" />
-                                            Restaurar Datos
+                                            {t('rw.restoreData')}
                                         </button>
                                     </div>
                                 </motion.div>
@@ -419,10 +421,10 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                         <Loader2 className="w-20 h-20 text-primary animate-spin relative z-10" />
                                     </div>
                                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                                        Restaurando Base de Datos...
+                                        {t('rw.restoring')}
                                     </h3>
                                     <p className="text-gray-500 max-w-xs mx-auto">
-                                        Por favor no cierres la aplicación hasta que el proceso termine.
+                                        {t('rw.dontClose')}
                                     </p>
                                 </motion.div>
                             )}
@@ -439,10 +441,10 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                         <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-500 drop-shadow-sm" />
                                     </div>
                                     <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                                        ¡Restauración Exitosa!
+                                        {t('rw.success')}
                                     </h3>
                                     <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto text-lg">
-                                        Todos tus datos han sido recuperados correctamente. La aplicación se reiniciará.
+                                        {t('rw.successDesc')}
                                     </p>
                                     <button
                                         onClick={() => {
@@ -452,7 +454,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
                                         className="px-10 py-4 bg-primary text-white rounded-2xl font-bold hover:scale-105 transition-transform shadow-xl shadow-primary/30 flex items-center gap-2"
                                     >
                                         <Database className="w-5 h-5" />
-                                        Reiniciar Aplicación Ahora
+                                        {t('rw.restartNow')}
                                     </button>
                                 </motion.div>
                             )}

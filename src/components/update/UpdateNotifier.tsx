@@ -3,8 +3,10 @@ import { updaterService, UpdateStatus, DownloadProgress, UpdateInfo } from '@/se
 import { toast } from 'sonner'
 import { Download, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { t, useTranslation } from '@/i18n'
 
 export function UpdateNotifier() {
+    useTranslation()
     const [updateAvailable, setUpdateAvailable] = useState(false)
     const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
     const [downloading, setDownloading] = useState(false)
@@ -14,13 +16,13 @@ export function UpdateNotifier() {
     // Handlers definidos con useCallback para mantener referencias estables
     const handleDownload = useCallback(async () => {
         toast.dismiss('update-available')
-        toast.loading('⬇️ Descargando actualización...', {
+        toast.loading(t('updater.downloading'), {
             id: 'downloading-update',
         })
 
         const result = await updaterService.downloadUpdate()
         if (!result.success) {
-            toast.error(`Error al descargar: ${result.error}`, {
+            toast.error(t('updater.downloadError', { error: result.error ?? '' }), {
                 id: 'downloading-update',
             })
         }
@@ -28,7 +30,7 @@ export function UpdateNotifier() {
 
     const handleInstall = useCallback(async () => {
         toast.dismiss('update-downloaded')
-        toast.info('🔄 Instalando actualización...', {
+        toast.info(t('updater.installing'), {
             id: 'installing-update',
             duration: 2000,
         })
@@ -45,7 +47,7 @@ export function UpdateNotifier() {
 
             switch (status.event) {
                 case 'checking-for-update':
-                    toast.info('🔍 Verificando actualizaciones...', {
+                    toast.info(t('updater.checking'), {
                         id: 'checking-update',
                         duration: 2000,
                     })
@@ -55,12 +57,12 @@ export function UpdateNotifier() {
                     setUpdateAvailable(true)
                     setUpdateInfo(status.data as UpdateInfo)
                     toast.success(
-                        `🎉 ¡Nueva versión ${(status.data as UpdateInfo).version} disponible!`,
+                        t('updater.available', { version: (status.data as UpdateInfo).version }),
                         {
                             id: 'update-available',
                             duration: Infinity,
                             action: {
-                                label: 'Descargar',
+                                label: t('updater.download'),
                                 onClick: () => handleDownload(),
                             },
                         }
@@ -80,12 +82,12 @@ export function UpdateNotifier() {
                     setDownloading(false)
                     setUpdateDownloaded(true)
                     toast.success(
-                        `✅ Actualización ${(status.data as UpdateInfo).version} descargada`,
+                        t('updater.downloaded', { version: (status.data as UpdateInfo).version }),
                         {
                             id: 'update-downloaded',
                             duration: Infinity,
                             action: {
-                                label: 'Instalar y Reiniciar',
+                                label: t('updater.installRestart'),
                                 onClick: () => handleInstall(),
                             },
                         }
@@ -95,9 +97,9 @@ export function UpdateNotifier() {
                 case 'error': {
                     setDownloading(false)
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const errMsg = (status.data as any)?.message || 'Desconocido'
+                    const errMsg = (status.data as any)?.message || t('updater.unknown')
                     toast.error(
-                        `❌ Error al actualizar: ${errMsg}`,
+                        t('updater.error', { error: errMsg }),
                         {
                             id: 'update-error',
                             duration: 5000,
@@ -133,7 +135,7 @@ export function UpdateNotifier() {
                                         <Download className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-sm">Descargando actualización</h3>
+                                        <h3 className="font-bold text-sm">{t('updater.downloadingTitle')}</h3>
                                         <p className="text-xs text-white/80">v{updateInfo?.version}</p>
                                     </div>
                                 </div>

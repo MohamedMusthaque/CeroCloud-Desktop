@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { SiGoogledrive, SiDropbox } from 'react-icons/si'
 import { zipBackupService } from '@/services/zipBackupService'
 import { saveAs } from 'file-saver'
+import { useTranslation } from '@/i18n'
 
 interface BackupWizardProps {
     onClose: () => void
@@ -16,6 +17,7 @@ interface BackupWizardProps {
 type Step = 'create' | 'security' | 'choose' | 'guide-local' | 'guide-drive' | 'guide-dropbox' | 'complete'
 
 export function BackupWizard({ onClose }: BackupWizardProps) {
+    const { t } = useTranslation()
     const [step, setStep] = useState<Step>('create')
     const [backupFile, setBackupFile] = useState<{ filename: string } | null>(null)
     const [creating, setCreating] = useState(false)
@@ -44,13 +46,13 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                 setBackupFile({ filename: result.filename })
                 setBackupBlob(result.content)
                 setStep('choose')
-                toast.success(withPassword ? '🔐 Backup cifrado generado exitosamente' : 'Backup generado exitosamente')
+                toast.success(withPassword ? t('bw.encryptedCreated') : t('bw.created'))
             } else {
-                toast.error('Error al crear el backup: ' + (result.error || 'Desconocido'))
+                toast.error(t('bw.createErrorDetail', { error: result.error || t('bw.unknown') }))
             }
         } catch (error) {
             console.error(error)
-            toast.error('Error al crear el backup')
+            toast.error(t('bw.createError'))
         } finally {
             setCreating(false)
         }
@@ -59,20 +61,20 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
     const handleDownload = () => {
         if (backupBlob && backupFile) {
             saveAs(backupBlob, backupFile.filename)
-            toast.success('Archivo guardado en Descargas')
+            toast.success(t('bw.saved'))
         } else {
-            toast.error('No se pudo encontrar el archivo generado')
+            toast.error(t('bw.fileNotFound'))
         }
     }
 
     const handleSecurityContinue = () => {
         if (useEncryption) {
             if (!password || password.length < 6) {
-                toast.error('La contraseña debe tener al menos 6 caracteres')
+                toast.error(t('bw.passwordMin'))
                 return
             }
             if (password !== confirmPassword) {
-                toast.error('Las contraseñas no coinciden')
+                toast.error(t('bw.passwordMismatch'))
                 return
             }
             handleCreateBackup(password)
@@ -119,14 +121,14 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                 <button
                                     onClick={handleBack}
                                     className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all group"
-                                    title="Volver atrás"
+                                    title={t('bw.back')}
                                 >
                                     <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
                                 </button>
                             )}
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <Save className="w-5 h-5 text-primary" />
-                                Copia de Seguridad
+                                {t('bw.title')}
                             </h2>
                         </div>
                         <button
@@ -160,12 +162,12 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
 
                                     <div className="max-w-md">
                                         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                                            {creating ? 'Generando Respaldo...' : 'Crear Copia de Seguridad'}
+                                            {creating ? t('bw.generating') : t('bw.createTitle')}
                                         </h3>
                                         <p className="text-gray-500 text-lg leading-relaxed">
                                             {creating
-                                                ? 'Por favor espera, estamos empaquetando todos tus datos de forma segura.'
-                                                : 'CeroCloud generará una copia completa de tus datos incluyendo productos, ventas y proveedores.'}
+                                                ? t('bw.generatingDesc')
+                                                : t('bw.createDesc')}
                                         </p>
                                     </div>
 
@@ -175,7 +177,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                         className="px-10 py-4 bg-primary text-white text-lg font-bold rounded-2xl shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-1 hover:shadow-primary/40 transition-all disabled:opacity-50 disabled:transform-none disabled:shadow-none flex items-center gap-3"
                                     >
                                         {creating && <Loader2 className="w-5 h-5 animate-spin" />}
-                                        {creating ? 'Procesando...' : 'Iniciar Respaldo Ahora'}
+                                        {creating ? t('bw.processing') : t('bw.startNow')}
                                     </button>
                                 </motion.div>
                             )}
@@ -194,10 +196,10 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                             <Shield className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                                            Proteger con Contraseña
+                                            {t('bw.protectTitle')}
                                         </h3>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Agrega una capa extra de seguridad a tu copia
+                                            {t('bw.protectDesc')}
                                         </p>
                                     </div>
 
@@ -225,16 +227,16 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                 <div className="flex-1">
                                                     <h4 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-base">
                                                         <Lock className="w-4 h-4 text-purple-600" />
-                                                        Cifrar Copia de Seguridad
+                                                        {t('bw.encrypt')}
                                                     </h4>
                                                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
                                                         {useEncryption ? (
                                                             <>
                                                                 <ShieldCheck className="w-3 h-3 text-green-600" />
-                                                                Tu backup será cifrado con AES-256 (Máxima seguridad)
+                                                                {t('bw.encryptOn')}
                                                             </>
                                                         ) : (
-                                                            'Tu backup será descargado sin cifrado (Estándar)'
+                                                            t('bw.encryptOff')
                                                         )}
                                                     </p>
                                                 </div>
@@ -253,14 +255,14 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                 <div className="space-y-3 pt-1">
                                                     <div>
                                                         <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">
-                                                            Contraseña de cifrado
+                                                            {t('bw.password')}
                                                         </label>
                                                         <div className="relative">
                                                             <input
                                                                 type={showPassword ? 'text' : 'password'}
                                                                 value={password}
                                                                 onChange={(e) => setPassword(e.target.value)}
-                                                                placeholder="Mínimo 6 caracteres"
+                                                                placeholder={t('bw.passwordPlaceholder')}
                                                                 className="w-full px-4 py-2.5 pr-10 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-sm"
                                                             />
                                                             <button
@@ -275,20 +277,20 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
 
                                                     <div>
                                                         <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">
-                                                            Confirmar Contraseña
+                                                            {t('bw.confirmPassword')}
                                                         </label>
                                                         <input
                                                             type={showPassword ? 'text' : 'password'}
                                                             value={confirmPassword}
                                                             onChange={(e) => setConfirmPassword(e.target.value)}
-                                                            placeholder="Repite la contraseña"
+                                                            placeholder={t('bw.confirmPlaceholder')}
                                                             className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-sm"
                                                         />
                                                     </div>
 
                                                     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex gap-3 text-xs text-amber-800 dark:text-amber-200">
                                                         <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
-                                                        <p>Importante: Guarda tu contraseña en un lugar seguro. <strong>Sin ella será imposible recuperar la información.</strong></p>
+                                                        <p>{t('bw.passwordWarning')} <strong>{t('bw.passwordWarningStrong')}</strong></p>
                                                     </div>
                                                 </div>
                                             </motion.div>
@@ -302,7 +304,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                             className="w-full px-6 py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-purple-600/30 hover:-translate-y-0.5 text-sm"
                                         >
                                             {creating && <Loader2 className="w-4 h-4 animate-spin" />}
-                                            {creating ? 'Creando Backup...' : (useEncryption ? 'Generar Copia Protegida' : 'Generar Copia sin Cifrar')}
+                                            {creating ? t('bw.creating') : (useEncryption ? t('bw.generateProtected') : t('bw.generatePlain'))}
                                         </button>
                                     </div>
                                 </motion.div>
@@ -324,7 +326,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                             <CheckCircle className="w-6 h-6 drop-shadow-sm" />
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                            Respaldo Listo
+                                            {t('bw.ready')}
                                         </h3>
 
                                         <div className="mt-2 mx-auto max-w-sm bg-gray-50/80 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 flex items-center gap-3 shadow-sm group hover:border-primary/30 transition-colors backdrop-blur-sm">
@@ -332,7 +334,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                 <FileJson className="w-4 h-4" />
                                             </div>
                                             <div className="flex-1 text-left overflow-hidden">
-                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-0">Archivo generado</p>
+                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-0">{t('bw.generatedFile')}</p>
                                                 <p className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate font-mono">
                                                     {backupFile?.filename}
                                                 </p>
@@ -344,8 +346,8 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                         {[
                                             {
                                                 icon: HardDrive,
-                                                title: 'Guardar en mi PC',
-                                                desc: 'Descargar archivo localmente',
+                                                title: t('bw.saveToPc'),
+                                                desc: t('bw.saveToPcDesc'),
                                                 color: 'gray',
                                                 iconBg: 'bg-gray-100 dark:bg-gray-800',
                                                 iconColor: 'text-gray-600 dark:text-gray-300',
@@ -354,7 +356,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                             {
                                                 icon: SiGoogledrive,
                                                 title: 'Google Drive',
-                                                desc: 'Subir a la nube de Google',
+                                                desc: t('bw.driveDesc'),
                                                 color: 'blue',
                                                 iconBg: 'bg-[#4285F4]/10',
                                                 iconColor: 'text-[#4285F4]',
@@ -363,7 +365,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                             {
                                                 icon: SiDropbox,
                                                 title: 'Dropbox',
-                                                desc: 'Subir a tu cuenta de Dropbox',
+                                                desc: t('bw.dropboxDesc'),
                                                 color: 'cyan',
                                                 iconBg: 'bg-[#0061FF]/10',
                                                 iconColor: 'text-[#0061FF]',
@@ -398,7 +400,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                 <ImageIcon className="w-4 h-4" />
                                             </div>
                                             <p className="text-xs font-medium text-purple-900 dark:text-purple-200 leading-tight">
-                                                Incluye imágenes locales. <span className="opacity-75 font-normal">Sigue las instrucciones de nube para respaldarlas.</span>
+                                                {t('bw.includesImages')} <span className="opacity-75 font-normal">{t('bw.includesImagesHint')}</span>
                                             </p>
                                         </div>
                                     )}
@@ -419,10 +421,10 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                 <CheckCircle className="w-8 h-8 text-green-600" />
                                             </div>
                                             <div className="text-center">
-                                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">¡Proceso Finalizado!</h3>
-                                                <p className="text-sm text-gray-500">Tus datos están seguros.</p>
+                                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('bw.finished')}</h3>
+                                                <p className="text-sm text-gray-500">{t('bw.dataSafe')}</p>
                                             </div>
-                                            <button onClick={onClose} className="mt-2 px-8 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold hover:scale-105 transition-transform text-sm">Cerrar</button>
+                                            <button onClick={onClose} className="mt-2 px-8 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold hover:scale-105 transition-transform text-sm">{t('bw.close')}</button>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
@@ -438,9 +440,9 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                             <div className="mx-auto w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/10 mb-3 rotate-3 group-hover:rotate-0 transition-transform duration-500 border border-gray-100 dark:border-gray-700">
                                                                 <HardDrive className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                                                             </div>
-                                                            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Descarga Local</h4>
+                                                            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{t('bw.localTitle')}</h4>
                                                             <p className="text-sm text-gray-500 max-w-xs mx-auto mb-2">
-                                                                Guarda tu copia de seguridad directamente en este dispositivo o unidad externa.
+                                                                {t('bw.localDesc')}
                                                             </p>
                                                         </div>
 
@@ -450,7 +452,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                                 <FileJson className="w-5 h-5" />
                                                             </div>
                                                             <div className="flex-1 overflow-hidden">
-                                                                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-0.5">Nombre del archivo:</p>
+                                                                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-0.5">{t('bw.fileName')}</p>
                                                                 <p className="text-sm font-mono text-gray-700 dark:text-gray-300 truncate font-medium select-all">
                                                                     {backupFile?.filename}
                                                                 </p>
@@ -463,7 +465,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                             className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 hover:-translate-y-0.5"
                                                         >
                                                             <Save className="w-5 h-5" />
-                                                            <span className="text-sm">Descargar Archivo Ahora</span>
+                                                            <span className="text-sm">{t('bw.downloadNow')}</span>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -475,7 +477,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                     <div className="text-center mb-4">
                                                         <SiGoogledrive className="w-12 h-12 mx-auto text-[#4285F4] mb-2 drop-shadow-sm" />
                                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white">Google Drive</h3>
-                                                        <p className="text-sm text-gray-500">Respaldo seguro en la nube</p>
+                                                        <p className="text-sm text-gray-500">{t('bw.driveSubtitle')}</p>
                                                     </div>
 
                                                     <div className="grid gap-3">
@@ -484,8 +486,8 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-8 h-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-[#4285F4] font-bold text-base border border-blue-100 dark:border-blue-900/50">1</div>
                                                                 <div className="text-left">
-                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">Descarga el archivo</p>
-                                                                    <p className="text-[10px] text-gray-500">Necesario para subirlo después</p>
+                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{t('bw.downloadFile')}</p>
+                                                                    <p className="text-[10px] text-gray-500">{t('bw.downloadFileDesc')}</p>
                                                                 </div>
                                                             </div>
                                                             <button
@@ -493,7 +495,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                                 className="px-4 py-2 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 text-[#4285F4] font-bold rounded-lg text-xs border border-blue-200 dark:border-blue-900 shadow-sm flex items-center gap-1.5 transition-all"
                                                             >
                                                                 <Download className="w-3.5 h-3.5" />
-                                                                Guardar
+                                                                {t('bw.save')}
                                                             </button>
                                                         </div>
 
@@ -502,15 +504,15 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                             <div className="flex gap-3">
                                                                 <span className="flex-shrink-0 w-6 h-6 bg-[#4285F4] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md shadow-blue-500/20">2</span>
                                                                 <div>
-                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">Abre Google Drive</p>
-                                                                    <p className="text-xs text-gray-500">Inicia sesión en tu cuenta de Google</p>
+                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{t('bw.openDrive')}</p>
+                                                                    <p className="text-xs text-gray-500">{t('bw.openDriveDesc')}</p>
                                                                 </div>
                                                             </div>
                                                             <div className="w-0.5 h-4 bg-gray-200 dark:bg-gray-700 ml-3 -my-1.5"></div>
                                                             <div className="flex gap-3">
                                                                 <span className="flex-shrink-0 w-6 h-6 bg-[#34A853] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md shadow-green-500/20">3</span>
                                                                 <div>
-                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">Sube el archivo</p>
+                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{t('bw.uploadFile')}</p>
                                                                     <p className="text-xs text-gray-500 break-all">{backupFile?.filename}</p>
                                                                 </div>
                                                             </div>
@@ -522,7 +524,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                         className="w-full py-3 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 text-sm"
                                                     >
                                                         <ExternalLink className="w-4 h-4" />
-                                                        Abrir Google Drive
+                                                        {t('bw.openDriveButton')}
                                                     </button>
                                                 </div>
                                             )}
@@ -533,7 +535,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                     <div className="text-center mb-4">
                                                         <SiDropbox className="w-12 h-12 mx-auto text-[#0061FF] mb-2 drop-shadow-sm" />
                                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white">Dropbox</h3>
-                                                        <p className="text-sm text-gray-500">Almacenamiento en la nube</p>
+                                                        <p className="text-sm text-gray-500">{t('bw.dropboxSubtitle')}</p>
                                                     </div>
 
                                                     <div className="grid gap-3">
@@ -542,8 +544,8 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-8 h-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-[#0061FF] font-bold text-base border border-cyan-100 dark:border-cyan-900/50">1</div>
                                                                 <div className="text-left">
-                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">Descarga el archivo</p>
-                                                                    <p className="text-[10px] text-gray-500">Necesario para subirlo después</p>
+                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{t('bw.downloadFile')}</p>
+                                                                    <p className="text-[10px] text-gray-500">{t('bw.downloadFileDesc')}</p>
                                                                 </div>
                                                             </div>
                                                             <button
@@ -551,7 +553,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                                 className="px-4 py-2 bg-white dark:bg-gray-800 hover:bg-cyan-50 dark:hover:bg-gray-700 text-[#0061FF] font-bold rounded-lg text-xs border border-cyan-200 dark:border-cyan-900 shadow-sm flex items-center gap-1.5 transition-all"
                                                             >
                                                                 <Download className="w-3.5 h-3.5" />
-                                                                Guardar
+                                                                {t('bw.save')}
                                                             </button>
                                                         </div>
 
@@ -560,15 +562,15 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                             <div className="flex gap-3">
                                                                 <span className="flex-shrink-0 w-6 h-6 bg-[#0061FF] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md shadow-blue-600/20">2</span>
                                                                 <div>
-                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">Abre Dropbox</p>
-                                                                    <p className="text-xs text-gray-500">Inicia sesión en tu cuenta</p>
+                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{t('bw.openDropbox')}</p>
+                                                                    <p className="text-xs text-gray-500">{t('bw.openDropboxDesc')}</p>
                                                                 </div>
                                                             </div>
                                                             <div className="w-0.5 h-4 bg-gray-200 dark:bg-gray-700 ml-3 -my-1.5"></div>
                                                             <div className="flex gap-3">
                                                                 <span className="flex-shrink-0 w-6 h-6 bg-[#0061FF]/80 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md shadow-blue-600/20">3</span>
                                                                 <div>
-                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">Sube el archivo</p>
+                                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{t('bw.uploadFile')}</p>
                                                                     <p className="text-xs text-gray-500 break-all">{backupFile?.filename}</p>
                                                                 </div>
                                                             </div>
@@ -580,7 +582,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                         className="w-full py-3 bg-[#0061FF] hover:bg-[#0050d6] text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/30 hover:-translate-y-0.5 text-sm"
                                                     >
                                                         <ExternalLink className="w-4 h-4" />
-                                                        Abrir Dropbox
+                                                        {t('bw.openDropboxButton')}
                                                     </button>
                                                 </div>
                                             )}
@@ -591,7 +593,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                     className="px-6 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-2 shadow-xl hover:-translate-y-0.5 hover:shadow-2xl text-sm"
                                                 >
                                                     <Check className="w-4 h-4" />
-                                                    He terminado
+                                                    {t('bw.done')}
                                                 </button>
                                             </div>
                                         </div>

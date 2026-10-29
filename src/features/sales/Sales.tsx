@@ -28,9 +28,11 @@ import { useCartStore } from '@/stores/cartStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { clientService, type Client } from '@/services/clientService'
 import { LazyImage } from '@/components/ui/LazyImage'
+import { useTranslation } from '@/i18n'
 
 export function Sales() {
     // Data State
+    const { t } = useTranslation()
     const [settings] = useState(companyService.getSettings())
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(false)
@@ -57,7 +59,7 @@ export function Sales() {
     const { addNotification } = useNotificationStore()
 
     // Derived State from Store
-    const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId) || tabs[0], [tabs, activeTabId])
+    const activeTab = useMemo(() => tabs.find(tab => tab.id === activeTabId) || tabs[0], [tabs, activeTabId])
     const cart = activeTab.items
 
     // Checkout State
@@ -131,10 +133,10 @@ export function Sales() {
     }, [isCheckoutOpen])
 
     const handleCheckoutInitiate = useCallback(() => {
-        if (cart.length === 0) return toast.warning('Carrito vacío')
+        if (cart.length === 0) return toast.warning(t('pos.emptyCart'))
 
         if (settings.requireCustomerName && !activeTab.customerName.trim()) {
-            toast.error('El nombre del cliente es obligatorio')
+            toast.error(t('pos.customerRequired'))
             return
         }
 
@@ -143,7 +145,7 @@ export function Sales() {
         }
 
         setIsCheckoutOpen(true)
-    }, [cart, settings.requireCustomerName, activeTab.customerName, activeTab.paymentMethod, receivedAmount])
+    }, [cart, settings.requireCustomerName, activeTab.customerName, activeTab.paymentMethod, receivedAmount, t])
 
     const loadProducts = useCallback(async (): Promise<Product[]> => {
         try {
@@ -152,10 +154,10 @@ export function Sales() {
             return data
         } catch (error) {
             console.error('Error loading products:', error)
-            toast.error('Error al cargar productos')
+            toast.error(t('pos.loadError'))
             return []
         }
-    }, [settings.pos?.allowNegativeStock])
+    }, [settings.pos?.allowNegativeStock, t])
 
     // Load Data
     useEffect(() => {
@@ -206,27 +208,27 @@ export function Sales() {
     }, [products, searchTerm, selectedCategory])
 
     const categories = useMemo(() => {
-        const cats = new Set(products.map(p => p.category || 'Otros'))
+        const cats = new Set(products.map(p => p.category || t('pos.others')))
         return ['all', ...Array.from(cats)]
-    }, [products])
+    }, [products, t])
 
     // Cart Actions (Wrapped)
     const handleAddToCart = (product: Product) => {
         const currentItem = cart.find(i => i.product.id === product.id)
         if (currentItem) {
             if (!settings.pos?.allowNegativeStock && currentItem.quantity >= product.stock) {
-                toast.error(`Stock insuficiente (${product.stock} disponibles)`)
+                toast.error(t('pos.insufficientStock', { count: product.stock }))
                 return
             }
         } else {
             if (!settings.pos?.allowNegativeStock && product.stock <= 0) {
-                toast.error(`Stock insuficiente (${product.stock} disponibles)`)
+                toast.error(t('pos.insufficientStock', { count: product.stock }))
                 return
             }
         }
 
         addItem(product, settings.pos?.allowNegativeStock)
-        toast.success(`Agregado: ${product.name}`, { position: 'bottom-center', duration: 1000 })
+        toast.success(t('pos.added', { name: product.name }), { position: 'bottom-center', duration: 1000 })
 
         if (searchTerm.length > 0) {
             setSearchTerm('')
@@ -240,7 +242,7 @@ export function Sales() {
 
         const newQuantity = item.quantity + delta
         if (!settings.pos?.allowNegativeStock && newQuantity > item.product.stock) {
-            toast.error('Stock máximo alcanzado')
+            toast.error(t('pos.maxStock'))
             return
         }
 
@@ -260,7 +262,7 @@ export function Sales() {
 
     const processSale = useCallback(async () => {
         if (!isPaymentSufficient && activeTab.paymentMethod === 'cash') {
-            toast.error('Monto recibido insuficiente')
+            toast.error(t('pos.insufficientAmount'))
             receivedAmountInputRef.current?.focus()
             return
         }
@@ -289,11 +291,13 @@ export function Sales() {
 
             const newSale = await saleService.create(sale)
 
-            toast.success('¡Venta Completada!', {
+            toast.success(t('pos.saleCompleted'), {
                 icon: <Check className="w-5 h-5 text-green-500" />,
-                description: activeTab.paymentMethod === 'cash' ? `Vuelto: ${settings.currencySymbol}${change.toFixed(2)}` : `Total: ${settings.currencySymbol}${total.toFixed(2)}`,
+                description: activeTab.paymentMethod === 'cash'
+                    ? t('pos.changeDue', { amount: `${settings.currencySymbol}${change.toFixed(2)}` })
+                    : t('pos.totalAmount', { amount: `${settings.currencySymbol}${total.toFixed(2)}` }),
                 action: {
-                    label: 'Imprimir Ticket',
+                    label: t('pos.printTicket'),
                     onClick: () => pdfGenerator.generateInvoice(newSale, settings)
                 },
                 duration: 8000
@@ -317,8 +321,8 @@ export function Sales() {
                 const freshProduct = freshProducts.find(p => p.id === item.product.id)
                 if (freshProduct && freshProduct.stock <= freshProduct.min_stock) {
                     addNotification({
-                        title: '⚠️ Alerta de Stock Bajo',
-                        message: `El producto "${freshProduct.name}" se ha quedado con pocas existencias (${freshProduct.stock}).`,
+                        title: t('pos.lowStockTitle'),
+                        message: t('pos.lowStockMessage', { name: freshProduct.name, stock: freshProduct.stock }),
                         type: freshProduct.stock <= 0 ? 'error' : 'warning'
                     })
                 }
@@ -326,11 +330,11 @@ export function Sales() {
 
         } catch (error) {
             console.error(error)
-            toast.error('Error al procesar venta')
+            toast.error(t('pos.saleError'))
         } finally {
             setLoading(false)
         }
-    }, [isPaymentSufficient, activeTab.paymentMethod, activeTab.customerName, cart, subtotal, tax, discountAmount, total, settings, change, clearCart, loadProducts, addNotification])
+    }, [isPaymentSufficient, activeTab.paymentMethod, activeTab.customerName, cart, subtotal, tax, discountAmount, total, settings, change, clearCart, loadProducts, addNotification, t])
 
     // Update ref on render
     useEffect(() => {
@@ -348,7 +352,7 @@ export function Sales() {
                         <input
                             ref={searchInputRef}
                             type="text"
-                            placeholder="Buscar por nombre, código o categoría... (F2)"
+                            placeholder={t('pos.searchPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-12 pr-4 py-3 text-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white border-none rounded-xl focus:ring-2 focus:ring-primary shadow-inner placeholder:text-gray-400"
@@ -377,7 +381,7 @@ export function Sales() {
                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                                         )}
                                     >
-                                        {cat === 'all' ? 'Todos' : cat}
+                                        {cat === 'all' ? t('pos.all') : cat}
                                     </button>
                                 ))}
                             </div>
@@ -391,7 +395,7 @@ export function Sales() {
                                 >
                                     {categories.map(cat => (
                                         <option key={cat} value={cat}>
-                                            {cat === 'all' ? 'Todas las Categorías' : cat}
+                                            {cat === 'all' ? t('pos.allCategories') : cat}
                                         </option>
                                     ))}
                                 </select>
@@ -408,7 +412,7 @@ export function Sales() {
                     {filteredProducts.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-gray-400">
                             <Package className="w-16 h-16 mb-4 opacity-50" />
-                            <p>No se encontraron productos</p>
+                            <p>{t('pos.noProducts')}</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
@@ -463,7 +467,7 @@ export function Sales() {
                     <button
                         onClick={() => {
                             if (tabs.length >= 5) {
-                                toast.warning('Máximo 5 tickets simultáneos')
+                                toast.warning(t('pos.maxTickets'))
                                 return
                             }
                             addTab()
@@ -475,7 +479,7 @@ export function Sales() {
                                 ? "text-gray-600 cursor-not-allowed"
                                 : "text-gray-400 hover:text-white hover:bg-gray-700"
                         )}
-                        title={tabs.length >= 5 ? "Límite alcanzado" : "Nuevo Ticket"}
+                        title={tabs.length >= 5 ? t('pos.limitReached') : t('pos.newTicket')}
                     >
                         <Plus className="w-4 h-4" />
                     </button>
@@ -492,13 +496,13 @@ export function Sales() {
                                 onChange={(e) => updateTabName(activeTab.id, e.target.value)}
                                 className="font-bold text-gray-900 dark:text-white bg-transparent border-none p-0 focus:ring-0 w-full truncate text-sm"
                             />
-                            <p className="text-xs text-gray-500">{cart.length} productos</p>
+                            <p className="text-xs text-gray-500">{t('pos.productCount', { count: cart.length })}</p>
                         </div>
                         <button
                             onClick={clearCart}
                             className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                         >
-                            Limpiar
+                            {t('pos.clear')}
                         </button>
                     </div>
 
@@ -521,7 +525,7 @@ export function Sales() {
                                 <div className="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-2">
                                     <ShoppingCart className="w-10 h-10 text-gray-400 dark:text-gray-500" />
                                 </div>
-                                <p className="font-medium text-sm">Carrito vacío</p>
+                                <p className="font-medium text-sm">{t('pos.emptyCart')}</p>
                             </div>
                         )}
                     </div>
@@ -540,7 +544,7 @@ export function Sales() {
                                         value={activeTab.customerName}
                                         onChange={(e) => handleClientSearch(e.target.value)}
                                         onFocus={() => activeTab.customerName.length >= 2 && setShowClientResults(true)}
-                                        placeholder="Cliente (Público General)"
+                                        placeholder={t('pos.customerPlaceholder')}
                                         className={cn(
                                             "w-full pl-10 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400",
                                             settings.requireCustomerName && !activeTab.customerName && "border-red-300 ring-2 ring-red-50"
@@ -564,13 +568,13 @@ export function Sales() {
                                                     >
                                                         <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{client.name}</span>
                                                         <div className="flex gap-2 text-xs text-gray-500">
-                                                            {client.tax_id && <span>NIT: {client.tax_id}</span>}
+                                                            {client.tax_id && <span>{t('pos.nit', { id: client.tax_id })}</span>}
                                                             {client.phone && <span>• {client.phone}</span>}
                                                         </div>
                                                     </button>
                                                 ))}
                                                 <div className="bg-gray-50 dark:bg-gray-900/50 p-2 text-center text-xs text-gray-400">
-                                                    {clientSearchResults.length} coincidencias
+                                                    {t('pos.matches', { count: clientSearchResults.length })}
                                                 </div>
                                             </motion.div>
                                         )}
@@ -598,16 +602,16 @@ export function Sales() {
                             {/* Method Selection */}
                             <div className="flex gap-2 justify-between bg-gray-50 dark:bg-gray-900/30 p-1.5 rounded-xl border border-gray-100 dark:border-gray-700/50">
                                 {settings.paymentMethods?.cash && (
-                                    <PaymentChip active={activeTab.paymentMethod === 'cash'} onClick={() => setPaymentMethod('cash')} icon={Banknote} label="Efectivo" />
+                                    <PaymentChip active={activeTab.paymentMethod === 'cash'} onClick={() => setPaymentMethod('cash')} icon={Banknote} label={t('payment.cash')} />
                                 )}
                                 {settings.paymentMethods?.card && (
-                                    <PaymentChip active={activeTab.paymentMethod === 'card'} onClick={() => setPaymentMethod('card')} icon={CreditCard} label="Tarjeta" />
+                                    <PaymentChip active={activeTab.paymentMethod === 'card'} onClick={() => setPaymentMethod('card')} icon={CreditCard} label={t('payment.card')} />
                                 )}
                                 {settings.paymentMethods?.transfer && (
-                                    <PaymentChip active={activeTab.paymentMethod === 'transfer'} onClick={() => setPaymentMethod('transfer')} icon={QrCode} label="Transf." />
+                                    <PaymentChip active={activeTab.paymentMethod === 'transfer'} onClick={() => setPaymentMethod('transfer')} icon={QrCode} label={t('pos.transferShort')} />
                                 )}
                                 {settings.paymentMethods?.other && (
-                                    <PaymentChip active={activeTab.paymentMethod === 'other'} onClick={() => setPaymentMethod('other')} icon={Package} label="Otro" />
+                                    <PaymentChip active={activeTab.paymentMethod === 'other'} onClick={() => setPaymentMethod('other')} icon={Package} label={t('payment.other')} />
                                 )}
                             </div>
                         </div>
@@ -616,23 +620,23 @@ export function Sales() {
                         <div className="p-5 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-700 space-y-4">
                             <div className="space-y-1.5">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                                    <span className="text-gray-500 dark:text-gray-400">{t('pos.subtotal')}</span>
                                     <span className="font-medium text-gray-700 dark:text-gray-300">{settings.currencySymbol}{subtotal.toFixed(2)}</span>
                                 </div>
                                 {activeTab.discount > 0 && (
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-red-500 flex items-center gap-1"><Percent className="w-3 h-3" /> Descuento</span>
+                                        <span className="text-red-500 flex items-center gap-1"><Percent className="w-3 h-3" /> {t('pos.discount')}</span>
                                         <span className="font-medium text-red-500">-{settings.currencySymbol}{discountAmount.toFixed(2)}</span>
                                     </div>
                                 )}
                                 {settings.enableTax && (
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500 dark:text-gray-400">IVA ({settings.taxRate}%)</span>
+                                        <span className="text-gray-500 dark:text-gray-400">{t('pos.tax', { rate: settings.taxRate })}</span>
                                         <span className="font-medium text-gray-700 dark:text-gray-300">{settings.currencySymbol}{tax.toFixed(2)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between items-end pt-2 mt-1 border-t border-gray-200 dark:border-gray-700/50">
-                                    <span className="text-base font-bold text-gray-900 dark:text-white">Total a Pagar</span>
+                                    <span className="text-base font-bold text-gray-900 dark:text-white">{t('pos.totalDue')}</span>
                                     <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
                                         <span className="text-lg text-gray-400 font-normal mr-1">{settings.currencySymbol}</span>
                                         {total.toFixed(2)}
@@ -650,7 +654,7 @@ export function Sales() {
                                         <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                     ) : (
                                         <>
-                                            <span>COBRAR</span>
+                                            <span>{t('pos.charge')}</span>
                                             <span className="hidden sm:inline-block px-2 py-0.5 bg-white/20 rounded-md text-xs font-medium tracking-wide opacity-80 group-hover:opacity-100 transition-opacity">
                                                 Ctrl + Enter
                                             </span>
@@ -676,8 +680,8 @@ export function Sales() {
                         >
                             <div className="p-6 bg-gray-900 text-white flex justify-between items-center shrink-0">
                                 <div>
-                                    <h2 className="text-xl font-bold">Confirmar Venta</h2>
-                                    <p className="text-sm text-gray-400">Resumen final de transacción</p>
+                                    <h2 className="text-xl font-bold">{t('pos.confirmSale')}</h2>
+                                    <p className="text-sm text-gray-400">{t('pos.finalSummary')}</p>
                                 </div>
                                 <button onClick={() => setIsCheckoutOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                                     <X className="w-5 h-5" />
@@ -686,7 +690,7 @@ export function Sales() {
 
                             <div className="p-8 space-y-8 flex-1 overflow-y-auto">
                                 <div className="text-center">
-                                    <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">Total a Pagar</p>
+                                    <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">{t('pos.totalDue')}</p>
                                     <div className="text-5xl font-black text-gray-900 dark:text-white tracking-tight">
                                         {settings.currencySymbol}{total.toFixed(2)}
                                     </div>
@@ -695,7 +699,7 @@ export function Sales() {
                                 {activeTab.paymentMethod === 'cash' ? (
                                     <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-600 dark:text-gray-300 ml-1">Efectivo Recibido</label>
+                                            <label className="text-sm font-bold text-gray-600 dark:text-gray-300 ml-1">{t('pos.cashReceived')}</label>
                                             <div className="relative group">
                                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xl group-focus-within:text-primary transition-colors">
                                                     {settings.currencySymbol}
@@ -729,28 +733,28 @@ export function Sales() {
                                                 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300"
                                                 : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
                                         )}>
-                                            <span className="font-bold">Su Cambio</span>
+                                            <span className="font-bold">{t('pos.yourChange')}</span>
                                             <span className="text-2xl font-black">{settings.currencySymbol}{change.toFixed(2)}</span>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="text-center py-6 text-gray-500 font-medium bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                                        <p>Pago con {activeTab.paymentMethod === 'card' ? 'Tarjeta' : activeTab.paymentMethod === 'transfer' ? 'Transferencia' : 'Otro Método'}</p>
-                                        <p className="text-xs mt-1">Confirme que la transacción fue exitosa.</p>
+                                        <p>{t('pos.payWith', { method: activeTab.paymentMethod === 'card' ? t('payment.card') : activeTab.paymentMethod === 'transfer' ? t('payment.transfer') : t('pos.otherMethod') })}</p>
+                                        <p className="text-xs mt-1">{t('pos.confirmTransaction')}</p>
                                     </div>
                                 )}
                             </div>
 
                             <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 flex gap-4 shrink-0">
                                 <button onClick={() => setIsCheckoutOpen(false)} className="flex-1 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    Cancelar
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={processSale}
                                     disabled={loading || (activeTab.paymentMethod === 'cash' && !isPaymentSufficient)}
                                     className="flex-[2] py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                                 >
-                                    {loading ? 'Procesando...' : 'Confirmar y Finalizar'}
+                                    {loading ? t('pos.processing') : t('pos.confirmAndFinish')}
                                     {!loading && <Check className="w-5 h-5" />}
                                 </button>
                             </div>

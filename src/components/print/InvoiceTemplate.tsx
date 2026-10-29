@@ -1,7 +1,7 @@
 import { forwardRef } from 'react'
 import { Sale, CompanySettings, Client } from '@/types/database'
 import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { useTranslation, paymentMethodLabel } from '@/i18n'
 
 interface InvoiceTemplateProps {
     sale: Sale
@@ -10,6 +10,7 @@ interface InvoiceTemplateProps {
 }
 
 export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(({ sale, settings, client }, ref) => {
+    const { t, dateLocale } = useTranslation()
     const isTicket = settings.invoice?.paperSize === 'ticket80mm'
 
     // --- TICKET 80MM LAYOUT ---
@@ -28,20 +29,20 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                     <h1 className="font-bold text-sm uppercase mb-1">{settings.name}</h1>
                     <p>{settings.address}</p>
                     <p>{[settings.phone, settings.email].filter(Boolean).join(' - ')}</p>
-                    {settings.taxId && <p className="font-bold mt-1">NIT: {settings.taxId}</p>}
+                    {settings.taxId && <p className="font-bold mt-1">{t('print.nit', { id: settings.taxId })}</p>}
                 </div>
 
                 <div className="border-b border-black border-dashed my-2" />
 
                 <div className="mb-2">
-                    <p className="font-bold text-sm">Ticket #{sale.id}</p>
-                    <p>{format(new Date(sale.created_at!), "dd/MM/yyyy HH:mm", { locale: es })}</p>
+                    <p className="font-bold text-sm">{t('print.ticketNumber', { id: sale.id ?? '' })}</p>
+                    <p>{format(new Date(sale.created_at!), "dd/MM/yyyy HH:mm", { locale: dateLocale })}</p>
                 </div>
 
                 <div className="mb-2 break-words">
-                    <p className="font-bold uppercase">Cliente:</p>
-                    <p className="text-sm font-bold">{sale.customer_name || 'Mostrador'}</p>
-                    {client?.tax_id && <p>NIT: {client.tax_id}</p>}
+                    <p className="font-bold uppercase">{t('print.client')}</p>
+                    <p className="text-sm font-bold">{sale.customer_name || t('print.counter')}</p>
+                    {client?.tax_id && <p>{t('print.nit', { id: client.tax_id })}</p>}
                     {client?.address && <p>{client.address}</p>}
                 </div>
 
@@ -50,9 +51,9 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                 <table className="w-full mb-2 table-fixed">
                     <thead>
                         <tr className="text-left border-b border-black border-dashed">
-                            <th className="w-[55%] pb-1">Desc</th>
-                            <th className="w-[15%] pb-1 text-center">Cant</th>
-                            <th className="w-[30%] pb-1 text-right">Total</th>
+                            <th className="w-[55%] pb-1">{t('print.desc')}</th>
+                            <th className="w-[15%] pb-1 text-center">{t('print.qty')}</th>
+                            <th className="w-[30%] pb-1 text-right">{t('print.total')}</th>
                         </tr>
                     </thead>
                     <tbody className="align-top">
@@ -72,19 +73,19 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
 
                 <div className="border-t border-black border-dashed my-2 pt-2">
                     <div className="flex justify-between font-bold text-sm">
-                        <span>TOTAL</span>
+                        <span>{t('print.totalUpper')}</span>
                         <span>{settings.currencySymbol}{sale.total.toFixed(2)}</span>
                     </div>
                     {sale.discount > 0 && (
                         <div className="flex justify-between">
-                            <span>Ahorro</span>
+                            <span>{t('print.savings')}</span>
                             <span>{settings.currencySymbol}{sale.discount.toFixed(2)}</span>
                         </div>
                     )}
                 </div>
 
                 <div className="text-center mt-4 mb-2 break-words px-2">
-                    <p className="italic">{settings.invoice?.disclaimer || 'Gracias por su compra'}</p>
+                    <p className="italic">{settings.invoice?.disclaimer || t('print.thanks')}</p>
                     <p className="mt-2 text-[9px] opacity-60">-- CeroCloud --</p>
                 </div>
 
@@ -119,24 +120,24 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                             />
                         )}
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 tracking-tight">{settings.name || 'Empresa'}</h1>
+                            <h1 className="text-4xl font-black text-gray-900 tracking-tight">{settings.name || t('print.company')}</h1>
                             <div className="text-gray-500 text-sm mt-2 space-y-0.5">
                                 {settings.address && <p>{settings.address}</p>}
                                 {(settings.phone || settings.email) && <p>{[settings.phone, settings.email].filter(Boolean).join(' · ')}</p>}
-                                {settings.taxId && <p className="font-medium text-primary">RFC: {settings.taxId}</p>}
+                                {settings.taxId && <p className="font-medium text-primary">{t('print.rfc', { id: settings.taxId })}</p>}
                             </div>
                         </div>
                     </div>
 
                     <div className="text-right">
-                        <h2 className="text-xl font-bold text-gray-400 uppercase tracking-widest mb-1">Factura</h2>
+                        <h2 className="text-xl font-bold text-gray-400 uppercase tracking-widest mb-1">{t('print.invoice')}</h2>
                         <p className="text-4xl font-mono font-bold text-gray-900">#{sale.id?.toString().padStart(6, '0')}</p>
                         <p className="text-gray-500 mt-2 font-medium">
-                            Fecha: {format(new Date(sale.created_at!), "dd 'de' MMMM, yyyy", { locale: es })}
+                            {t('print.date', { date: format(new Date(sale.created_at!), t('print.longDateFormat'), { locale: dateLocale }) })}
                         </p>
                         <div className="mt-4 bg-gray-50 px-4 py-2 rounded-lg inline-block">
                             <span className={`text-xs font-bold uppercase tracking-wider ${sale.status === 'completed' ? 'text-green-600' : 'text-red-600'}`}>
-                                {sale.status === 'completed' ? 'Pagado' : sale.status}
+                                {sale.status === 'completed' ? t('print.paid') : sale.status}
                             </span>
                         </div>
                     </div>
@@ -145,23 +146,23 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                 {/* Client Info - Enhanced with Real Data */}
                 <div className="bg-gray-50 rounded-xl p-6 mb-12 flex justify-between">
                     <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Facturar a</h3>
-                        <p className="text-lg font-bold text-gray-900">{client?.name || sale.customer_name || 'Cliente General'}</p>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('print.billTo')}</h3>
+                        <p className="text-lg font-bold text-gray-900">{client?.name || sale.customer_name || t('print.generalClient')}</p>
 
                         {client ? (
                             <div className="text-sm text-gray-600 mt-1 space-y-0.5">
-                                {client.tax_id && <p>NIT/RFC: {client.tax_id}</p>}
+                                {client.tax_id && <p>{t('print.nitRfc', { id: client.tax_id })}</p>}
                                 {client.address && <p>{client.address}</p>}
-                                {client.phone && <p>Tel: {client.phone}</p>}
+                                {client.phone && <p>{t('print.phone', { phone: client.phone })}</p>}
                                 {client.email && <p>{client.email}</p>}
                             </div>
                         ) : (
-                            <p className="text-gray-500 text-sm">Cliente Mostrador</p>
+                            <p className="text-gray-500 text-sm">{t('print.counterClient')}</p>
                         )}
                     </div>
                     <div className="text-right">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Método de Pago</h3>
-                        <p className="text-lg font-bold text-gray-900 capitalize">{sale.payment_method}</p>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('print.paymentMethod')}</h3>
+                        <p className="text-lg font-bold text-gray-900 capitalize">{paymentMethodLabel(sale.payment_method)}</p>
                     </div>
                 </div>
 
@@ -170,10 +171,10 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                     <table className="w-full">
                         <thead>
                             <tr className="border-b-2 border-gray-100">
-                                <th className="py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-400 w-[50%]">Descripción</th>
-                                <th className="py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-400">Cant.</th>
-                                <th className="py-4 text-right text-xs font-bold uppercase tracking-wider text-gray-400">Precio</th>
-                                <th className="py-4 text-right text-xs font-bold uppercase tracking-wider text-gray-400">Total</th>
+                                <th className="py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-400 w-[50%]">{t('print.description')}</th>
+                                <th className="py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-400">{t('print.qtyShort')}</th>
+                                <th className="py-4 text-right text-xs font-bold uppercase tracking-wider text-gray-400">{t('print.price')}</th>
+                                <th className="py-4 text-right text-xs font-bold uppercase tracking-wider text-gray-400">{t('print.total')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -181,7 +182,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                 <tr key={index}>
                                     <td className="py-4">
                                         <p className="font-bold text-gray-900">{item.product_name}</p>
-                                        <p className="text-xs text-gray-400">Código: {item.product_id}</p>
+                                        <p className="text-xs text-gray-400">{t('print.code', { code: item.product_id })}</p>
                                     </td>
                                     <td className="py-4 text-center font-medium text-gray-600">{item.quantity}</td>
                                     <td className="py-4 text-right font-medium text-gray-600">
@@ -200,21 +201,21 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                 <div className="flex justify-end mb-20">
                     <div className="w-1/3">
                         <div className="flex justify-between py-2 text-gray-500">
-                            <span>Subtotal</span>
+                            <span>{t('print.subtotal')}</span>
                             <span>{settings.currencySymbol}{sale.subtotal.toFixed(2)}</span>
                         </div>
                         {sale.discount > 0 && (
                             <div className="flex justify-between py-2 text-green-600">
-                                <span>Descuento</span>
+                                <span>{t('print.discount')}</span>
                                 <span>-{settings.currencySymbol}{sale.discount.toFixed(2)}</span>
                             </div>
                         )}
                         <div className="flex justify-between py-2 text-gray-500 border-b border-gray-100 pb-4">
-                            <span>Impuestos ({settings.taxRate}%)</span>
+                            <span>{t('print.taxes', { rate: settings.taxRate })}</span>
                             <span>{settings.currencySymbol}{sale.tax.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between py-4 text-2xl font-black text-gray-900">
-                            <span>Total</span>
+                            <span>{t('print.total')}</span>
                             <span>{settings.currencySymbol}{sale.total.toFixed(2)}</span>
                         </div>
                     </div>
@@ -222,8 +223,8 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
 
                 {/* Footer */}
                 <div className="text-center text-gray-400 text-sm border-t border-gray-100 pt-8 pb-12">
-                    <p className="mb-2">{settings.invoice?.disclaimer || 'Gracias por su compra'}</p>
-                    <p className="text-xs">Documento generado electrónicamente por CeroCloud</p>
+                    <p className="mb-2">{settings.invoice?.disclaimer || t('print.thanks')}</p>
+                    <p className="text-xs">{t('print.generatedBy')}</p>
                 </div>
             </div>
 

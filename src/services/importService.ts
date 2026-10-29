@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as XLSX from 'xlsx'
 import { Product } from '@/types/database'
+import { t, useLanguageStore } from '@/i18n'
 
 interface ImportResult {
     success: boolean
@@ -30,7 +31,7 @@ export const importService = {
                 } catch (error) {
                     resolve({
                         success: false,
-                        errors: ['Error al leer el archivo Excel']
+                        errors: [t('importService.readExcelError')]
                     })
                 }
             }
@@ -38,7 +39,7 @@ export const importService = {
             reader.onerror = () => {
                 resolve({
                     success: false,
-                    errors: ['Error al leer el archivo']
+                    errors: [t('importService.readError')]
                 })
             }
 
@@ -64,7 +65,7 @@ export const importService = {
                 } catch (error) {
                     resolve({
                         success: false,
-                        errors: ['Error al leer el archivo CSV']
+                        errors: [t('importService.readCsvError')]
                     })
                 }
             }
@@ -72,7 +73,7 @@ export const importService = {
             reader.onerror = () => {
                 resolve({
                     success: false,
-                    errors: ['Error al leer el archivo']
+                    errors: [t('importService.readError')]
                 })
             }
 
@@ -91,19 +92,19 @@ export const importService = {
 
             // Required fields validation
             if (!row.codigo && !row.code && !row.Codigo && !row.Code) {
-                errors.push(`Fila ${rowNum}: Falta el código del producto`)
+                errors.push(t('importService.missingCode', { row: rowNum }))
                 invalidCount++
                 return
             }
 
             if (!row.nombre && !row.name && !row.Nombre && !row.Name) {
-                errors.push(`Fila ${rowNum}: Falta el nombre del producto`)
+                errors.push(t('importService.missingName', { row: rowNum }))
                 invalidCount++
                 return
             }
 
             if (!row.precio && !row.price && !row.Precio && !row.Price && row.precio !== 0) {
-                errors.push(`Fila ${rowNum}: Falta el precio del producto`)
+                errors.push(t('importService.missingPrice', { row: rowNum }))
                 invalidCount++
                 return
             }
@@ -123,13 +124,13 @@ export const importService = {
 
             // Validate numeric fields
             if (isNaN(product.price!) || product.price! < 0) {
-                errors.push(`Fila ${rowNum}: Precio inválido`)
+                errors.push(t('importService.invalidPrice', { row: rowNum }))
                 invalidCount++
                 return
             }
 
             if (isNaN(product.stock!) || product.stock! < 0) {
-                errors.push(`Fila ${rowNum}: Stock inválido`)
+                errors.push(t('importService.invalidStock', { row: rowNum }))
                 invalidCount++
                 return
             }
@@ -148,23 +149,39 @@ export const importService = {
 
     // Generate template Excel
     downloadTemplate: () => {
-        const template = [
-            {
+        // Column headers follow the UI language; validateAndTransform accepts both
+        const sample = {
+            name: t('importService.sampleName'),
+            description: t('importService.sampleDescription'),
+            category: t('importService.sampleCategory')
+        }
+        const template = useLanguageStore.getState().language === 'en'
+            ? [{
+                code: 'PROD001',
+                name: sample.name,
+                description: sample.description,
+                category: sample.category,
+                price: 100.00,
+                cost: 50.00,
+                stock: 10,
+                min_stock: 5,
+                unit: 'unidad'
+            }]
+            : [{
                 codigo: 'PROD001',
-                nombre: 'Producto Ejemplo',
-                descripcion: 'Descripción del producto',
-                categoria: 'Categoría',
+                nombre: sample.name,
+                descripcion: sample.description,
+                categoria: sample.category,
                 precio: 100.00,
                 costo: 50.00,
                 stock: 10,
                 stock_minimo: 5,
                 unidad: 'unidad'
-            }
-        ]
+            }]
 
         const ws = XLSX.utils.json_to_sheet(template)
         const wb = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(wb, ws, 'Productos')
+        XLSX.utils.book_append_sheet(wb, ws, t('importService.sheetName'))
 
         // Set column widths
         const wscols = [
@@ -180,6 +197,6 @@ export const importService = {
         ]
         ws['!cols'] = wscols
 
-        XLSX.writeFile(wb, 'plantilla_productos_cerocloud.xlsx')
+        XLSX.writeFile(wb, t('importService.templateFile'))
     }
 }

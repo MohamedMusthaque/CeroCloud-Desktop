@@ -1,6 +1,39 @@
 import type { TranslationKey } from './es'
+import { common } from './en/common'
+import { imageUpload } from './en/imageUpload'
+import { restoreWizard } from './en/restoreWizard'
+import { backupWizard } from './en/backupWizard'
+import { reports } from './en/reports'
+import { about } from './en/about'
+import { clients } from './en/clients'
+import { suppliers } from './en/suppliers'
+import { pos } from './en/pos'
+import { importWizard } from './en/importWizard'
+import { productForm } from './en/productForm'
+import { inventoryPage } from './en/inventory'
+import { dashboard } from './en/dashboard'
+import { printTexts } from './en/print'
+import { shell } from './en/shell'
+import { exportTexts } from './en/exports'
 
 export const en: Record<TranslationKey, string> = {
+    ...common,
+    ...imageUpload,
+    ...restoreWizard,
+    ...backupWizard,
+    ...reports,
+    ...about,
+    ...clients,
+    ...suppliers,
+    ...pos,
+    ...importWizard,
+    ...productForm,
+    ...inventoryPage,
+    ...dashboard,
+    ...printTexts,
+    ...shell,
+    ...exportTexts,
+
     // Navigation
     'nav.dashboard': 'Dashboard',
     'nav.inventory': 'Inventory',

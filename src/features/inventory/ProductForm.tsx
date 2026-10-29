@@ -13,6 +13,7 @@ import { cn, getImageSrc } from '@/lib/utils'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { productSchema, type ProductFormValues } from '@/lib/validators'
+import { useTranslation, type TranslationKey } from '@/i18n'
 
 interface ProductFormProps {
     product: Product | null
@@ -20,7 +21,10 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ product, onClose }: ProductFormProps) {
+    const { t } = useTranslation()
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
+    // Schema messages are translation keys (see validators.ts)
+    const errorText = (message?: string) => message ? t(message as TranslationKey) : null
 
     useEffect(() => {
         supplierService.getAll().then(setSuppliers).catch(console.error)
@@ -75,15 +79,15 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
         try {
             if (product?.id) {
                 await productService.update(product.id, data)
-                toast.success('Producto actualizado correctamente')
+                toast.success(t('productForm.updated'))
             } else {
                 await productService.create(data)
-                toast.success('Producto creado correctamente')
+                toast.success(t('productForm.created'))
             }
             onClose()
         } catch (error) {
             console.error('Error saving product:', error)
-            toast.error('Error al guardar el producto')
+            toast.error(t('productForm.saveError'))
         }
     }
 
@@ -94,18 +98,18 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
             const filePath = file.path
 
             if (filePath) {
-                const toastId = toast.loading('Guardando imagen...')
+                const toastId = toast.loading(t('productForm.savingImage'))
                 try {
                     const result = await window.electronAPI.products.saveImage(filePath)
                     if (result.success && result.filename) {
                         setValue('image', result.filename, { shouldDirty: true })
-                        toast.success('Imagen guardada', { id: toastId })
+                        toast.success(t('productForm.imageSaved'), { id: toastId })
                     } else {
-                        toast.error('Error al guardar imagen', { id: toastId })
+                        toast.error(t('productForm.imageError'), { id: toastId })
                     }
                 } catch (error) {
                     console.error(error)
-                    toast.error('Error de sistema', { id: toastId })
+                    toast.error(t('productForm.systemError'), { id: toastId })
                 }
             }
         }
@@ -134,10 +138,10 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                     <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur z-10 sticky top-0">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                {product ? 'Editar Producto' : 'Nuevo Producto'}
+                                {product ? t('productForm.editTitle') : t('productForm.newTitle')}
                             </h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {product ? 'Modifica los detalles del producto' : 'Agrega un nuevo ítem al inventario'}
+                                {product ? t('productForm.editSubtitle') : t('productForm.newSubtitle')}
                             </p>
                         </div>
                         <button
@@ -171,7 +175,7 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
 
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <label className="cursor-pointer text-white text-xs font-medium text-center px-2 w-full h-full flex items-center justify-center">
-                                                Cambiar
+                                                {t('productForm.change')}
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -187,7 +191,7 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                             onClick={() => setValue('image', '', { shouldDirty: true })}
                                             className="text-xs text-red-500 hover:text-red-600 mt-2 w-full text-center"
                                         >
-                                            Eliminar
+                                            {t('productForm.remove')}
                                         </button>
                                     )}
                                 </div>
@@ -195,11 +199,11 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                 <div className="flex-1 space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="col-span-2 sm:col-span-1">
-                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Nombre del Producto</label>
+                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.name')}</label>
                                             <input
                                                 type="text"
                                                 {...register('name')}
-                                                placeholder="Ej. Coca Cola 600ml"
+                                                placeholder={t('productForm.namePlaceholder')}
                                                 className={cn(
                                                     "w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border focus:ring-2 transition-all outline-none",
                                                     errors.name
@@ -207,14 +211,14 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                                         : "border-gray-200 dark:border-gray-700 focus:ring-primary/20 focus:border-primary"
                                                 )}
                                             />
-                                            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+                                            {errors.name && <p className="text-red-500 text-xs mt-1">{errorText(errors.name.message)}</p>}
                                         </div>
                                         <div className="col-span-2 sm:col-span-1">
-                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Código de Barras</label>
+                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.barcode')}</label>
                                             <input
                                                 type="text"
                                                 {...register('code')}
-                                                placeholder="Escanea o escribe..."
+                                                placeholder={t('productForm.barcodePlaceholder')}
                                                 className={cn(
                                                     "w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border focus:ring-2 transition-all outline-none",
                                                     errors.code
@@ -222,11 +226,11 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                                         : "border-gray-200 dark:border-gray-700 focus:ring-primary/20 focus:border-primary"
                                                 )}
                                             />
-                                            {errors.code && <p className="text-red-500 text-xs mt-1">{errors.code.message}</p>}
+                                            {errors.code && <p className="text-red-500 text-xs mt-1">{errorText(errors.code.message)}</p>}
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Descripción (Opcional)</label>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.description')}</label>
                                         <textarea
                                             {...register('description')}
                                             rows={2}
@@ -241,44 +245,44 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                             {/* Details Grid */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div className="col-span-2">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Categoría</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.category')}</label>
                                     <input
                                         type="text"
                                         {...register('category')}
-                                        placeholder="Ej. Bebidas"
+                                        placeholder={t('productForm.categoryPlaceholder')}
                                         className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                                     />
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Proveedor</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.supplier')}</label>
                                     <select
                                         {...register('supplier_id')}
                                         className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none cursor-pointer"
                                     >
-                                        <option value="">Selecciona un proveedor (Opcional)</option>
+                                        <option value="">{t('productForm.supplierPlaceholder')}</option>
                                         {suppliers.map(s => (
                                             <option key={s.id} value={s.id}>{s.name}</option>
                                         ))}
                                     </select>
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Unidad de Medida</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.unit')}</label>
                                     <select
                                         {...register('unit')}
                                         className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none cursor-pointer"
                                     >
-                                        <option value="unidad">Unidad (Pieza)</option>
-                                        <option value="kg">Kilogramo (kg)</option>
-                                        <option value="g">Gramo (g)</option>
-                                        <option value="l">Litro (l)</option>
-                                        <option value="ml">Mililitro (ml)</option>
-                                        <option value="m">Metro (m)</option>
-                                        <option value="caja">Caja</option>
-                                        <option value="paquete">Paquete</option>
+                                        <option value="unidad">{t('unit.unidad')}</option>
+                                        <option value="kg">{t('unit.kg')}</option>
+                                        <option value="g">{t('unit.g')}</option>
+                                        <option value="l">{t('unit.l')}</option>
+                                        <option value="ml">{t('unit.ml')}</option>
+                                        <option value="m">{t('unit.m')}</option>
+                                        <option value="caja">{t('unit.caja')}</option>
+                                        <option value="paquete">{t('unit.paquete')}</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Costo ($)</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.cost')}</label>
                                     <input
                                         type="number"
                                         min="0"
@@ -286,10 +290,10 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                         {...register('cost')}
                                         className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                                     />
-                                    {errors.cost && <p className="text-red-500 text-xs mt-1">{errors.cost.message}</p>}
+                                    {errors.cost && <p className="text-red-500 text-xs mt-1">{errorText(errors.cost.message)}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-primary uppercase tracking-wider mb-1">Precio Venta ($)</label>
+                                    <label className="block text-xs font-semibold text-primary uppercase tracking-wider mb-1">{t('productForm.price')}</label>
                                     <input
                                         type="number"
                                         min="0"
@@ -302,10 +306,10 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                                 : "border-primary/20 dark:border-primary/30 focus:ring-primary/20 focus:border-primary"
                                         )}
                                     />
-                                    {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price.message}</p>}
+                                    {errors.price && <p className="text-red-500 text-xs mt-1">{errorText(errors.price.message)}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Stock Actual</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.stock')}</label>
                                     <input
                                         type="number"
                                         min="0"
@@ -317,10 +321,10 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                                 : "border-gray-200 dark:border-gray-700 focus:ring-primary/20 focus:border-primary"
                                         )}
                                     />
-                                    {errors.stock && <p className="text-red-500 text-xs mt-1">{errors.stock.message}</p>}
+                                    {errors.stock && <p className="text-red-500 text-xs mt-1">{errorText(errors.stock.message)}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Stock Mínimo</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.minStock')}</label>
                                     <input
                                         type="number"
                                         min="0"
@@ -332,7 +336,7 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                                 : "border-gray-200 dark:border-gray-700 focus:ring-primary/20 focus:border-primary"
                                         )}
                                     />
-                                    {errors.min_stock && <p className="text-red-500 text-xs mt-1">{errors.min_stock.message}</p>}
+                                    {errors.min_stock && <p className="text-red-500 text-xs mt-1">{errorText(errors.min_stock.message)}</p>}
                                 </div>
                             </div>
                         </form>
@@ -345,7 +349,7 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                             onClick={onClose}
                             className="px-5 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors"
                         >
-                            Cancelar
+                            {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
@@ -358,7 +362,7 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                             ) : (
                                 <Save className="w-4 h-4" />
                             )}
-                            {product ? 'Guardar Cambios' : 'Crear Producto'}
+                            {product ? t('productForm.saveChanges') : t('productForm.create')}
                         </button>
                     </div>
                 </motion.div>

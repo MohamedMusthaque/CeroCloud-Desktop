@@ -1,4 +1,5 @@
 import { saveAs } from 'file-saver'
+import { t } from '@/i18n'
 
 export const backupService = {
     // Create backup (export current database)
@@ -60,13 +61,13 @@ export const backupService = {
 
                     if (isEncrypted) {
                         if (!password) {
-                            resolve({ success: false, message: 'Archivo encriptado. Se requiere contraseña.', needPassword: true })
+                            resolve({ success: false, message: t('backupService.needPassword'), needPassword: true })
                             return
                         }
                         try {
                             content = await secureEncryptionService.decrypt(content, password)
                         } catch (err) {
-                            resolve({ success: false, message: 'Contraseña incorrecta o archivo corrupto.' })
+                            resolve({ success: false, message: t('backupService.wrongPassword') })
                             return
                         }
                     }
@@ -76,7 +77,7 @@ export const backupService = {
                     // Validate backup structure
                     // Validate backup structure
                     if (!backup.data || !backup.data.products) {
-                        resolve({ success: false, message: 'Archivo de backup inválido o estructura desconocida' })
+                        resolve({ success: false, message: t('backupService.invalidFile') })
                         return
                     }
 
@@ -84,22 +85,22 @@ export const backupService = {
                     const result = await window.electronAPI.database.restore(backup)
 
                     if (!result.success) {
-                        resolve({ success: false, message: result.error || 'Error desconocido al restaurar la base de datos' })
+                        resolve({ success: false, message: result.error || t('backupService.unknownRestoreError') })
                         return
                     }
 
                     resolve({
                         success: true,
-                        message: `Restauración exitosa. Se han recuperado ${backup.data.products.length} productos, ${backup.data.sales?.length || 0} ventas.`
+                        message: t('backupService.restoreSuccess', { products: backup.data.products.length, sales: backup.data.sales?.length || 0 })
                     })
                 } catch (error) {
                     console.error(error)
-                    resolve({ success: false, message: 'Error al procesar el archivo de backup' })
+                    resolve({ success: false, message: t('backupService.processError') })
                 }
             }
 
             reader.onerror = () => {
-                resolve({ success: false, message: 'Error al leer el archivo' })
+                resolve({ success: false, message: t('backupService.readError') })
             }
 
             reader.readAsText(file)

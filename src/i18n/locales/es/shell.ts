@@ -1,0 +1,43 @@
+export const shell = {
+    // Update notifier
+    'updater.downloading': '⬇️ Descargando actualización...',
+    'updater.downloadError': 'Error al descargar: {error}',
+    'updater.installing': '🔄 Instalando actualización...',
+    'updater.checking': '🔍 Verificando actualizaciones...',
+    'updater.available': '🎉 ¡Nueva versión {version} disponible!',
+    'updater.download': 'Descargar',
+    'updater.downloaded': '✅ Actualización {version} descargada',
+    'updater.installRestart': 'Instalar y Reiniciar',
+    'updater.unknown': 'Desconocido',
+    'updater.error': '❌ Error al actualizar: {error}',
+    'updater.downloadingTitle': 'Descargando actualización',
+
+    // Command palette
+    'cmd.placeholder': 'Buscar o ejecutar comando...',
+    'cmd.noResults': 'No se encontraron resultados',
+    'cmd.navigation': 'Navegación',
+    'cmd.goDashboard': 'Ir a Dashboard',
+    'cmd.goInventory': 'Ir a Inventario',
+    'cmd.goSales': 'Ir a Ventas (POS)',
+    'cmd.goReports': 'Ir a Reportes',
+    'cmd.goSettings': 'Ir a Configuración',
+    'cmd.actions': 'Acciones',
+    'cmd.createProduct': 'Crear Producto',
+    'cmd.newSale': 'Nueva Venta',
+    'cmd.viewReports': 'Ver Reportes',
+    'cmd.navigate': 'Navegar',
+    'cmd.select': 'Seleccionar',
+    'cmd.close': 'Cerrar',
+
+    // Global search
+    'search.productSubtitle': '{code} · {stock} en stock · {price}',
+    'search.saleTitle': 'Venta #{id}',
+    'search.reportsTitle': 'Reportes y Análisis',
+    'search.reportsSubtitle': 'Ver reportes de ventas e inventario',
+    'search.inventoryTitle': 'Inventario',
+    'search.inventorySubtitle': 'Gestionar productos y stock',
+    'search.salesTitle': 'Ventas',
+    'search.salesSubtitle': 'Punto de venta y historial',
+    'search.placeholder': 'Buscar productos, ventas, reportes... (Ctrl+K)',
+    'search.noResultsFor': 'No se encontraron resultados para',
+}

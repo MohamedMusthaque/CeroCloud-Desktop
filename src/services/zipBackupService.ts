@@ -2,6 +2,7 @@ import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import { secureEncryptionService } from './secureEncryptionService'
 import { Product, Category, Sale, Supplier, CompanySettings, Client } from '@/types/database'
+import { t } from '@/i18n'
 
 interface BackupMetadata {
     app: string
@@ -131,7 +132,7 @@ export const zipBackupService = {
 
             // Nombre del archivo con extensión .cerobak
             const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0]
-            const secureFlag = password ? '_protegido' : ''
+            const secureFlag = password ? t('zipBackup.protectedSuffix') : ''
             const filename = `cerocloud_backup${secureFlag}_${timestamp}.cerobak`
 
             // Descargar solo si download es true
@@ -162,7 +163,7 @@ export const zipBackupService = {
 
             // 1. Validar estructura
             if (!zip.files['metadata.json'] || !zip.files['version.json'] || !zip.files['database/data.json']) {
-                return { success: false, error: 'Archivo de respaldo inválido' }
+                return { success: false, error: t('zipBackup.invalidFile') }
             }
 
             // 2. Leer metadata // Fixed below lines by referencing original code context not shown here but following logic
@@ -172,7 +173,7 @@ export const zipBackupService = {
 
             // Verificar si requiere contraseña
             if (metadata.encrypted && !password) {
-                return { success: false, error: 'Esta copia está protegida. Ingresa tu contraseña.' }
+                return { success: false, error: t('zipBackup.passwordRequired') }
             }
 
             // 3. Leer version y validar compatibilidad
@@ -182,7 +183,7 @@ export const zipBackupService = {
             if (versionInfo.backupFormatVersion > 1) {
                 return {
                     success: false,
-                    error: `Este respaldo requiere una versión más reciente de CeroCloud`
+                    error: t('zipBackup.newerVersion')
                 }
             }
 
@@ -194,7 +195,7 @@ export const zipBackupService = {
                 try {
                     databaseContent = await secureEncryptionService.decrypt(databaseRaw, password)
                 } catch (error) {
-                    return { success: false, error: 'Contraseña incorrecta' }
+                    return { success: false, error: t('zipBackup.wrongPassword') }
                 }
             }
 
@@ -260,7 +261,7 @@ export const zipBackupService = {
     validateZipBackup: async (file: File): Promise<{ valid: boolean; error?: string; metadata?: BackupMetadata }> => {
         try {
             if (!file.name.endsWith('.cerobak') && !file.name.endsWith('.cerobak')) {
-                return { valid: false, error: 'El archivo debe ser un .cerobak' }
+                return { valid: false, error: t('zipBackup.mustBeCerobak') }
             }
 
             const zip = await JSZip.loadAsync(file)
@@ -269,7 +270,7 @@ export const zipBackupService = {
             const requiredFiles = ['metadata.json', 'version.json', 'database/data.json']
             for (const requiredFile of requiredFiles) {
                 if (!zip.files[requiredFile]) {
-                    return { valid: false, error: `Archivo requerido no encontrado: ${requiredFile}` }
+                    return { valid: false, error: t('zipBackup.missingFile', { file: requiredFile }) }
                 }
             }
 
@@ -279,12 +280,12 @@ export const zipBackupService = {
 
             // Validar que sea de CeroCloud o CeroCloud (Legacy)
             if (metadata.app !== 'CeroCloud' && metadata.app !== 'CeroCloud Gestor Local') {
-                return { valid: false, error: 'Este archivo no es un respaldo válido de CeroCloud' }
+                return { valid: false, error: t('zipBackup.notCeroCloud') }
             }
 
             return { valid: true, metadata }
         } catch (error) {
-            return { valid: false, error: 'Error al leer el archivo: ' + String(error) }
+            return { valid: false, error: t('zipBackup.readFileError', { error: String(error) }) }
         }
     },
 
@@ -343,7 +344,7 @@ export const zipBackupService = {
                     databaseContent = await secureEncryptionService.decrypt(databaseRaw, password)
                 } catch (error) {
                     // Si falla el descifrado, es contraseña incorrecta
-                    return { success: false, error: 'Contraseña incorrecta' }
+                    return { success: false, error: t('zipBackup.wrongPassword') }
                 }
             }
 
@@ -369,9 +370,9 @@ export const zipBackupService = {
             console.error('Error in getBackupInfo:', error)
             // Si el error es de JSON parse en un archivo cifrado, casi seguro es contraseña incorrecta
             if (isEncrypted && password) {
-                return { success: false, error: 'Contraseña incorrecta' }
+                return { success: false, error: t('zipBackup.wrongPassword') }
             }
-            return { success: false, error: 'Error al leer el archivo de respaldo' }
+            return { success: false, error: t('zipBackup.readBackupError') }
         }
     }
 }

@@ -7,6 +7,7 @@ import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 import { clientService } from './clientService'
+import { t, getLocale } from '@/i18n'
 
 export const pdfGenerator = {
     generateInvoice: async (sale: Sale, settings: CompanySettings) => {
@@ -81,7 +82,7 @@ export const pdfGenerator = {
             }
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-            pdf.save(`factura_${sale.id}_${new Date().toISOString().split('T')[0]}.pdf`)
+            pdf.save(`${t('export.file.invoice')}_${sale.id}_${new Date().toISOString().split('T')[0]}.pdf`)
 
             // Cleanup
             root.unmount()
@@ -180,13 +181,13 @@ export const pdfGenerator = {
             }
 
             const filenameMap: Record<string, string> = {
-                'sales': 'Ventas',
-                'inventory': 'Inventario',
-                'low-stock': 'StockBajo',
-                'daily-closing': 'Reporte'
+                'sales': t('export.file.reportSales'),
+                'inventory': t('export.file.reportInventory'),
+                'low-stock': t('export.file.reportLowStock'),
+                'daily-closing': t('export.file.report')
             }
-            const filenamePrefix = filenameMap[type] || 'Reporte'
-            const dateStr = new Date().toLocaleDateString('es-MX').replace(/\//g, '-')
+            const filenamePrefix = filenameMap[type] || t('export.file.report')
+            const dateStr = new Date().toLocaleDateString(getLocale()).replace(/\//g, '-')
 
             pdf.save(`${filenamePrefix}_${dateStr}.pdf`)
 
