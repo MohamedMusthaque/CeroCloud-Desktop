@@ -11,22 +11,22 @@ function start_feature() {
     local feature_name=$1
     
     if [ -z "$feature_name" ]; then
-        echo "❌ Error: Debes especificar el nombre de la feature"
-        echo "Ejemplo: ./gitflow-helper.sh feature mi-nueva-caracteristica"
+        echo "❌ Error: you must give the feature name"
+        echo "Example: ./gitflow-helper.sh feature my-new-feature"
         exit 1
     fi
     
-    echo "🚀 Creando feature branch: feature/$feature_name"
+    echo "🚀 Creating feature branch: feature/$feature_name"
     
     git checkout develop
     git pull origin develop
     git checkout -b "feature/$feature_name"
     
-    echo "✅ Feature branch creado exitosamente!"
-    echo "📝 Trabaja en tu feature y haz commits usando Conventional Commits:"
-    echo "   git commit -m 'feat: descripción de la característica'"
+    echo "✅ Feature branch created!"
+    echo "📝 Work on your feature and commit using Conventional Commits:"
+    echo "   git commit -m 'feat: describe the feature'"
     echo ""
-    echo "🔄 Cuando termines, haz push y crea un PR a develop:"
+    echo "🔄 When you're done, push and open a PR to develop:"
     echo "   git push origin feature/$feature_name"
 }
 
@@ -34,54 +34,54 @@ function start_release() {
     local version=$1
     
     if [ -z "$version" ]; then
-        echo "❌ Error: Debes especificar la versión del release"
-        echo "Ejemplo: ./gitflow-helper.sh release v1.1.0"
+        echo "❌ Error: you must give the release version"
+        echo "Example: ./gitflow-helper.sh release v1.1.0"
         exit 1
     fi
     
     # Strip a leading 'v' if present
     version=${version#v}
     
-    echo "📦 Creando release branch: release/v$version"
+    echo "📦 Creating release branch: release/v$version"
     
     git checkout develop
     git pull origin develop
     git checkout -b "release/v$version"
     
-    echo "⬆️  Actualizando versión en package.json..."
+    echo "⬆️  Updating the version in package.json..."
     npm version $version --no-git-tag-version
     
     git add package.json package-lock.json
     git commit -m "chore: bump version to $version"
     
-    echo "✅ Release branch creado exitosamente!"
+    echo "✅ Release branch created!"
     echo ""
-    echo "📝 Próximos pasos:"
-    echo "   1. Actualiza changelog.md con las novedades"
-    echo "   2. Haz los ajustes finales necesarios"
-    echo "   3. Ejecuta: ./gitflow-helper.sh finish v$version"
+    echo "📝 Next steps:"
+    echo "   1. Update changelog.md with the changes"
+    echo "   2. Make any final adjustments"
+    echo "   3. Run: ./gitflow-helper.sh finish v$version"
 }
 
 function start_hotfix() {
     local hotfix_name=$1
     
     if [ -z "$hotfix_name" ]; then
-        echo "❌ Error: Debes especificar el nombre del hotfix"
-        echo "Ejemplo: ./gitflow-helper.sh hotfix fix-critical-bug"
+        echo "❌ Error: you must give the hotfix name"
+        echo "Example: ./gitflow-helper.sh hotfix fix-critical-bug"
         exit 1
     fi
     
-    echo "🚨 Creando hotfix branch: hotfix/$hotfix_name"
+    echo "🚨 Creating hotfix branch: hotfix/$hotfix_name"
     
     git checkout main
     git pull origin main
     git checkout -b "hotfix/$hotfix_name"
     
-    echo "✅ Hotfix branch creado exitosamente!"
-    echo "🔧 Corrige el bug y haz commits:"
-    echo "   git commit -m 'fix: descripción del bug corregido'"
+    echo "✅ Hotfix branch created!"
+    echo "🔧 Fix the bug and commit:"
+    echo "   git commit -m 'fix: describe the fixed bug'"
     echo ""
-    echo "📌 Recuerda incrementar la versión patch:"
+    echo "📌 Remember to bump the patch version:"
     echo "   npm version patch --no-git-tag-version"
 }
 
@@ -89,34 +89,34 @@ function finish_branch() {
     local current_branch=$(git rev-parse --abbrev-ref HEAD)
     
     if [[ ! $current_branch =~ ^(release|hotfix)/ ]]; then
-        echo "❌ Error: Solo puedes finalizar branches release/* o hotfix/*"
-        echo "Tu rama actual: $current_branch"
+        echo "❌ Error: only release/* or hotfix/* branches can be finished"
+        echo "Your current branch: $current_branch"
         exit 1
     fi
     
-    echo "🏁 Finalizando branch: $current_branch"
+    echo "🏁 Finishing branch: $current_branch"
     
     # Merge a main
-    echo "📤 Merging a main..."
+    echo "📤 Merging into main..."
     git checkout main
     git pull origin main
     git merge --no-ff $current_branch
     git push origin main
     
     # Merge a develop
-    echo "📤 Merging a develop..."
+    echo "📤 Merging into develop..."
     git checkout develop
     git pull origin develop
     git merge --no-ff $current_branch
     git push origin develop
     
     # Delete the local and remote branch
-    echo "🗑️  Eliminando branch $current_branch..."
+    echo "🗑️  Deleting branch $current_branch..."
     git branch -d $current_branch
     git push origin --delete $current_branch
     
-    echo "✅ Branch finalizado y mergeado exitosamente!"
-    echo "🚀 El release se creará automáticamente en GitHub Actions"
+    echo "✅ Branch finished and merged!"
+    echo "🚀 GitHub Actions will create the release automatically"
 }
 
 # Run the requested action
@@ -134,8 +134,8 @@ case $ACTION in
         finish_branch
         ;;
     *)
-        echo "❌ Acción inválida: $ACTION"
-        echo "Uso: ./gitflow-helper.sh {feature|release|hotfix|finish} [nombre]"
+        echo "❌ Invalid action: $ACTION"
+        echo "Uso: ./gitflow-helper.sh {feature|release|hotfix|finish} [name]"
         exit 1
         ;;
 esac

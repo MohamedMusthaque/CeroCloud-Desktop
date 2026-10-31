@@ -118,7 +118,7 @@ function rescueOldImages() {
         const newPath = path.join(app.getPath('userData'), 'images', 'products')
 
         if (fs.existsSync(oldPath)) {
-            console.log('🔄 Detectada instalación anterior. Intentando migrar imágenes...')
+            console.log('Previous installation found. Migrating images...')
             if (!fs.existsSync(newPath)) {
                 fs.mkdirSync(newPath, { recursive: true })
             }
@@ -133,10 +133,10 @@ function rescueOldImages() {
                     copied++
                 }
             }
-            if (copied > 0) console.log(`✅ ${copied} imágenes migradas exitosamente desde Nexus Gestor Local.`)
+            if (copied > 0) console.log(`${copied} images migrated from Nexus Gestor Local.`)
         }
     } catch (error) {
-        console.error('Error migrando imágenes antiguas:', error)
+        console.error('Error migrating old images:', error)
     }
 }
 

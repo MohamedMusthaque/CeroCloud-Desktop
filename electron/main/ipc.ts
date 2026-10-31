@@ -61,23 +61,23 @@ export function registerIpcHandlers() {
     // Database Utils
     ipcMain.handle('database:restore', (_event, data) => {
         try {
-            console.log('📦 Recibida solicitud de restauración IPC')
+            console.log('Restore request received')
 
             // Strict version check
             if (data.version !== '1.0') {
-                console.error('❌ Versión de backup incompatible:', data.version)
+                console.error('Incompatible backup version:', data.version)
                 return {
                     success: false,
-                    error: `Versión de backup incompatible (${data.version}). Se requiere versión 1.0`
+                    error: `Incompatible backup version (${data.version}). Version 1.0 is required.`
                 }
             }
 
             if (!data.data || !data.data.products) {
-                return { success: false, error: 'Estructura de backup inválida' }
+                return { success: false, error: 'Invalid backup structure' }
             }
 
             restoreDatabase(data.data)
-            logger.info('Restore', 'Base de datos restaurada correctamente')
+            logger.info('Restore', 'Database restored')
             return { success: true }
         } catch (error) {
             logger.error('Database Restore', error)
@@ -88,7 +88,7 @@ export function registerIpcHandlers() {
     ipcMain.handle('database:clearAll', () => {
         try {
             clearAll()
-            logger.info('Database', 'Base de datos limpiada')
+            logger.info('Database', 'Database cleared')
             return { success: true }
         } catch (error) {
             logger.error('Database Clear', error)
@@ -406,5 +406,5 @@ export function registerIpcHandlers() {
 
     // Inventory Logs handlers REMOVED
 
-    console.log('✅ IPC Handlers registered')
+    console.log('IPC handlers registered')
 }

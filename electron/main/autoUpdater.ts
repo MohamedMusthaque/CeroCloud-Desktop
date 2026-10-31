@@ -30,12 +30,12 @@ export class AutoUpdateService {
 
         // Event listeners
         autoUpdater.on('checking-for-update', () => {
-            log.info('🔍 Verificando actualizaciones...')
+            log.info('Checking for updates...')
             this.sendStatusToWindow('checking-for-update')
         })
 
         autoUpdater.on('update-available', (info) => {
-            log.info('✅ Actualización disponible:', info.version)
+            log.info('Update available:', info.version)
             this.sendStatusToWindow('update-available', {
                 version: info.version,
                 releaseDate: info.releaseDate,
@@ -44,17 +44,17 @@ export class AutoUpdateService {
         })
 
         autoUpdater.on('update-not-available', (info) => {
-            log.info('✅ Ya estás en la última versión:', info.version)
+            log.info('Already on the latest version:', info.version)
             this.sendStatusToWindow('update-not-available', { version: info.version })
         })
 
         autoUpdater.on('error', (err) => {
-            log.error('❌ Error en auto-updater:', err)
+            log.error('Auto-updater error:', err)
             this.sendStatusToWindow('error', { message: err.message })
         })
 
         autoUpdater.on('download-progress', (progressObj) => {
-            const logMessage = `Descargando: ${progressObj.percent.toFixed(2)}% - ${(progressObj.transferred / 1024 / 1024).toFixed(2)}MB / ${(progressObj.total / 1024 / 1024).toFixed(2)}MB`
+            const logMessage = `Downloading: ${progressObj.percent.toFixed(2)}% - ${(progressObj.transferred / 1024 / 1024).toFixed(2)}MB / ${(progressObj.total / 1024 / 1024).toFixed(2)}MB`
             log.info(logMessage)
             this.sendStatusToWindow('download-progress', {
                 percent: progressObj.percent,
@@ -65,7 +65,7 @@ export class AutoUpdateService {
         })
 
         autoUpdater.on('update-downloaded', (info) => {
-            log.info('✅ Actualización descargada:', info.version)
+            log.info('Update downloaded:', info.version)
             this.sendStatusToWindow('update-downloaded', {
                 version: info.version,
                 releaseNotes: info.releaseNotes,
@@ -80,7 +80,7 @@ export class AutoUpdateService {
             if (!app.isPackaged) {
                 return {
                     success: false,
-                    error: 'Auto-updater no disponible en modo desarrollo. Usa npm run build para probar.'
+                    error: 'The auto-updater is not available in development. Use npm run build to test it.'
                 }
             }
 
@@ -88,7 +88,7 @@ export class AutoUpdateService {
                 const result = await autoUpdater.checkForUpdates()
                 return { success: true, data: result }
             } catch (error) {
-                log.error('Error al verificar actualizaciones:', error)
+                log.error('Error checking for updates:', error)
                 return { success: false, error: error instanceof Error ? error.message : String(error) }
             }
         })
@@ -96,14 +96,14 @@ export class AutoUpdateService {
         // Handler to download the update
         ipcMain.handle('updater:download-update', async () => {
             if (!app.isPackaged) {
-                return { success: false, error: 'No disponible en desarrollo' }
+                return { success: false, error: 'Not available in development' }
             }
 
             try {
                 await autoUpdater.downloadUpdate()
                 return { success: true }
             } catch (error) {
-                log.error('Error al descargar actualización:', error)
+                log.error('Error downloading the update:', error)
                 return { success: false, error: error instanceof Error ? error.message : String(error) }
             }
         })
@@ -122,7 +122,7 @@ export class AutoUpdateService {
         // Handler to configure automatic checks
         ipcMain.handle('updater:set-auto-check', (_event, enabled: boolean, intervalHours: number = 6) => {
             if (!app.isPackaged) {
-                return { success: false, error: 'No disponible en desarrollo' }
+                return { success: false, error: 'Not available in development' }
             }
 
             if (enabled) {
@@ -146,9 +146,9 @@ export class AutoUpdateService {
      */
     public checkForUpdatesOnStartup() {
         setTimeout(() => {
-            log.info('🚀 Verificación automática al inicio')
+            log.info('Automatic check at startup')
             autoUpdater.checkForUpdates().catch((err) => {
-                log.error('Error en verificación de inicio:', err)
+                log.error('Error in the startup check:', err)
             })
         }, 5000)
     }
@@ -163,12 +163,12 @@ export class AutoUpdateService {
         }
 
         const intervalMs = intervalHours * 60 * 60 * 1000
-        log.info(`⏰ Auto-verificación configurada cada ${intervalHours} horas`)
+        log.info(`Automatic checks every ${intervalHours} hours`)
 
         this.updateCheckInterval = setInterval(() => {
-            log.info('⏰ Verificación automática programada')
+            log.info('Scheduled automatic check')
             autoUpdater.checkForUpdates().catch((err) => {
-                log.error('Error en verificación automática:', err)
+                log.error('Error in the automatic check:', err)
             })
         }, intervalMs)
 
@@ -183,7 +183,7 @@ export class AutoUpdateService {
         if (this.updateCheckInterval) {
             clearInterval(this.updateCheckInterval)
             this.updateCheckInterval = null
-            log.info('⏹️ Auto-verificación deshabilitada')
+            log.info('Automatic checks disabled')
         }
     }
 

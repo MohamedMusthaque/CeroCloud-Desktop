@@ -14,7 +14,7 @@ function migrateLegacyData() {
     try {
         if (legacyDir !== userData && fs.existsSync(legacyDir) && !fs.existsSync(userData)) {
             fs.renameSync(legacyDir, userData)
-            console.log(`📦 Datos migrados de ${legacyDir} a ${userData}`)
+            console.log(`Data migrated from ${legacyDir} to ${userData}`)
         }
 
         const legacyDb = path.join(userData, 'cerocloud.db')
@@ -23,10 +23,10 @@ function migrateLegacyData() {
             for (const suffix of ['', '-wal', '-shm']) {
                 if (fs.existsSync(legacyDb + suffix)) fs.renameSync(legacyDb + suffix, newDb + suffix)
             }
-            console.log('📦 Base de datos cerocloud.db renombrada a nexoracloud.db')
+            console.log('Database cerocloud.db renamed to nexoracloud.db')
         }
     } catch (error) {
-        console.error('❌ Error migrando datos de CeroCloud:', error)
+        console.error('Error migrating CeroCloud data:', error)
     }
 }
 

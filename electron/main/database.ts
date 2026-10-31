@@ -67,7 +67,7 @@ function seedDefaultUser() {
   if (count === 0) {
     db.prepare('INSERT INTO users(username, password_hash, role, permissions, created_at) VALUES(?, ?, ?, ?, ?)')
       .run('admin', hashPassword('admin'), 'admin', DEFAULT_PERMISSIONS, new Date().toISOString())
-    console.log('👤 Usuario por defecto creado: admin')
+    console.log('Default user created: admin')
   }
 }
 
@@ -380,7 +380,7 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_expenses_type_id ON expenses(expense_type_id);
   `)
 
-  console.log('✅ Esquema SQLite inicializado con optimizaciones de rendimiento.')
+  console.log('SQLite schema initialized.')
 }
 
 // ==========================================
@@ -393,7 +393,7 @@ function migrateFromJSON() {
 
   const jsonPath = path.join(app.getPath('userData'), 'cerocloud-data.json')
   if (fs.existsSync(jsonPath)) {
-    console.log('📦 Detectado archivo JSON antiguo. Iniciando migración a SQLite...')
+    console.log('Old JSON data file found. Migrating to SQLite...')
     try {
       const rawData = fs.readFileSync(jsonPath, 'utf8')
       const jsonData = JSON.parse(rawData)
@@ -457,9 +457,9 @@ function migrateFromJSON() {
       })
 
       migration()
-      console.log('✅ Migración completada exitosamente.')
+      console.log('Migration completed.')
     } catch (error) {
-      console.error('❌ Error migrando datos JSON:', error)
+      console.error('Error migrating JSON data:', error)
     }
   } else {
     initializeDemoData()
@@ -467,18 +467,18 @@ function migrateFromJSON() {
 }
 
 function initializeDemoData() {
-  console.log('📦 Inicializando datos de demostración...')
+  console.log('Creating demo data...')
   const insert = db.prepare(`
         INSERT INTO products(code, name, description, category, price, cost, stock, min_stock, unit, created_at, updated_at)
   VALUES(@code, @name, @description, @category, @price, @cost, @stock, @min_stock, @unit, @created_at, @updated_at)
     `)
 
   const demoProducts = [
-    { code: 'DEMO01', name: 'Laptop HP 15', description: '8GB RAM, 256GB SSD', category: 'Electrónica', price: 599.99, cost: 450.00, stock: 10, min_stock: 2, unit: 'unidad' },
-    { code: 'DEMO02', name: 'Mouse Inalámbrico', description: 'Óptico 2.4Ghz', category: 'Accesorios', price: 12.50, cost: 6.00, stock: 50, min_stock: 10, unit: 'unidad' },
-    { code: 'DEMO03', name: 'Teclado Mecánico', description: 'RGB Gamer', category: 'Accesorios', price: 45.00, cost: 25.00, stock: 15, min_stock: 5, unit: 'unidad' },
-    { code: 'DEMO04', name: 'Monitor 24"', description: 'Full HD IPS', category: 'Electrónica', price: 120.00, cost: 90.00, stock: 5, min_stock: 2, unit: 'unidad' },
-    { code: 'DEMO05', name: 'Cable HDMI', description: '2 metros 4K', category: 'Cables', price: 5.99, cost: 1.50, stock: 100, min_stock: 20, unit: 'unidad' }
+    { code: 'DEMO01', name: 'HP 15 Laptop', description: '8GB RAM, 256GB SSD', category: 'Electronics', price: 599.99, cost: 450.00, stock: 10, min_stock: 2, unit: 'unidad' },
+    { code: 'DEMO02', name: 'Wireless Mouse', description: 'Optical 2.4GHz', category: 'Accessories', price: 12.50, cost: 6.00, stock: 50, min_stock: 10, unit: 'unidad' },
+    { code: 'DEMO03', name: 'Mechanical Keyboard', description: 'RGB Gaming', category: 'Accessories', price: 45.00, cost: 25.00, stock: 15, min_stock: 5, unit: 'unidad' },
+    { code: 'DEMO04', name: '24" Monitor', description: 'Full HD IPS', category: 'Electronics', price: 120.00, cost: 90.00, stock: 5, min_stock: 2, unit: 'unidad' },
+    { code: 'DEMO05', name: 'HDMI Cable', description: '2 meters 4K', category: 'Cables', price: 5.99, cost: 1.50, stock: 100, min_stock: 20, unit: 'unidad' }
   ]
 
   const tx = db.transaction(() => {
@@ -1114,7 +1114,7 @@ export const expenseQueries = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function restoreDatabase(data: any) {
   const restoreTx = db.transaction(() => {
-    console.log('🔄 Iniciando restauración de base de datos...')
+    console.log('Restoring database...')
 
     // Backups made before expenses existed don't include them: keep the current ones in that case
     const hasExpenses = Array.isArray(data.expenseTypes)
@@ -1272,7 +1272,7 @@ export function restoreDatabase(data: any) {
   })
 
   restoreTx()
-  console.log('✅ Restauración completada exitosamente.')
+  console.log('Database restore completed.')
 }
 
 // Every NIC file name a client or supplier still points to
@@ -1297,7 +1297,7 @@ export function clearAll() {
     db.prepare('DELETE FROM sqlite_sequence').run()
   })
   clearTx()
-  console.log('✅ Base de datos limpiada completamente')
+  console.log('Database cleared.')
 }
 
 
@@ -1307,12 +1307,12 @@ export function initializeDatabase() {
   try {
     migrateFromJSON()
   } catch (e) {
-    console.error('Error durante la migración/inicialización:', e)
+    console.error('Error during migration/initialization:', e)
   }
-  console.log(`✅ Base de datos SQLite activa en: ${dbPath} `)
+  console.log(`SQLite database ready at: ${dbPath}`)
 }
 
 export function closeDatabase() {
   db.close()
-  console.log('✅ Conexión SQLite cerrada.')
+  console.log('SQLite connection closed.')
 }

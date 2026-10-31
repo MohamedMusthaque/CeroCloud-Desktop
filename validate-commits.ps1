@@ -1,12 +1,12 @@
 # Validates commits and detects problems
 
-Write-Host "🔍 Validación de Commits para Semantic Release" -ForegroundColor Cyan
+Write-Host "🔍 Commit Validation for Semantic Release" -ForegroundColor Cyan
 Write-Host "===============================================`n" -ForegroundColor Cyan
 
 # Get the last 10 commits
 $commits = git log --pretty=format:"%h|%s" -10
 
-Write-Host "📝 Analizando últimos 10 commits...`n" -ForegroundColor Yellow
+Write-Host "📝 Analyzing the last 10 commits...`n" -ForegroundColor Yellow
 
 $validCommits = 0
 $invalidCommits = 0
@@ -53,27 +53,27 @@ foreach ($commit in $commits) {
     }
 }
 
-Write-Host "`n📊 Resumen:" -ForegroundColor Cyan
-Write-Host "   ✅ Commits válidos: $validCommits" -ForegroundColor Green
-Write-Host "   ❌ Commits inválidos: $invalidCommits" -ForegroundColor Red
+Write-Host "`n📊 Summary:" -ForegroundColor Cyan
+Write-Host "   ✅ Valid commits: $validCommits" -ForegroundColor Green
+Write-Host "   ❌ Invalid commits: $invalidCommits" -ForegroundColor Red
 
 if ($invalidCommits -gt 0) {
-    Write-Host "`n⚠️  IMPORTANTE: Commits inválidos detectados!" -ForegroundColor Yellow
-    Write-Host "`n💡 Formato correcto de commits:" -ForegroundColor Cyan
-    Write-Host "   feat: nueva funcionalidad (genera minor version)" -ForegroundColor White
-    Write-Host "   fix: corrección de bug (genera patch version)" -ForegroundColor White
-    Write-Host "   BREAKING CHANGE: cambio incompatible (genera major version)" -ForegroundColor White
-    Write-Host "`nEjemplos:" -ForegroundColor Cyan
-    Write-Host "   feat: agregar exportación de reportes" -ForegroundColor White
-    Write-Host "   fix: corregir cálculo de totales" -ForegroundColor White
-    Write-Host "   fix(hotfix): corregir auto-update en v1.1.1" -ForegroundColor White
-    Write-Host "   chore: actualizar dependencias" -ForegroundColor White
+    Write-Host "`n⚠️  IMPORTANT: invalid commits found!" -ForegroundColor Yellow
+    Write-Host "`n💡 Correct commit format:" -ForegroundColor Cyan
+    Write-Host "   feat: new feature (bumps the minor version)" -ForegroundColor White
+    Write-Host "   fix: bug fix (bumps the patch version)" -ForegroundColor White
+    Write-Host "   BREAKING CHANGE: incompatible change (bumps the major version)" -ForegroundColor White
+    Write-Host "`nExamples:" -ForegroundColor Cyan
+    Write-Host "   feat: add report export" -ForegroundColor White
+    Write-Host "   fix: correct total calculation" -ForegroundColor White
+    Write-Host "   fix(hotfix): fix auto-update in v1.1.1" -ForegroundColor White
+    Write-Host "   chore: update dependencies" -ForegroundColor White
 }
 
-Write-Host "`n🔍 Branch actual:" -ForegroundColor Yellow
+Write-Host "`n🔍 Current branch:" -ForegroundColor Yellow
 $branch = git rev-parse --abbrev-ref HEAD
 Write-Host "   $branch" -ForegroundColor White
 
-Write-Host "`n📌 Versión actual en package.json:" -ForegroundColor Yellow
+Write-Host "`n📌 Current version in package.json:" -ForegroundColor Yellow
 $packageJson = Get-Content "package.json" -Raw | ConvertFrom-Json
 Write-Host "   v$($packageJson.version)" -ForegroundColor White

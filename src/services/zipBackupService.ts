@@ -238,7 +238,7 @@ export const zipBackupService = {
                     try {
                         settingsContent = await secureEncryptionService.decrypt(settingsRaw, password)
                     } catch (error) {
-                        console.warn('No se pudo descifrar la configuración')
+                        console.warn('Could not decrypt the settings')
                     }
                 }
 
@@ -260,7 +260,7 @@ export const zipBackupService = {
                                 const buffer = await file.async('uint8array')
                                 await window.electronAPI.products.restoreImage(relativePath, buffer)
                             } catch (e) {
-                                console.warn('Error restaurando imagen:', relativePath, e)
+                                console.warn('Error restoring image:', relativePath, e)
                             }
                         })()
                         imagePromises.push(promise)

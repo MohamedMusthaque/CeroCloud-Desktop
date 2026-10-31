@@ -197,8 +197,8 @@ export function Reports() {
         })
         return {
             date: format(date, 'dd MMM', { locale: dateLocale }),
-            ventas: daySales.reduce((sum, sale) => sum + sale.total, 0),
-            cantidad: daySales.length
+            sales: daySales.reduce((sum, sale) => sum + sale.total, 0),
+            count: daySales.length
         }
     })
 
@@ -386,13 +386,13 @@ export function Reports() {
                                                 itemStyle={{ color: '#e5e7eb' }}
                                                 labelStyle={{ color: '#9ca3af', marginBottom: '0.5rem', fontSize: '0.875rem' }}
                                                 formatter={(value: number, name: string) => [
-                                                    name === 'ventas' ? `${settings.currencySymbol}${Number(value).toLocaleString()}` : value,
-                                                    name === 'ventas' ? t('rep.chartSales') : t('rep.chartTransactions')
+                                                    name === 'sales' ? `${settings.currencySymbol}${Number(value).toLocaleString()}` : value,
+                                                    name === 'sales' ? t('rep.chartSales') : t('rep.chartTransactions')
                                                 ]}
                                             />
                                             <Area
                                                 type="monotone"
-                                                dataKey="ventas"
+                                                dataKey="sales"
                                                 stroke="#8b5cf6"
                                                 strokeWidth={3}
                                                 fillOpacity={1}

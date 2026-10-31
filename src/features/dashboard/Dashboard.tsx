@@ -87,7 +87,7 @@ export function Dashboard() {
         return {
             date: format(date, 'EEE', { locale: dateLocale }), // Mon, Tue...
             fullDate: format(date, 'dd MMM', { locale: dateLocale }),
-            ventas: daySales.reduce((sum, sale) => sum + sale.total, 0),
+            sales: daySales.reduce((sum, sale) => sum + sale.total, 0),
         }
     })
 
@@ -115,7 +115,7 @@ export function Dashboard() {
         .slice(0, 5)
         .map(item => ({
             name: item.product.name.substring(0, 15),
-            ventas: item.revenue,
+            sales: item.revenue,
             quantity: item.quantity
         }))
 
@@ -277,7 +277,7 @@ export function Dashboard() {
                                 />
                                 <Area
                                     type="monotone"
-                                    dataKey="ventas"
+                                    dataKey="sales"
                                     name={t('dash.revenue')}
                                     stroke="#3b82f6"
                                     strokeWidth={2}
@@ -329,7 +329,7 @@ export function Dashboard() {
                                                 </div>
                                                 <div className="text-right flex flex-col items-end">
                                                     <span className="text-sm font-black text-gray-900 dark:text-white">
-                                                        {settings.currencySymbol}{product.ventas.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        {settings.currencySymbol}{product.sales.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                                     </span>
                                                     <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
                                                         {t('dash.unitsSold', { count: product.quantity })}
@@ -340,7 +340,7 @@ export function Dashboard() {
                                                 <div
                                                     className="h-full rounded-full transition-all duration-500 ease-out bg-teal-500 group-hover:bg-teal-400"
                                                     style={{
-                                                        width: `${(product.ventas / (topProducts[0]?.ventas || 1)) * 100}%`
+                                                        width: `${(product.sales / (topProducts[0]?.sales || 1)) * 100}%`
                                                     }}
                                                 />
                                             </div>

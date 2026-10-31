@@ -58,7 +58,7 @@ export const useNotificationStore = create<NotificationState>()(
 
             requestPermission: async () => {
                 if (!('Notification' in window)) {
-                    console.log('Este navegador no soporta notificaciones de escritorio')
+                    console.log('This browser does not support desktop notifications')
                     return
                 }
 

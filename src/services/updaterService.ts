@@ -47,7 +47,7 @@ class UpdaterService {
             const result = await window.electronAPI.updater.checkForUpdates()
             return result
         } catch (error) {
-            console.error('Error al verificar actualizaciones:', error)
+            console.error('Error checking for updates:', error)
             return { success: false, error: error instanceof Error ? error.message : String(error) }
         }
     }
@@ -64,7 +64,7 @@ class UpdaterService {
             const result = await window.electronAPI.updater.downloadUpdate()
             return result
         } catch (error) {
-            console.error('Error al descargar actualización:', error)
+            console.error('Error downloading the update:', error)
             return { success: false, error: error instanceof Error ? error.message : String(error) }
         }
     }
@@ -92,7 +92,7 @@ class UpdaterService {
             const version = await window.electronAPI.updater.getCurrentVersion()
             return version
         } catch (error) {
-            console.error('Error al obtener versión:', error)
+            console.error('Error getting the version:', error)
             return 'N/A'
         }
     }
@@ -132,7 +132,7 @@ class UpdaterService {
             try {
                 listener(status)
             } catch (error) {
-                console.error('Error en listener de actualización:', error)
+                console.error('Error in update listener:', error)
             }
         })
     }

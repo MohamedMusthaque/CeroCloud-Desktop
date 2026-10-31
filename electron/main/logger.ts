@@ -28,7 +28,7 @@ export const logger = {
         try {
             fs.appendFileSync(getLogPath(), logLine, 'utf-8')
         } catch (writeErr) {
-            console.error('❌ FALLÓ ESCRITURA DE LOG:', writeErr)
+            console.error('FAILED TO WRITE LOG:', writeErr)
         }
     },
 
@@ -41,7 +41,7 @@ export const logger = {
         try {
             fs.appendFileSync(getLogPath(), logLine, 'utf-8')
         } catch (writeErr) {
-            console.error('❌ FALLÓ ESCRITURA DE LOG:', writeErr)
+            console.error('FAILED TO WRITE LOG:', writeErr)
         }
     },
 
@@ -55,11 +55,11 @@ export const logger = {
                     const backupPath = logPath + '.old'
                     if (fs.existsSync(backupPath)) fs.unlinkSync(backupPath)
                     fs.renameSync(logPath, backupPath)
-                    logger.info('Logger', 'Log rotado por tamaño excesivo')
+                    logger.info('Logger', 'Log rotated (file too large)')
                 }
             }
         } catch (e) {
-            console.error('Error rotando logs:', e)
+            console.error('Error rotating logs:', e)
         }
     }
 }
