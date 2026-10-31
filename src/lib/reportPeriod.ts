@@ -1,8 +1,8 @@
-import { parseISO, startOfMonth, startOfWeek } from 'date-fns'
+import { endOfMonth, endOfWeek, format, parseISO, startOfMonth, startOfWeek } from 'date-fns'
 import type { Locale } from 'date-fns'
 import type { TranslationKey } from '@/i18n'
 import { saleDay } from '@/lib/profit'
-import type { Sale } from '@/types/database'
+import type { Expense, Sale } from '@/types/database'
 
 export type ReportRange = 'today' | 'week' | 'month' | 'all' | 'custom'
 
@@ -32,6 +32,22 @@ export function filterSalesByPeriod(sales: Sale[], period: ReportPeriod, dateLoc
             default: return true
         }
     })
+}
+
+// Expenses carry a day ('YYYY-MM-DD') that may be in the future, so week / month are bounded on both ends
+export function filterExpensesByPeriod(expenses: Expense[], period: ReportPeriod, dateLocale: Locale): Expense[] {
+    const now = new Date()
+    const day = (date: Date) => format(date, 'yyyy-MM-dd')
+    const [from, to] = ((): [string?, string?] => {
+        switch (period.range) {
+            case 'today': return [day(now), day(now)]
+            case 'week': return [day(startOfWeek(now, { locale: dateLocale })), day(endOfWeek(now, { locale: dateLocale }))]
+            case 'month': return [day(startOfMonth(now)), day(endOfMonth(now))]
+            case 'custom': return [period.from, period.to]
+            default: return []
+        }
+    })()
+    return expenses.filter(e => (!from || e.expense_date >= from) && (!to || e.expense_date <= to))
 }
 
 // Human label of the period ("This Week", "01/10/2026 – 15/10/2026", ...), used in descriptions and PDFs

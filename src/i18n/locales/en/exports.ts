@@ -47,6 +47,7 @@ export const exportTexts: Record<keyof typeof es, string> = {
     'export.file.reportSales': 'Sales',
     'export.file.reportInventory': 'Inventory',
     'export.file.reportLowStock': 'LowStock',
+    'export.file.reportExpenses': 'Expenses',
     'export.file.report': 'Report',
 
     // Invoice PDF

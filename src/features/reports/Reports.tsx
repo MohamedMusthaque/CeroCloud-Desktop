@@ -12,6 +12,7 @@ import {
     Activity,
     X,
     Scale,
+    Wallet,
     ArrowUpDown,
     Search
 } from 'lucide-react'
@@ -38,7 +39,7 @@ import { expenseService } from '@/services/expenseService'
 import { ProfitReport } from './ProfitReport'
 import { format, subDays, startOfDay } from 'date-fns'
 import { ReportPeriodFilter } from './ReportPeriodFilter'
-import { filterSalesByPeriod, periodLabel, type ReportPeriod } from '@/lib/reportPeriod'
+import { filterSalesByPeriod, filterExpensesByPeriod, periodLabel, type ReportPeriod } from '@/lib/reportPeriod'
 import { useTranslation, paymentMethodLabel, t as translateNow } from '@/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn, getImageSrc } from '@/lib/utils'
@@ -717,7 +718,7 @@ export function Reports() {
                     )}
 
                     {activeTab === 'export' && (
-                        <ExportSection sales={sales} products={products} settings={settings} />
+                        <ExportSection sales={sales} expenses={expenses} products={products} settings={settings} />
                     )}
 
                     {activeTab === 'transactions' && (
@@ -928,12 +929,13 @@ function MetricCard({ title, value, subtitle, icon: Icon, color }: any) {
     )
 }
 
-function ExportSection({ sales, products, settings }: { sales: Sale[]; products: Product[]; settings: any }) {
+function ExportSection({ sales, expenses, products, settings }: { sales: Sale[]; expenses: Expense[]; products: Product[]; settings: any }) {
     const { t, locale, dateLocale } = useTranslation()
     const [period, setPeriod] = useState<ReportPeriod>({ range: 'today' })
     const timeRange = period.range
 
     const filteredSales = filterSalesByPeriod(sales, period, dateLocale)
+    const filteredExpenses = filterExpensesByPeriod(expenses, period, dateLocale)
     // Products don't usually filter by date unless it's "created_at", but for inventory snapshots we usually want current state.
     // However, for "Low Stock" we just filter by logic. Used products remains full list usually.
 
@@ -941,15 +943,17 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
 
     const rangeLabel = periodLabel(period, t, locale)
 
-    const handleExport = (type: 'sales' | 'inventory' | 'low-stock' | 'daily-closing') => {
+    const handleExport = (type: 'sales' | 'expenses' | 'inventory' | 'low-stock' | 'daily-closing') => {
         const titleMap = {
             'sales': t('rep.export.salesTitle'),
+            'expenses': t('rep.export.expensesTitle'),
             'inventory': t('rep.export.inventoryTitle'),
             'low-stock': t('rep.export.lowStockTitle'),
             'daily-closing': t('rep.export.closingTitle')
         }
         const subtitleMap = {
             'sales': t('rep.export.salesSubtitle'),
+            'expenses': t('rep.export.expensesSubtitle'),
             'inventory': t('rep.export.inventorySubtitle'),
             'low-stock': t('rep.export.lowStockSubtitle'),
             'daily-closing': t('rep.export.closingSubtitle')
@@ -959,6 +963,7 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
         const exportTitle = titleMap[type]
 
         if (type === 'sales') dataToExport = filteredSales
+        if (type === 'expenses') dataToExport = filteredExpenses
         if (type === 'daily-closing') {
             // Daily closing is specifically Today regardless of filter, or we can respect filter if user selects "Today" specifically? 
             // Usually Daily Closing implies Today. Let's force filter to today for this button or use current filter if it makes sense.
@@ -1011,6 +1016,24 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
                         <div key={s.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="text-gray-500">#{s.id}</span>
                             <span className="font-medium text-gray-900 dark:text-white">{settings.currencySymbol}{s.total.toFixed(2)}</span>
+                        </div>
+                    ))}
+                />
+
+                {/* Expenses Report Card (follows the period) */}
+                <NewExportCard
+                    title={t('rep.export.expensesTitle')}
+                    description={t('rep.export.expensesDesc', { range: timeRange === 'today' ? t('rep.export.descToday') : timeRange === 'all' ? t('rep.export.descAll') : rangeLabel })}
+                    count={filteredExpenses.length}
+                    total={filteredExpenses.reduce((s, e) => s + e.amount, 0)}
+                    currencySymbol={settings.currencySymbol}
+                    icon={Wallet}
+                    color="orange"
+                    onClick={() => handleExport('expenses')}
+                    previewData={filteredExpenses.slice(0, 3).map(e => (
+                        <div key={e.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
+                            <span className="truncate max-w-[150px] text-gray-500">{e.expense_type_name}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{settings.currencySymbol}{e.amount.toFixed(2)}</span>
                         </div>
                     ))}
                 />
@@ -1081,6 +1104,7 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
         green: "text-green-600 bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800",
         purple: "text-purple-600 bg-purple-50 dark:bg-purple-900/20 border-purple-100 dark:border-purple-800",
         red: "text-red-600 bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800",
+        orange: "text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800",
     }
 
     const solidColors = {
@@ -1088,6 +1112,7 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
         green: "bg-green-600 hover:bg-green-700 text-white shadow-green-500/30",
         purple: "bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/30",
         red: "bg-red-600 hover:bg-red-700 text-white shadow-red-500/30",
+        orange: "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-500/30",
     }
 
     // Fallback for color indexing

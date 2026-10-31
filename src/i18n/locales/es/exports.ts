@@ -45,6 +45,7 @@ export const exportTexts = {
     'export.file.reportSales': 'Ventas',
     'export.file.reportInventory': 'Inventario',
     'export.file.reportLowStock': 'StockBajo',
+    'export.file.reportExpenses': 'Gastos',
     'export.file.report': 'Reporte',
 
     // Invoice PDF
