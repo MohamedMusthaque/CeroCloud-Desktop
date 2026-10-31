@@ -30,7 +30,7 @@ export const pos: Record<keyof typeof es, string> = {
     'pos.customerPlaceholder': 'Customer (Walk-in)',
     'pos.nit': 'Tax ID: {id}',
     'pos.matches': '{count} matches',
-    'pos.transferShort': 'Transfer',
+    'pos.transferShort': 'Bank Transfer',
     'pos.subtotal': 'Subtotal',
     'pos.discount': 'Discount',
     'pos.tax': 'Tax ({rate}%)',

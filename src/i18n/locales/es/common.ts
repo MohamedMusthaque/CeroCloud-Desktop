@@ -18,7 +18,7 @@ export const common = {
     // Payment methods
     'payment.cash': 'Efectivo',
     'payment.card': 'Tarjeta',
-    'payment.transfer': 'Transferencia',
+    'payment.transfer': 'Transferencia Bancaria',
     'payment.other': 'Otro',
     'payment.credit': 'Crédito',
     'payment.cheque': 'Cheque',

@@ -117,7 +117,7 @@ export const en: Record<TranslationKey, string> = {
     'sales.paymentMethods': 'Payment Methods',
     'sales.payment.cash': 'Cash',
     'sales.payment.card': 'Card',
-    'sales.payment.transfer': 'Transfer',
+    'sales.payment.transfer': 'Bank Transfer',
     'sales.payment.other': 'Other',
     'sales.payment.credit': 'Credit',
     'sales.payment.cheque': 'Cheque',

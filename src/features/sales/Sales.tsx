@@ -27,14 +27,11 @@ import { Product, CartItem, Sale, SaleItem } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn, getImageSrc } from '@/lib/utils'
-import { useCartStore, type PaymentMethod } from '@/stores/cartStore'
+import { useCartStore, PAYMENT_METHODS } from '@/stores/cartStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { clientService, type Client } from '@/services/clientService'
 import { LazyImage } from '@/components/ui/LazyImage'
 import { useTranslation } from '@/i18n'
-
-// Chip order in the bill section; each one shows only when enabled in Settings > Payment Methods
-const PAYMENT_METHODS: PaymentMethod[] = ['cash', 'card', 'transfer', 'other', 'cheque', 'credit']
 
 export function Sales() {
     // Data State
@@ -1076,7 +1073,7 @@ function PaymentChip({ active, onClick, icon: Icon, label, disabled, title }: Pa
             )}
         >
             <Icon className={cn("w-5 h-5 mb-1 transition-colors", active ? "text-indigo-500" : "text-current")} />
-            <span className={cn("text-[10px] font-bold uppercase tracking-wide", active ? "text-indigo-600 dark:text-indigo-400" : "text-current")}>{label}</span>
+            <span className={cn("text-[10px] font-bold uppercase tracking-wide text-center leading-tight", active ? "text-indigo-600 dark:text-indigo-400" : "text-current")}>{label}</span>
         </button>
     )
 }

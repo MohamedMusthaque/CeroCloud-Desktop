@@ -20,7 +20,7 @@ export const common: Record<keyof typeof es, string> = {
     // Payment methods
     'payment.cash': 'Cash',
     'payment.card': 'Card',
-    'payment.transfer': 'Transfer',
+    'payment.transfer': 'Bank Transfer',
     'payment.other': 'Other',
     'payment.credit': 'Credit',
     'payment.cheque': 'Cheque',

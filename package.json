@@ -1,7 +1,7 @@
 {
     "name": "nexoracloud",
     "version": "1.2.0",
-    "description": "Sistema Integral de Ventas e Inventario de Escritorio - 100% Local y Gratuito",
+    "description": "Comprehensive Desktop Sales and Inventory System – 100% Local and Free",
     "main": "dist-electron/main/main.js",
     "author": {
         "name": "Mohamed Musthaque",

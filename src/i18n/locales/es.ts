@@ -116,7 +116,7 @@ export const es = {
     'sales.paymentMethods': 'Métodos de Pago',
     'sales.payment.cash': 'Efectivo',
     'sales.payment.card': 'Tarjeta',
-    'sales.payment.transfer': 'Transfer.',
+    'sales.payment.transfer': 'Transferencia Bancaria',
     'sales.payment.other': 'Otros',
     'sales.payment.credit': 'Crédito',
     'sales.payment.cheque': 'Cheque',

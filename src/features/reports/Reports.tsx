@@ -44,6 +44,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn, getImageSrc } from '@/lib/utils'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { PAYMENT_METHODS } from '@/stores/cartStore'
+
+// Client filter value for bills without a customer name
+const WALK_IN = '__walk-in__'
 
 export function Reports() {
     const [products, setProducts] = useState<Product[]>([])
@@ -59,9 +63,40 @@ export function Reports() {
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [historyPeriod, setHistoryPeriod] = useState<ReportPeriod>({ range: 'all' })
+    const [clientFilter, setClientFilter] = useState('')
+    const [typeFilter, setTypeFilter] = useState('')
+
+    // Dropdown options come from the bills themselves, so old names and methods stay filterable
+    const clientOptions = useMemo(() => {
+        const names = new Map<string, string>()
+        for (const sale of sales) {
+            const name = sale.customer_name?.trim()
+            if (name && !names.has(name.toLowerCase())) names.set(name.toLowerCase(), name)
+        }
+        return [...names.values()].sort((a, b) => a.localeCompare(b))
+    }, [sales])
+    const hasWalkIns = useMemo(() => sales.some(sale => !sale.customer_name?.trim()), [sales])
+    // Methods enabled in Settings (in POS order), plus any other method found on older bills
+    const typeOptions = useMemo(() => {
+        const enabled: string[] = PAYMENT_METHODS.filter(method => settings.paymentMethods?.[method])
+        const fromBills = [...new Set(sales.map(sale => sale.payment_method).filter(Boolean))]
+            .filter(method => !enabled.includes(method))
+            .sort((a, b) => PAYMENT_METHODS.indexOf(a) - PAYMENT_METHODS.indexOf(b))
+        return [...enabled, ...fromBills]
+    }, [sales, settings.paymentMethods])
 
     const sortedSales = useMemo(() => {
         let sortableSales = filterSalesByPeriod(sales, historyPeriod, dateLocale)
+
+        if (clientFilter) {
+            sortableSales = sortableSales.filter(s => {
+                const name = s.customer_name?.trim().toLowerCase() || ''
+                return clientFilter === WALK_IN ? !name : name === clientFilter.toLowerCase()
+            })
+        }
+        if (typeFilter) {
+            sortableSales = sortableSales.filter(s => s.payment_method === typeFilter)
+        }
 
         // Filter by Search Term
         if (searchTerm.trim()) {
@@ -104,7 +139,7 @@ export function Reports() {
             sortableSales.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
         }
         return sortableSales
-    }, [sales, historyPeriod, dateLocale, sortConfig, searchTerm, t])
+    }, [sales, historyPeriod, clientFilter, typeFilter, dateLocale, sortConfig, searchTerm, t])
 
     const requestSort = (key: string) => {
         let direction: 'asc' | 'desc' = 'asc'
@@ -222,6 +257,7 @@ export function Reports() {
 
 
     const COLORS = ['#3b82f6', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6']
+    const historySelectClass = "px-3 py-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all max-w-[14rem]"
 
     if (loading) {
         return (
@@ -685,9 +721,28 @@ export function Reports() {
 
                     {activeTab === 'transactions' && (
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-300 dark:border-gray-700 overflow-hidden">
-                            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
                                 <h3 className="font-bold text-gray-900 dark:text-white">{t('rep.transactionHistory')}</h3>
-                                <div className="flex items-center gap-4 w-full sm:w-auto">
+                                <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                                    <select
+                                        value={clientFilter}
+                                        onChange={(e) => setClientFilter(e.target.value)}
+                                        aria-label={t('rep.filter.client')}
+                                        className={historySelectClass}
+                                    >
+                                        <option value="">{t('rep.filter.allClients')}</option>
+                                        {hasWalkIns && <option value={WALK_IN}>{t('rep.walkIn')}</option>}
+                                        {clientOptions.map(name => <option key={name} value={name}>{name}</option>)}
+                                    </select>
+                                    <select
+                                        value={typeFilter}
+                                        onChange={(e) => setTypeFilter(e.target.value)}
+                                        aria-label={t('rep.filter.type')}
+                                        className={historySelectClass}
+                                    >
+                                        <option value="">{t('rep.filter.allTypes')}</option>
+                                        {typeOptions.map(method => <option key={method} value={method}>{paymentMethodLabel(method)}</option>)}
+                                    </select>
                                     <div className="relative w-full sm:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                         <input

@@ -28,7 +28,7 @@ export const pos = {
     'pos.customerPlaceholder': 'Cliente (Público General)',
     'pos.nit': 'NIT: {id}',
     'pos.matches': '{count} coincidencias',
-    'pos.transferShort': 'Transf.',
+    'pos.transferShort': 'Transf. Bancaria',
     'pos.subtotal': 'Subtotal',
     'pos.discount': 'Descuento',
     'pos.tax': 'IVA ({rate}%)',

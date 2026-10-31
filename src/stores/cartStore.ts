@@ -14,6 +14,9 @@ export interface CartTab {
 
 export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'credit' | 'cheque' | 'other'
 
+// Display order everywhere methods are listed; each shows only when enabled in Settings > Payment Methods
+export const PAYMENT_METHODS: PaymentMethod[] = ['cash', 'card', 'transfer', 'other', 'cheque', 'credit']
+
 interface CartState {
     tabs: CartTab[]
     activeTabId: string
