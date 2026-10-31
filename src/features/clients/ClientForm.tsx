@@ -110,10 +110,10 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
+                        className="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="bg-slate-900 dark:bg-slate-950 px-6 py-4 flex items-center justify-between">
+                        <div className="bg-slate-900 dark:bg-slate-950 px-6 py-4 flex items-center justify-between shrink-0">
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                 {clientToEdit ? t('cliForm.editTitle') : t('cliForm.newTitle')}
                             </h2>
@@ -126,119 +126,122 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                         </div>
 
                         {/* Body */}
-                        <form onSubmit={handleSubmit} className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Name */}
-                                <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        {t('cliForm.fullName')}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        placeholder={t('cliForm.namePlaceholder')}
-                                    />
-                                </div>
+                        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                            {/* Scrollable fields */}
+                            <div className="flex-1 overflow-y-auto p-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Name */}
+                                    <div className="col-span-2 md:col-span-1">
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                                            {t('cliForm.fullName')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            placeholder={t('cliForm.namePlaceholder')}
+                                        />
+                                    </div>
 
-                                {/* Tax ID (NIT/RUC) */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        {t('cliForm.taxId')}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.tax_id}
-                                        onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        placeholder={t('cliForm.taxIdPlaceholder')}
-                                    />
-                                </div>
+                                    {/* Tax ID (NIT/RUC) */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                                            {t('cliForm.taxId')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.tax_id}
+                                            onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            placeholder={t('cliForm.taxIdPlaceholder')}
+                                        />
+                                    </div>
 
-                                {/* Phone */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        {t('cliForm.phone')}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        placeholder="+502 1234 5678"
-                                    />
-                                </div>
+                                    {/* Phone */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                                            {t('cliForm.phone')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            placeholder="+502 1234 5678"
+                                        />
+                                    </div>
 
-                                {/* Email */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        {t('cliForm.email')}
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        placeholder={t('cliForm.emailPlaceholder')}
-                                    />
-                                </div>
+                                    {/* Email */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                                            {t('cliForm.email')}
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            placeholder={t('cliForm.emailPlaceholder')}
+                                        />
+                                    </div>
 
-                                {/* Address */}
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        {t('cliForm.address')}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.address}
-                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        placeholder={t('cliForm.addressPlaceholder')}
-                                    />
-                                </div>
+                                    {/* Address */}
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                                            {t('cliForm.address')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.address}
+                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            placeholder={t('cliForm.addressPlaceholder')}
+                                        />
+                                    </div>
 
-                                {/* Credit limit */}
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        {t('cliForm.creditLimit')} ({companyService.getSettings().currencySymbol})
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={formData.credit_limit ?? 0}
-                                        onChange={(e) => setFormData({ ...formData, credit_limit: Math.max(0, Number(e.target.value) || 0) })}
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                    />
-                                    <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{t('cliForm.creditLimitHint')}</p>
-                                </div>
+                                    {/* Credit limit */}
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                                            {t('cliForm.creditLimit')} ({companyService.getSettings().currencySymbol})
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={formData.credit_limit ?? 0}
+                                            onChange={(e) => setFormData({ ...formData, credit_limit: Math.max(0, Number(e.target.value) || 0) })}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                        <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{t('cliForm.creditLimitHint')}</p>
+                                    </div>
 
-                                {/* Notes */}
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                        {t('cliForm.notes')}
-                                    </label>
-                                    <textarea
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        rows={3}
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
-                                        placeholder={t('cliForm.notesPlaceholder')}
-                                    />
-                                </div>
+                                    {/* Notes */}
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                                            {t('cliForm.notes')}
+                                        </label>
+                                        <textarea
+                                            value={formData.notes}
+                                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                            rows={3}
+                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                                            placeholder={t('cliForm.notesPlaceholder')}
+                                        />
+                                    </div>
 
-                                {/* NIC attachment */}
-                                <div className="col-span-2">
-                                    <NicAttachmentField
-                                        value={formData.nic_attachment}
-                                        onChange={(filename) => setFormData({ ...formData, nic_attachment: filename })}
-                                    />
+                                    {/* NIC attachment */}
+                                    <div className="col-span-2">
+                                        <NicAttachmentField
+                                            value={formData.nic_attachment}
+                                            onChange={(filename) => setFormData({ ...formData, nic_attachment: filename })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100 dark:border-gray-700">
+                            <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-gray-700 shrink-0">
                                 <button
                                     type="button"
                                     onClick={onClose}
