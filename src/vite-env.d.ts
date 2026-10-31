@@ -81,6 +81,12 @@ interface ElectronAPI {
         update: (id: number, expense: any) => Promise<UserResult<any>>
         delete: (id: number) => Promise<UserResult<void>>
     }
+    attachments: {
+        saveNic: (sourcePath: string) => Promise<{ success: boolean; filename?: string; error?: string }>
+        openNic: (filename: string) => Promise<{ success: boolean; error?: string }>
+        readNic: (filename: string) => Promise<{ success: boolean; buffer?: Uint8Array; error?: string }>
+        restoreNic: (filename: string, buffer: Uint8Array) => Promise<{ success: boolean; error?: string }>
+    }
     database: {
         clearAll: () => Promise<{ success: boolean; error?: string }>
         restore: (data: any) => Promise<{ success: boolean; error?: string }>

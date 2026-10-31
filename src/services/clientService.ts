@@ -9,6 +9,7 @@ export interface Client extends AuditFields {
     email?: string
     notes?: string
     credit_limit?: number
+    nic_attachment?: string | null // NIC scan file name (userData/attachments/nic)
 }
 
 class ClientService {

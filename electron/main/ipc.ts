@@ -4,6 +4,7 @@ import fs from 'fs'
 import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, expenseQueries, expenseTypeQueries, ExpenseError, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
+import { AttachmentError, saveNicAttachment, openNicAttachment, deleteNicAttachment, readNicAttachment, restoreNicAttachment } from './attachments'
 
 // Signed-in user of this app session (set on login, cleared on logout)
 let sessionUser: AuthUser | null = null
@@ -265,12 +266,16 @@ export function registerIpcHandlers() {
     })
 
     ipcMain.handle('suppliers:update', (_event, id: number, supplier) => {
+        const previousNic = supplierQueries.getById(id)?.nic_attachment
         const result = supplierQueries.update(id, supplier, actorName())
+        if (previousNic && previousNic !== result?.nic_attachment) deleteNicAttachment(previousNic)
         return result || { id, ...supplier }
     })
 
     ipcMain.handle('suppliers:delete', (_event, id: number) => {
+        const nic = supplierQueries.getById(id)?.nic_attachment
         supplierQueries.delete(id)
+        deleteNicAttachment(nic)
         return { success: true }
     })
 
@@ -297,13 +302,57 @@ export function registerIpcHandlers() {
     })
 
     ipcMain.handle('clients:update', (_event, id: number, client) => {
+        const previousNic = clientQueries.getById(id)?.nic_attachment
         const result = clientQueries.update(id, client, actorName())
+        if (previousNic && previousNic !== result?.nic_attachment) deleteNicAttachment(previousNic)
         return result || { id, ...client }
     })
 
     ipcMain.handle('clients:delete', (_event, id: number) => {
+        const nic = clientQueries.getById(id)?.nic_attachment
         clientQueries.delete(id)
+        deleteNicAttachment(nic)
         return { success: true }
+    })
+
+    // NIC attachments (suppliers and clients)
+    ipcMain.handle('attachments:saveNic', async (_event, sourcePath: string) => {
+        try {
+            return { success: true, filename: await saveNicAttachment(sourcePath) }
+        } catch (error) {
+            if (error instanceof AttachmentError) return { success: false, error: error.code }
+            logger.error('NIC Attachment Save', error)
+            return { success: false, error: 'UNKNOWN' }
+        }
+    })
+
+    ipcMain.handle('attachments:openNic', async (_event, filename: string) => {
+        try {
+            await openNicAttachment(filename)
+            return { success: true }
+        } catch (error) {
+            if (error instanceof AttachmentError) return { success: false, error: error.code }
+            logger.error('NIC Attachment Open', error)
+            return { success: false, error: 'UNKNOWN' }
+        }
+    })
+
+    ipcMain.handle('attachments:readNic', async (_event, filename: string) => {
+        try {
+            return { success: true, buffer: await readNicAttachment(filename) }
+        } catch (error) {
+            return { success: false, error: String(error) }
+        }
+    })
+
+    ipcMain.handle('attachments:restoreNic', async (_event, filename: string, buffer: Uint8Array) => {
+        try {
+            await restoreNicAttachment(filename, buffer)
+            return { success: true }
+        } catch (error) {
+            logger.error('NIC Attachment Restore', error)
+            return { success: false, error: String(error) }
+        }
     })
 
     ipcMain.handle('clients:getCreditBalance', (_event, id: number) => {

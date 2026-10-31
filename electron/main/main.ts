@@ -3,7 +3,8 @@ import path from 'path'
 import fs from 'fs'
 import { pathToFileURL } from 'url'
 import './migrateLegacyData'
-import { initializeDatabase, closeDatabase } from './database'
+import { initializeDatabase, closeDatabase, getNicAttachmentNames } from './database'
+import { sweepNicAttachments } from './attachments'
 import { registerIpcHandlers } from './ipc'
 import { AutoUpdateService } from './autoUpdater'
 
@@ -74,6 +75,8 @@ app.whenReady().then(() => {
     initializeDatabase()
     registerIpcHandlers()
     rescueOldImages()
+    // NIC files left by forms closed without saving, or replaced by a restore
+    sweepNicAttachments(getNicAttachmentNames())
 
     // Register custom protocol handler
     // Register custom protocol handler

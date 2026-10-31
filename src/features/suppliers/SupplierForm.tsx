@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation, type TranslationKey } from '@/i18n'
+import { NicAttachmentField } from '@/components/attachments/NicAttachmentField'
 
 const supplierSchema = z.object({
     name: z.string().min(1, 'validation.nameRequired'),
@@ -17,6 +18,7 @@ const supplierSchema = z.object({
     email: z.string().email('validation.invalidEmail').optional().or(z.literal('')),
     phone: z.string().optional(),
     address: z.string().optional(),
+    nic_attachment: z.string().nullable().optional(),
 })
 
 type SupplierFormValues = z.infer<typeof supplierSchema>
@@ -32,6 +34,8 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
         register,
         handleSubmit,
         reset,
+        watch,
+        setValue,
         formState: { errors, isSubmitting }
     } = useForm<SupplierFormValues>({
         resolver: zodResolver(supplierSchema),
@@ -41,6 +45,7 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
             email: '',
             phone: '',
             address: '',
+            nic_attachment: null,
         }
     })
 
@@ -52,6 +57,7 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                 email: supplier.email || '',
                 phone: supplier.phone || '',
                 address: supplier.address || '',
+                nic_attachment: supplier.nic_attachment ?? null,
             })
         }
     }, [supplier, reset])
@@ -185,7 +191,11 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                                 />
                             </div>
 
-
+                            {/* NIC attachment */}
+                            <NicAttachmentField
+                                value={watch('nic_attachment')}
+                                onChange={(filename) => setValue('nic_attachment', filename, { shouldDirty: true })}
+                            />
                         </form>
                     </div>
 

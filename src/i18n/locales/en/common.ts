@@ -16,6 +16,21 @@ export const common: Record<keyof typeof es, string> = {
     'common.to': 'To',
     'common.clearDates': 'Clear dates',
     'common.clearFilters': 'Clear filters',
+
+    // NIC attachment (suppliers and clients)
+    'nic.label': 'NIC Attachment',
+    'nic.upload': 'Attach NIC (image or PDF)',
+    'nic.uploading': 'Attaching...',
+    'nic.hint': 'Scan or photo of the National Identity Card. PDF or image (JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC), up to 10 MB.',
+    'nic.attached': 'NIC attached',
+    'nic.image': 'Image',
+    'nic.view': 'View',
+    'nic.replace': 'Replace',
+    'nic.remove': 'Remove',
+    'nic.error.TYPE': 'Only PDF or image files can be attached',
+    'nic.error.SIZE': 'The file is larger than 10 MB',
+    'nic.error.NOT_FOUND': 'The attached file could not be found',
+    'nic.error.UNKNOWN': 'The NIC file could not be attached',
     'common.walkInCustomer': 'Walk-in customer',
 
     // Payment methods

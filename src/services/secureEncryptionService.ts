@@ -19,7 +19,7 @@ interface EncryptedData {
 }
 
 // Helper to convert a large Uint8Array to Base64 without the spread operator
-function arrayToBase64(array: Uint8Array): string {
+export function arrayToBase64(array: Uint8Array): string {
     let binary = ''
     const chunkSize = 8192
     for (let i = 0; i < array.length; i += chunkSize) {
@@ -30,7 +30,7 @@ function arrayToBase64(array: Uint8Array): string {
 }
 
 // Helper to convert Base64 to a Uint8Array
-function base64ToArray(base64: string): Uint8Array {
+export function base64ToArray(base64: string): Uint8Array {
     const binary = atob(base64)
     const array = new Uint8Array(binary.length)
     for (let i = 0; i < binary.length; i++) {

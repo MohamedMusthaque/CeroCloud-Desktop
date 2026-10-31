@@ -352,6 +352,9 @@ function initSchema() {
   addColumnIfMissing('sales', 'client_id', 'INTEGER')
   addColumnIfMissing('sales', 'cheque_number', 'TEXT')
   addColumnIfMissing('sales', 'cheque_bank', 'TEXT')
+  // File name of the attached NIC scan (see attachments.ts)
+  addColumnIfMissing('suppliers', 'nic_attachment', 'TEXT')
+  addColumnIfMissing('clients', 'nic_attachment', 'TEXT')
   if (addColumnIfMissing('sale_items', 'unit_cost', 'REAL')) {
     // Older sales didn't store the cost: approximate it with the product's current cost
     db.exec('UPDATE sale_items SET unit_cost = (SELECT cost FROM products WHERE products.id = sale_items.product_id)')
@@ -709,8 +712,8 @@ export const clientQueries = {
 
   create: (client: Omit<Client, 'id'> & { id?: number }, actor: Actor = null): Client => {
     const stmt = db.prepare(`
-            INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, created_at, created_by, updated_at, updated_by)
-            VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @created_at, @created_by, @updated_at, @updated_by)
+            INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, nic_attachment, created_at, created_by, updated_at, updated_by)
+            VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @nic_attachment, @created_at, @created_by, @updated_at, @updated_by)
         `)
 
     const audit = {
@@ -728,6 +731,7 @@ export const clientQueries = {
       email: client.email || null,
       notes: client.notes || '',
       credit_limit: client.credit_limit || 0,
+      nic_attachment: client.nic_attachment || null,
       ...audit
     })
 
@@ -783,8 +787,8 @@ export const supplierQueries = {
 
   create: (supplier: Omit<Supplier, 'id'> & { id?: number }, actor: Actor = null): Supplier => {
     const stmt = db.prepare(`
-            INSERT INTO suppliers(id, name, contact, phone, email, address, created_at, created_by, updated_at, updated_by)
-  VALUES(@id, @name, @contact, @phone, @email, @address, @created_at, @created_by, @updated_at, @updated_by)
+            INSERT INTO suppliers(id, name, contact, phone, email, address, nic_attachment, created_at, created_by, updated_at, updated_by)
+  VALUES(@id, @name, @contact, @phone, @email, @address, @nic_attachment, @created_at, @created_by, @updated_at, @updated_by)
         `)
     const createdAt = supplier.created_at || new Date().toISOString()
     const audit = { created_at: createdAt, created_by: actor, updated_at: createdAt, updated_by: actor }
@@ -795,6 +799,7 @@ export const supplierQueries = {
       phone: supplier.phone || null,
       email: supplier.email || null,
       address: supplier.address || null,
+      nic_attachment: supplier.nic_attachment || null,
       ...audit
     })
     return { ...supplier, ...audit, id: Number(info.lastInsertRowid) }
@@ -1133,8 +1138,8 @@ export function restoreDatabase(data: any) {
 
     // Prepared Statements
     const insertSupplier = db.prepare(`
-        INSERT INTO suppliers(id, name, contact, phone, email, address, created_at, created_by, updated_at, updated_by)
-  VALUES(@id, @name, @contact, @phone, @email, @address, @created_at, @created_by, @updated_at, @updated_by)
+        INSERT INTO suppliers(id, name, contact, phone, email, address, nic_attachment, created_at, created_by, updated_at, updated_by)
+  VALUES(@id, @name, @contact, @phone, @email, @address, @nic_attachment, @created_at, @created_by, @updated_at, @updated_by)
     `)
 
     const insertCategory = db.prepare(`
@@ -1164,7 +1169,8 @@ export function restoreDatabase(data: any) {
       for (const s of data.suppliers) {
         insertSupplier.run({
           id: s.id, name: s.name, contact: s.contact || '', phone: s.phone || '',
-          email: s.email || '', address: s.address || '', created_at: s.created_at || new Date().toISOString(),
+          email: s.email || '', address: s.address || '', nic_attachment: s.nic_attachment || null,
+          created_at: s.created_at || new Date().toISOString(),
           updated_at: s.updated_at ?? null, ...auditOf(s)
         })
       }
@@ -1221,8 +1227,8 @@ export function restoreDatabase(data: any) {
     // 6. Restore clients
     if (data.clients) {
       const insertClient = db.prepare(`
-        INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, created_at, created_by, updated_at, updated_by)
-        VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @created_at, @created_by, @updated_at, @updated_by)
+        INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, nic_attachment, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @nic_attachment, @created_at, @created_by, @updated_at, @updated_by)
       `)
 
       for (const c of data.clients) {
@@ -1230,6 +1236,7 @@ export function restoreDatabase(data: any) {
           id: c.id, name: c.name, tax_id: c.tax_id || null, address: c.address || null,
           phone: c.phone || null, email: c.email || null, notes: c.notes || '',
           credit_limit: c.credit_limit || 0,
+          nic_attachment: c.nic_attachment || null,
           created_at: c.created_at || new Date().toISOString(),
           updated_at: c.updated_at || new Date().toISOString(),
           ...auditOf(c)
@@ -1266,6 +1273,15 @@ export function restoreDatabase(data: any) {
 
   restoreTx()
   console.log('✅ Restauración completada exitosamente.')
+}
+
+// Every NIC file name a client or supplier still points to
+export function getNicAttachmentNames(): Set<string> {
+  const rows = db.prepare(`
+    SELECT nic_attachment AS name FROM clients WHERE nic_attachment IS NOT NULL
+    UNION SELECT nic_attachment FROM suppliers WHERE nic_attachment IS NOT NULL
+  `).all() as { name: string }[]
+  return new Set(rows.map(r => r.name))
 }
 
 export function clearAll() {

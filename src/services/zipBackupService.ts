@@ -1,6 +1,6 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
-import { secureEncryptionService } from './secureEncryptionService'
+import { secureEncryptionService, arrayToBase64, base64ToArray } from './secureEncryptionService'
 import { Product, Category, Sale, Supplier, CompanySettings, Client, Expense, ExpenseType } from '@/types/database'
 import { t } from '@/i18n'
 
@@ -130,6 +130,26 @@ export const zipBackupService = {
                 }
             }
 
+            // 6. attachments/nic/ (NIC scans of suppliers and clients)
+            // They are identity documents, so with a password each one is encrypted like the database (stored as <name>.enc)
+            const nicFolder = zip.folder('attachments/nic')
+            const nicFiles = new Set([...suppliers, ...clients].map(r => r.nic_attachment).filter((f): f is string => !!f))
+            if (nicFolder) {
+                for (const filename of nicFiles) {
+                    try {
+                        const result = await window.electronAPI.attachments.readNic(filename)
+                        if (!result.success || !result.buffer) continue
+                        if (password) {
+                            nicFolder.file(`${filename}.enc`, await secureEncryptionService.encrypt(arrayToBase64(new Uint8Array(result.buffer)), password))
+                        } else {
+                            nicFolder.file(filename, result.buffer)
+                        }
+                    } catch (nicError) {
+                        console.warn(`Could not back up NIC attachment ${filename}:`, nicError)
+                    }
+                }
+            }
+
             // Generate the ZIP file
             const content = await zip.generateAsync({
                 type: 'blob',
@@ -248,6 +268,28 @@ export const zipBackupService = {
                 })
                 // Wait for every image to be saved (optional, but recommended for integrity)
                 await Promise.all(imagePromises)
+            }
+
+            // 7. Restore NIC attachments (encrypted ones end in .enc)
+            const nicFolder = zip.folder('attachments/nic')
+            if (nicFolder) {
+                const nicEntries: { name: string; file: JSZip.JSZipObject }[] = []
+                nicFolder.forEach((relativePath, file) => {
+                    if (!file.dir) nicEntries.push({ name: relativePath, file })
+                })
+                for (const { name, file } of nicEntries) {
+                    try {
+                        if (name.endsWith('.enc')) {
+                            if (!password) continue
+                            const plain = await secureEncryptionService.decrypt(await file.async('string'), password)
+                            await window.electronAPI.attachments.restoreNic(name.slice(0, -'.enc'.length), base64ToArray(plain))
+                        } else {
+                            await window.electronAPI.attachments.restoreNic(name, await file.async('uint8array'))
+                        }
+                    } catch (e) {
+                        console.warn('Could not restore NIC attachment:', name, e)
+                    }
+                }
             }
 
             return {

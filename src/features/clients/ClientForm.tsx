@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { companyService } from '@/services/companyService'
 import { useTranslation } from '@/i18n'
+import { NicAttachmentField } from '@/components/attachments/NicAttachmentField'
 
 interface ClientFormProps {
     isOpen: boolean
@@ -25,7 +26,8 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
         phone: '',
         address: '',
         notes: '',
-        credit_limit: 0
+        credit_limit: 0,
+        nic_attachment: null
     })
 
     useEffect(() => {
@@ -38,7 +40,8 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                     phone: clientToEdit.phone || '',
                     address: clientToEdit.address || '',
                     notes: clientToEdit.notes || '',
-                    credit_limit: clientToEdit.credit_limit || 0
+                    credit_limit: clientToEdit.credit_limit || 0,
+                    nic_attachment: clientToEdit.nic_attachment ?? null
                 })
             } else {
                 setFormData({
@@ -48,7 +51,8 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                     phone: '',
                     address: '',
                     notes: '',
-                    credit_limit: 0
+                    credit_limit: 0,
+                    nic_attachment: null
                 })
             }
         }
@@ -221,6 +225,14 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                         rows={3}
                                         className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
                                         placeholder={t('cliForm.notesPlaceholder')}
+                                    />
+                                </div>
+
+                                {/* NIC attachment */}
+                                <div className="col-span-2">
+                                    <NicAttachmentField
+                                        value={formData.nic_attachment}
+                                        onChange={(filename) => setFormData({ ...formData, nic_attachment: filename })}
                                     />
                                 </div>
                             </div>

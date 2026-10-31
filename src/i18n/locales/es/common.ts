@@ -14,6 +14,21 @@ export const common = {
     'common.to': 'Hasta',
     'common.clearDates': 'Borrar fechas',
     'common.clearFilters': 'Limpiar filtros',
+
+    // NIC attachment (suppliers and clients)
+    'nic.label': 'Adjunto de NIC',
+    'nic.upload': 'Adjuntar NIC (imagen o PDF)',
+    'nic.uploading': 'Adjuntando...',
+    'nic.hint': 'Escaneo o foto del documento de identidad (NIC). PDF o imagen (JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC), hasta 10 MB.',
+    'nic.attached': 'NIC adjunto',
+    'nic.image': 'Imagen',
+    'nic.view': 'Ver',
+    'nic.replace': 'Reemplazar',
+    'nic.remove': 'Quitar',
+    'nic.error.TYPE': 'Solo se pueden adjuntar archivos PDF o de imagen',
+    'nic.error.SIZE': 'El archivo supera los 10 MB',
+    'nic.error.NOT_FOUND': 'No se encontró el archivo adjunto',
+    'nic.error.UNKNOWN': 'No se pudo adjuntar el archivo del NIC',
     'common.walkInCustomer': 'Cliente general',
 
     // Payment methods

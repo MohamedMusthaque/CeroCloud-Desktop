@@ -29,6 +29,7 @@ export interface Supplier extends AuditFields {
     phone?: string
     email?: string
     address?: string
+    nic_attachment?: string | null // NIC scan file name (userData/attachments/nic)
     products_count?: number
 }
 
@@ -41,6 +42,7 @@ export interface Client extends AuditFields {
     email?: string
     notes?: string
     credit_limit?: number
+    nic_attachment?: string | null // NIC scan file name (userData/attachments/nic)
 }
 
 export interface Category extends AuditFields {

@@ -88,6 +88,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
         delete: (id: number) => ipcRenderer.invoke('expenses:delete', id),
     },
 
+    // NIC attachments (suppliers and clients)
+    attachments: {
+        saveNic: (sourcePath: string) => ipcRenderer.invoke('attachments:saveNic', sourcePath),
+        openNic: (filename: string) => ipcRenderer.invoke('attachments:openNic', filename),
+        readNic: (filename: string) => ipcRenderer.invoke('attachments:readNic', filename),
+        restoreNic: (filename: string, buffer: Uint8Array) => ipcRenderer.invoke('attachments:restoreNic', filename, buffer),
+    },
+
     // Database
     database: {
         clearAll: () => ipcRenderer.invoke('database:clearAll'),
