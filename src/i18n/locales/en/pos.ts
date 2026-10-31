@@ -28,6 +28,7 @@ export const pos: Record<keyof typeof es, string> = {
     'pos.productCount': '{count} products',
     'pos.clear': 'Clear',
     'pos.customerPlaceholder': 'Customer (Walk-in)',
+    'pos.clearCustomer': 'Clear customer',
     'pos.nit': 'Tax ID: {id}',
     'pos.matches': '{count} matches',
     'pos.transferShort': 'Bank Transfer',

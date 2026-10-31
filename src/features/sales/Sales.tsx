@@ -95,6 +95,7 @@ export function Sales() {
     const [showClientResults, setShowClientResults] = useState(false)
     const clientSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const clientContainerRef = useRef<HTMLDivElement>(null)
+    const clientInputRef = useRef<HTMLInputElement>(null)
 
     // Credit info of the selected registered client
     const [clientCredit, setClientCredit] = useState<{ limit: number; balance: number } | null>(null)
@@ -617,17 +618,30 @@ export function Sales() {
                                         <User className="w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors" />
                                     </div>
                                     <input
+                                        ref={clientInputRef}
                                         type="text"
                                         value={activeTab.customerName}
                                         onChange={(e) => handleClientSearch(e.target.value)}
                                         onFocus={() => activeTab.customerName.length >= 2 && setShowClientResults(true)}
                                         placeholder={t('pos.customerPlaceholder')}
                                         className={cn(
-                                            "w-full pl-10 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400",
+                                            "w-full pl-10 pr-9 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400",
                                             settings.requireCustomerName && !activeTab.customerName && "border-red-300 ring-2 ring-red-50"
                                         )}
                                         autoComplete="off"
                                     />
+                                    {/* Clears the name like typing it away: also unlinks the selected client */}
+                                    {activeTab.customerName && (
+                                        <button
+                                            type="button"
+                                            onClick={() => { handleClientSearch(''); clientInputRef.current?.focus() }}
+                                            title={t('pos.clearCustomer')}
+                                            aria-label={t('pos.clearCustomer')}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
+                                        >
+                                            <X className="w-4 h-4 text-gray-500" />
+                                        </button>
+                                    )}
                                     {/* Autocomplete results */}
                                     <AnimatePresence>
                                         {showClientResults && clientSearchResults.length > 0 && (

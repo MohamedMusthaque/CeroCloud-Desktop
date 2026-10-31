@@ -26,6 +26,7 @@ export const pos = {
     'pos.productCount': '{count} productos',
     'pos.clear': 'Limpiar',
     'pos.customerPlaceholder': 'Cliente (Público General)',
+    'pos.clearCustomer': 'Borrar cliente',
     'pos.nit': 'NIT: {id}',
     'pos.matches': '{count} coincidencias',
     'pos.transferShort': 'Transf. Bancaria',
