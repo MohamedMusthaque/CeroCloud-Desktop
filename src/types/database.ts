@@ -64,6 +64,24 @@ export interface Sale extends AuditFields {
     status: 'completed' | 'cancelled'
 }
 
+export interface ExpenseType extends AuditFields {
+    id?: number
+    name: string
+    description?: string
+    expenses_count?: number
+    total_amount?: number
+}
+
+export interface Expense extends AuditFields {
+    id?: number
+    expense_type_id: number
+    expense_type_name?: string
+    amount: number
+    expense_date: string // Día local 'YYYY-MM-DD'
+    payment_method: string
+    description?: string
+}
+
 export interface SaleItem {
     id?: number
     sale_id?: number
@@ -72,6 +90,7 @@ export interface SaleItem {
     product_name: string
     quantity: number
     unit_price: number
+    unit_cost?: number | null // Costo del producto al momento de la venta
     subtotal: number
 }
 

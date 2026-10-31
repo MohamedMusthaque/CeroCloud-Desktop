@@ -18,6 +18,7 @@ import { dashboard } from './en/dashboard'
 import { printTexts } from './en/print'
 import { shell } from './en/shell'
 import { exportTexts } from './en/exports'
+import { expenses } from './en/expenses'
 
 export const en: Record<TranslationKey, string> = {
     ...common,
@@ -39,6 +40,7 @@ export const en: Record<TranslationKey, string> = {
     ...printTexts,
     ...shell,
     ...exportTexts,
+    ...expenses,
 
     // Navigation
     'nav.dashboard': 'Dashboard',
@@ -46,6 +48,7 @@ export const en: Record<TranslationKey, string> = {
     'nav.sales': 'Sales',
     'nav.suppliers': 'Suppliers',
     'nav.clients': 'Clients',
+    'nav.expenses': 'Expenses',
     'nav.reports': 'Reports',
     'nav.settings': 'Settings',
     'nav.users': 'Users',

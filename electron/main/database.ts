@@ -3,7 +3,7 @@ import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
 import crypto from 'crypto'
-import { Product, Category, Sale, Supplier, SaleItem, Client } from '../../src/types/database'
+import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType } from '../../src/types/database'
 import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
 // Configuración de la Base de Datos
@@ -19,11 +19,12 @@ db.pragma('foreign_keys = ON')
 // 1. Definición del Esquema (Schema)
 // ==========================================
 
-function addColumnIfMissing(table: string, column: string, definition: string) {
+// Devuelve true si la columna se acaba de agregar
+function addColumnIfMissing(table: string, column: string, definition: string): boolean {
   const columns = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
-  if (!columns.some(c => c.name === column)) {
-    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
-  }
+  if (columns.some(c => c.name === column)) return false
+  db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
+  return true
 }
 
 // ==========================================
@@ -202,6 +203,17 @@ export const userQueries = {
 // Usuario por defecto: administrador con acceso a todas las páginas
 const DEFAULT_PERMISSIONS = JSON.stringify(PAGE_IDS)
 
+// Tipos de gasto iniciales; el usuario puede renombrarlos, eliminarlos o crear otros
+const DEFAULT_EXPENSE_TYPES = ['Transport', 'Employee Salary', 'Fuel', 'Rent', 'Utilities', 'Other']
+
+function seedExpenseTypes() {
+  const insert = db.prepare('INSERT OR IGNORE INTO expense_types(name, description, created_at, updated_at) VALUES(?, ?, ?, ?)')
+  const now = new Date().toISOString()
+  db.transaction(() => {
+    for (const name of DEFAULT_EXPENSE_TYPES) insert.run(name, '', now, now)
+  })()
+}
+
 function initSchema() {
   // Tabla: Productos
   db.exec(`
@@ -292,6 +304,36 @@ function initSchema() {
 
 
 
+  // Tabla: Tipos de Gasto (definidos por el usuario: Transporte, Salarios, Combustible...)
+  const isNewExpenseTypesTable = !db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'expense_types'").get()
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS expense_types (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+        description TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT
+    )`)
+  if (isNewExpenseTypesTable) seedExpenseTypes()
+
+  // Tabla: Gastos del negocio
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        expense_type_id INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        expense_date TEXT NOT NULL,
+        payment_method TEXT,
+        description TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT,
+        FOREIGN KEY (expense_type_id) REFERENCES expense_types(id)
+    )`)
+
   // Tabla: Usuarios (login local)
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -308,6 +350,10 @@ function initSchema() {
   // Columnas agregadas después de la versión inicial (bases de datos existentes)
   addColumnIfMissing('clients', 'credit_limit', 'REAL DEFAULT 0')
   addColumnIfMissing('sales', 'client_id', 'INTEGER')
+  if (addColumnIfMissing('sale_items', 'unit_cost', 'REAL')) {
+    // Ventas anteriores no guardaban el costo: se aproxima con el costo actual del producto
+    db.exec('UPDATE sale_items SET unit_cost = (SELECT cost FROM products WHERE products.id = sale_items.product_id)')
+  }
   for (const table of AUDITED_TABLES) {
     addColumnIfMissing(table, 'created_by', 'TEXT')
     addColumnIfMissing(table, 'updated_at', 'TEXT')
@@ -325,6 +371,8 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_clients_tax_id ON clients(tax_id);
     CREATE INDEX IF NOT EXISTS idx_clients_tax_id ON clients(tax_id);
     CREATE INDEX IF NOT EXISTS idx_sales_client_id ON sales(client_id);
+    CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
+    CREATE INDEX IF NOT EXISTS idx_expenses_type_id ON expenses(expense_type_id);
   `)
 
   console.log('✅ Esquema SQLite inicializado con optimizaciones de rendimiento.')
@@ -807,9 +855,11 @@ export const saleQueries = {
       const saleId = Number(info.lastInsertRowid)
 
       // 2. Insertar Items y Actualizar Stock
+      // El costo unitario se congela al vender, así cambiar el costo del producto no altera ganancias pasadas
       const insertItem = db.prepare(`
-                INSERT INTO sale_items(sale_id, product_id, product_code, product_name, quantity, unit_price, subtotal)
-  VALUES(@sale_id, @product_id, @product_code, @product_name, @quantity, @unit_price, @subtotal)
+                INSERT INTO sale_items(sale_id, product_id, product_code, product_name, quantity, unit_price, unit_cost, subtotal)
+  VALUES(@sale_id, @product_id, @product_code, @product_name, @quantity, @unit_price,
+         COALESCE(@unit_cost, (SELECT cost FROM products WHERE id = @product_id)), @subtotal)
             `)
 
       const updateStock = db.prepare(`UPDATE products SET stock = stock - @qty WHERE id = @id`)
@@ -836,6 +886,8 @@ export const saleQueries = {
           product_name: item.product_name,
           quantity: item.quantity,
           unit_price: item.unit_price,
+          // Solo una restauración trae un costo propio; una venta nueva siempre usa el costo actual del producto
+          unit_cost: isRestore ? item.unit_cost ?? null : null,
           subtotal: item.subtotal
         })
 
@@ -915,6 +967,143 @@ export const cancelSale = (id: number, actor: Actor = null): Sale | null => {
 }
 
 // ==========================================
+// Gastos y Tipos de Gasto
+// ==========================================
+
+// Errores de gastos; el código se traduce en la interfaz
+export class ExpenseError extends Error {
+  constructor(public code: 'NAME_REQUIRED' | 'NAME_TAKEN' | 'TYPE_IN_USE' | 'TYPE_REQUIRED' | 'AMOUNT_INVALID' | 'DATE_INVALID' | 'NOT_FOUND') {
+    super(code)
+  }
+}
+
+export interface ExpenseInput {
+  expense_type_id?: number
+  amount?: number
+  expense_date?: string
+  payment_method?: string
+  description?: string
+}
+
+export const expenseTypeQueries = {
+  // Incluye cuántos gastos usan cada tipo y su importe total
+  getAll: (): ExpenseType[] => {
+    return db.prepare(`
+      SELECT t.*, COUNT(e.id) AS expenses_count, COALESCE(SUM(e.amount), 0) AS total_amount
+      FROM expense_types t
+      LEFT JOIN expenses e ON e.expense_type_id = t.id
+      GROUP BY t.id
+      ORDER BY t.name COLLATE NOCASE ASC
+    `).all() as ExpenseType[]
+  },
+
+  create: (name: string, description?: string, actor: Actor = null): ExpenseType => {
+    const trimmed = (name ?? '').trim()
+    if (!trimmed) throw new ExpenseError('NAME_REQUIRED')
+    if (db.prepare('SELECT 1 FROM expense_types WHERE name = ?').get(trimmed)) throw new ExpenseError('NAME_TAKEN')
+
+    const now = new Date().toISOString()
+    const info = db.prepare('INSERT INTO expense_types(name, description, created_at, created_by, updated_at, updated_by) VALUES(?, ?, ?, ?, ?, ?)')
+      .run(trimmed, description?.trim() || '', now, actor, now, actor)
+    return {
+      id: Number(info.lastInsertRowid), name: trimmed, description: description?.trim() || '',
+      created_at: now, created_by: actor, updated_at: now, updated_by: actor, expenses_count: 0, total_amount: 0
+    }
+  },
+
+  // Los gastos guardan el id del tipo, así que renombrar no requiere sincronizar nada
+  update: (id: number, data: { name?: string; description?: string }, actor: Actor = null): ExpenseType => {
+    const existing = db.prepare('SELECT * FROM expense_types WHERE id = ?').get(id) as ExpenseType | undefined
+    if (!existing) throw new ExpenseError('NOT_FOUND')
+
+    const name = data.name !== undefined ? data.name.trim() : existing.name
+    if (!name) throw new ExpenseError('NAME_REQUIRED')
+    if (db.prepare('SELECT 1 FROM expense_types WHERE name = ? AND id != ?').get(name, id)) throw new ExpenseError('NAME_TAKEN')
+    const description = data.description !== undefined ? data.description.trim() : (existing.description || '')
+
+    const updatedAt = new Date().toISOString()
+    db.prepare('UPDATE expense_types SET name = ?, description = ?, updated_at = ?, updated_by = ? WHERE id = ?')
+      .run(name, description, updatedAt, actor, id)
+    return { ...existing, name, description, updated_at: updatedAt, updated_by: actor }
+  },
+
+  // No se puede eliminar un tipo con gastos registrados (perderían su clasificación)
+  delete: (id: number): void => {
+    if (!db.prepare('SELECT 1 FROM expense_types WHERE id = ?').get(id)) throw new ExpenseError('NOT_FOUND')
+    if (db.prepare('SELECT 1 FROM expenses WHERE expense_type_id = ? LIMIT 1').get(id)) throw new ExpenseError('TYPE_IN_USE')
+    db.prepare('DELETE FROM expense_types WHERE id = ?').run(id)
+  }
+}
+
+// Valida y normaliza los campos de un gasto; `existing` aporta los valores no enviados al editar
+function normalizeExpense(input: ExpenseInput, existing?: Expense) {
+  const typeId = Number(input.expense_type_id ?? existing?.expense_type_id)
+  if (!typeId) throw new ExpenseError('TYPE_REQUIRED')
+  if (!db.prepare('SELECT 1 FROM expense_types WHERE id = ?').get(typeId)) throw new ExpenseError('TYPE_REQUIRED')
+
+  const amount = Number(input.amount ?? existing?.amount)
+  if (!Number.isFinite(amount) || amount <= 0) throw new ExpenseError('AMOUNT_INVALID')
+
+  // Fecha del gasto como día local 'YYYY-MM-DD'
+  const date = String(input.expense_date ?? existing?.expense_date ?? '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(Date.parse(date))) throw new ExpenseError('DATE_INVALID')
+
+  return {
+    expense_type_id: typeId,
+    amount: Math.round(amount * 100) / 100,
+    expense_date: date,
+    payment_method: input.payment_method ?? existing?.payment_method ?? 'cash',
+    description: (input.description ?? existing?.description ?? '').trim()
+  }
+}
+
+export const expenseQueries = {
+  getAll: (): Expense[] => {
+    return db.prepare(`
+      SELECT e.*, t.name AS expense_type_name
+      FROM expenses e
+      LEFT JOIN expense_types t ON t.id = e.expense_type_id
+      ORDER BY e.expense_date DESC, e.id DESC
+    `).all() as Expense[]
+  },
+
+  getById: (id: number): Expense | undefined => {
+    return db.prepare(`
+      SELECT e.*, t.name AS expense_type_name
+      FROM expenses e
+      LEFT JOIN expense_types t ON t.id = e.expense_type_id
+      WHERE e.id = ?
+    `).get(id) as Expense | undefined
+  },
+
+  create: (input: ExpenseInput, actor: Actor = null): Expense => {
+    const now = new Date().toISOString()
+    const info = db.prepare(`
+      INSERT INTO expenses(expense_type_id, amount, expense_date, payment_method, description, created_at, created_by, updated_at, updated_by)
+      VALUES(@expense_type_id, @amount, @expense_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
+    `).run({ ...normalizeExpense(input), created_at: now, created_by: actor, updated_at: now, updated_by: actor })
+    return expenseQueries.getById(Number(info.lastInsertRowid))!
+  },
+
+  update: (id: number, input: ExpenseInput, actor: Actor = null): Expense => {
+    const existing = expenseQueries.getById(id)
+    if (!existing) throw new ExpenseError('NOT_FOUND')
+
+    db.prepare(`
+      UPDATE expenses SET expense_type_id = @expense_type_id, amount = @amount, expense_date = @expense_date,
+        payment_method = @payment_method, description = @description, updated_at = @updated_at, updated_by = @updated_by
+      WHERE id = @id
+    `).run({ ...normalizeExpense(input, existing), id, updated_at: new Date().toISOString(), updated_by: actor })
+    return expenseQueries.getById(id)!
+  },
+
+  delete: (id: number): void => {
+    const info = db.prepare('DELETE FROM expenses WHERE id = ?').run(id)
+    if (info.changes === 0) throw new ExpenseError('NOT_FOUND')
+  }
+}
+
+// ==========================================
 // Inventory Logs (Kardex / Trazabilidad)
 // ==========================================
 
@@ -925,14 +1114,21 @@ export function restoreDatabase(data: any) {
   const restoreTx = db.transaction(() => {
     console.log('🔄 Iniciando restauración de base de datos...')
 
+    // Los backups anteriores a los gastos no los incluyen: en ese caso se conservan los actuales
+    const hasExpenses = Array.isArray(data.expenseTypes)
+
     // 1. Limpiar todo
+    if (hasExpenses) {
+      db.prepare('DELETE FROM expenses').run()
+      db.prepare('DELETE FROM expense_types').run()
+    }
     db.prepare('DELETE FROM sale_items').run()
     db.prepare('DELETE FROM sales').run()
     db.prepare('DELETE FROM products').run()
     db.prepare('DELETE FROM categories').run()
     db.prepare('DELETE FROM suppliers').run()
     db.prepare('DELETE FROM clients').run()
-    db.prepare('DELETE FROM sqlite_sequence').run()
+    db.prepare(`DELETE FROM sqlite_sequence${hasExpenses ? '' : " WHERE name NOT IN ('expenses', 'expense_types')"}`).run()
 
     // Auditoría original del backup (los backups antiguos no la incluyen)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -959,9 +1155,11 @@ export function restoreDatabase(data: any) {
   VALUES(@id, @subtotal, @tax, @discount, @total, @payment_method, @customer_name, @client_id, @notes, @status, @created_at, @created_by, @updated_at, @updated_by)
     `)
 
+    // Backups anteriores no guardan el costo del item: se toma el costo del producto restaurado
     const insertSaleItem = db.prepare(`
-        INSERT INTO sale_items(sale_id, product_id, product_code, product_name, quantity, unit_price, subtotal)
-  VALUES(@sale_id, @product_id, @product_code, @product_name, @quantity, @unit_price, @subtotal)
+        INSERT INTO sale_items(sale_id, product_id, product_code, product_name, quantity, unit_price, unit_cost, subtotal)
+  VALUES(@sale_id, @product_id, @product_code, @product_name, @quantity, @unit_price,
+         COALESCE(@unit_cost, (SELECT cost FROM products WHERE id = @product_id)), @subtotal)
     `)
 
     // 2. Restaurar Proveedores
@@ -1016,7 +1214,7 @@ export function restoreDatabase(data: any) {
             insertSaleItem.run({
               sale_id: s.id, product_id: item.product_id || 0,
               product_code: item.product_code || '', product_name: item.product_name || '',
-              quantity: item.quantity, unit_price: item.unit_price, subtotal: item.subtotal
+              quantity: item.quantity, unit_price: item.unit_price, unit_cost: item.unit_cost ?? null, subtotal: item.subtotal
             })
           }
         }
@@ -1040,6 +1238,32 @@ export function restoreDatabase(data: any) {
         })
       }
     }
+
+    // 7. Restaurar Tipos de Gasto y Gastos
+    if (hasExpenses) {
+      const insertExpenseType = db.prepare(`
+        INSERT INTO expense_types(id, name, description, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @name, @description, @created_at, @created_by, @updated_at, @updated_by)
+      `)
+      for (const t of data.expenseTypes) {
+        insertExpenseType.run({
+          id: t.id, name: t.name, description: t.description || '',
+          created_at: t.created_at || new Date().toISOString(), updated_at: t.updated_at ?? null, ...auditOf(t)
+        })
+      }
+
+      const insertExpense = db.prepare(`
+        INSERT INTO expenses(id, expense_type_id, amount, expense_date, payment_method, description, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @expense_type_id, @amount, @expense_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
+      `)
+      for (const e of data.expenses ?? []) {
+        insertExpense.run({
+          id: e.id, expense_type_id: e.expense_type_id, amount: e.amount, expense_date: e.expense_date,
+          payment_method: e.payment_method || 'cash', description: e.description || '',
+          created_at: e.created_at || new Date().toISOString(), updated_at: e.updated_at ?? null, ...auditOf(e)
+        })
+      }
+    }
   })
 
   restoreTx()
@@ -1048,6 +1272,8 @@ export function restoreDatabase(data: any) {
 
 export function clearAll() {
   const clearTx = db.transaction(() => {
+    db.prepare('DELETE FROM expenses').run()
+    db.prepare('DELETE FROM expense_types').run()
     db.prepare('DELETE FROM sale_items').run()
     db.prepare('DELETE FROM sales').run()
     db.prepare('DELETE FROM products').run()

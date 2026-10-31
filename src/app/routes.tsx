@@ -10,6 +10,7 @@ import { About } from '@/features/about/About'
 import { Suppliers } from '@/features/suppliers/Suppliers'
 import { Clients } from '@/features/clients/Clients'
 import { Users } from '@/features/users/Users'
+import { Expenses } from '@/features/expenses/Expenses'
 
 export function AppRoutes() {
     return (
@@ -20,6 +21,7 @@ export function AppRoutes() {
                 <Route path="sales" element={<RequirePage page="sales"><Sales /></RequirePage>} />
                 <Route path="suppliers" element={<RequirePage page="suppliers"><Suppliers /></RequirePage>} />
                 <Route path="clients" element={<RequirePage page="clients"><Clients /></RequirePage>} />
+                <Route path="expenses" element={<RequirePage page="expenses"><Expenses /></RequirePage>} />
                 <Route path="reports" element={<RequirePage page="reports"><Reports /></RequirePage>} />
                 <Route path="users" element={<RequirePage page="users"><Users /></RequirePage>} />
                 <Route path="settings" element={<RequirePage page="settings"><Settings /></RequirePage>} />

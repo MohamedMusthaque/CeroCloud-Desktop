@@ -1,6 +1,6 @@
 // Page-level access control shared by the renderer and the Electron main process (keep it dependency-free)
 
-export const PAGE_IDS = ['dashboard', 'inventory', 'sales', 'suppliers', 'clients', 'reports', 'users', 'settings'] as const
+export const PAGE_IDS = ['dashboard', 'inventory', 'sales', 'suppliers', 'clients', 'expenses', 'reports', 'users', 'settings'] as const
 export type PageId = typeof PAGE_IDS[number]
 
 export const PAGE_PATHS: Record<PageId, string> = {
@@ -9,6 +9,7 @@ export const PAGE_PATHS: Record<PageId, string> = {
     sales: '/sales',
     suppliers: '/suppliers',
     clients: '/clients',
+    expenses: '/expenses',
     reports: '/reports',
     users: '/users',
     settings: '/settings'

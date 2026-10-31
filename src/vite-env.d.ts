@@ -69,6 +69,18 @@ interface ElectronAPI {
         delete: (id: number) => Promise<{ success: boolean }>
         getCreditBalance: (id: number) => Promise<number>
     }
+    expenseTypes: {
+        getAll: () => Promise<any[]>
+        create: (name: string, description?: string) => Promise<UserResult<any>>
+        update: (id: number, data: { name?: string; description?: string }) => Promise<UserResult<any>>
+        delete: (id: number) => Promise<UserResult<void>>
+    }
+    expenses: {
+        getAll: () => Promise<any[]>
+        create: (expense: any) => Promise<UserResult<any>>
+        update: (id: number, expense: any) => Promise<UserResult<any>>
+        delete: (id: number) => Promise<UserResult<void>>
+    }
     database: {
         clearAll: () => Promise<{ success: boolean; error?: string }>
         restore: (data: any) => Promise<{ success: boolean; error?: string }>

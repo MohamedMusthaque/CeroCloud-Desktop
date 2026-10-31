@@ -1,7 +1,7 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import { secureEncryptionService } from './secureEncryptionService'
-import { Product, Category, Sale, Supplier, CompanySettings, Client } from '@/types/database'
+import { Product, Category, Sale, Supplier, CompanySettings, Client, Expense, ExpenseType } from '@/types/database'
 import { t } from '@/i18n'
 
 interface BackupMetadata {
@@ -23,6 +23,9 @@ interface BackupData {
     sales: Sale[]
     suppliers: Supplier[]
     clients: Client[]
+    // Absent in backups made before expenses existed
+    expenseTypes?: ExpenseType[]
+    expenses?: Expense[]
 }
 
 export const zipBackupService = {
@@ -44,6 +47,8 @@ export const zipBackupService = {
             const sales = await window.electronAPI.sales.getAll() as Sale[]
             const suppliers = await window.electronAPI.suppliers.getAll() as Supplier[]
             const clients = await window.electronAPI.clients.getAll() as Client[]
+            const expenseTypes = await window.electronAPI.expenseTypes.getAll() as ExpenseType[]
+            const expenses = await window.electronAPI.expenses.getAll() as Expense[]
 
             // Obtener configuración 
             const settingsStr = localStorage.getItem('companySettings')
@@ -75,7 +80,9 @@ export const zipBackupService = {
                 categories,
                 sales,
                 suppliers,
-                clients
+                clients,
+                expenseTypes,
+                expenses
             }
             const databaseJson = JSON.stringify(databaseData, null, 2)
             const databaseContent = password

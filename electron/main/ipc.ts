@@ -1,7 +1,7 @@
 import { ipcMain, app } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, type AuthUser, type Actor } from './database'
+import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, expenseQueries, expenseTypeQueries, ExpenseError, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
 
@@ -29,6 +29,19 @@ function withUserAdmin<T>(action: (actor: AuthUser) => T) {
     } catch (error) {
         if (error instanceof UserError) return { success: false, error: error.code }
         logger.error('Users', error)
+        return { success: false, error: 'UNKNOWN' }
+    }
+}
+
+// Runs an expense change only for users allowed on the Expenses page
+function withExpenseAccess<T>(action: (actor: AuthUser) => T) {
+    const actor = currentUser()
+    if (!actor || !canAccessPage(actor, 'expenses')) return { success: false, error: 'FORBIDDEN' }
+    try {
+        return { success: true, data: action(actor) }
+    } catch (error) {
+        if (error instanceof ExpenseError) return { success: false, error: error.code }
+        logger.error('Expenses', error)
         return { success: false, error: 'UNKNOWN' }
     }
 }
@@ -296,6 +309,24 @@ export function registerIpcHandlers() {
     ipcMain.handle('clients:getCreditBalance', (_event, id: number) => {
         return clientQueries.getCreditBalance(id)
     })
+
+    // Expense types (reads stay open so backups include them for every user)
+    ipcMain.handle('expenseTypes:getAll', () => expenseTypeQueries.getAll())
+    ipcMain.handle('expenseTypes:create', (_event, name: string, description?: string) =>
+        withExpenseAccess(actor => expenseTypeQueries.create(name, description, actor.username)))
+    ipcMain.handle('expenseTypes:update', (_event, id: number, data: { name?: string; description?: string }) =>
+        withExpenseAccess(actor => expenseTypeQueries.update(id, data ?? {}, actor.username)))
+    ipcMain.handle('expenseTypes:delete', (_event, id: number) =>
+        withExpenseAccess(() => expenseTypeQueries.delete(id)))
+
+    // Expenses
+    ipcMain.handle('expenses:getAll', () => expenseQueries.getAll())
+    ipcMain.handle('expenses:create', (_event, input) =>
+        withExpenseAccess(actor => expenseQueries.create(input ?? {}, actor.username)))
+    ipcMain.handle('expenses:update', (_event, id: number, input) =>
+        withExpenseAccess(actor => expenseQueries.update(id, input ?? {}, actor.username)))
+    ipcMain.handle('expenses:delete', (_event, id: number) =>
+        withExpenseAccess(() => expenseQueries.delete(id)))
 
     // Auth
     ipcMain.handle('auth:login', (_event, username: string, password: string) => {

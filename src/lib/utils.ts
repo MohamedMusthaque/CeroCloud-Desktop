@@ -18,5 +18,7 @@ export function getImageSrc(imagePath?: string) {
 // Uses the currency symbol configured in Settings, like the rest of the UI
 export function formatCurrency(amount: number) {
     const { currencySymbol } = companyService.getSettings()
-    return `${currencySymbol}${amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    const formatted = Math.abs(amount).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    // Sign before the symbol: -$5.00 (losses); amounts that round to zero carry no sign
+    return `${amount <= -0.005 ? '-' : ''}${currencySymbol}${formatted}`
 }

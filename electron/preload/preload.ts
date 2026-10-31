@@ -72,6 +72,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
         getCreditBalance: (id: number) => ipcRenderer.invoke('clients:getCreditBalance', id),
     },
 
+    // Expense types
+    expenseTypes: {
+        getAll: () => ipcRenderer.invoke('expenseTypes:getAll'),
+        create: (name: string, description?: string) => ipcRenderer.invoke('expenseTypes:create', name, description),
+        update: (id: number, data: { name?: string; description?: string }) => ipcRenderer.invoke('expenseTypes:update', id, data),
+        delete: (id: number) => ipcRenderer.invoke('expenseTypes:delete', id),
+    },
+
+    // Expenses
+    expenses: {
+        getAll: () => ipcRenderer.invoke('expenses:getAll'),
+        create: (expense: any) => ipcRenderer.invoke('expenses:create', expense),
+        update: (id: number, expense: any) => ipcRenderer.invoke('expenses:update', id, expense),
+        delete: (id: number) => ipcRenderer.invoke('expenses:delete', id),
+    },
+
     // Database
     database: {
         clearAll: () => ipcRenderer.invoke('database:clearAll'),

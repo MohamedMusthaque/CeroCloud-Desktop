@@ -10,6 +10,8 @@ export const backupService = {
             const categories = await window.electronAPI.categories.getAll()
             const sales = await window.electronAPI.sales.getAll()
             const suppliers = await window.electronAPI.suppliers.getAll()
+            const expenseTypes = await window.electronAPI.expenseTypes.getAll()
+            const expenses = await window.electronAPI.expenses.getAll()
 
             const backupData = {
                 version: '1.0',
@@ -19,6 +21,8 @@ export const backupService = {
                     categories,
                     sales,
                     suppliers,
+                    expenseTypes,
+                    expenses,
                 }
             }
 

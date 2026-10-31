@@ -11,8 +11,7 @@ import {
     AlertCircle,
     Activity,
     X,
-    AlertTriangle,
-    CheckCircle2,
+    Scale,
     ArrowUpDown,
     Search
 } from 'lucide-react'
@@ -34,8 +33,11 @@ import { productService } from '@/services/productService'
 import { saleService } from '@/services/saleService'
 import { pdfGenerator } from '@/services/pdfGenerator'
 import { companyService } from '@/services/companyService'
-import { Product, Sale } from '@/types/database'
-import { format, subDays, startOfDay } from 'date-fns'
+import { Expense, Product, Sale } from '@/types/database'
+import { expenseService } from '@/services/expenseService'
+import { ProfitReport } from './ProfitReport'
+import { format, subDays, startOfDay, startOfWeek, startOfMonth, parseISO } from 'date-fns'
+import { saleDay } from '@/lib/profit'
 import { useTranslation, paymentMethodLabel, t as translateNow } from '@/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn, getImageSrc } from '@/lib/utils'
@@ -45,8 +47,9 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 export function Reports() {
     const [products, setProducts] = useState<Product[]>([])
     const [sales, setSales] = useState<Sale[]>([])
+    const [expenses, setExpenses] = useState<Expense[]>([])
     const [loading, setLoading] = useState(true)
-    const [activeTab, setActiveTab] = useState<'sales' | 'inventory' | 'export' | 'transactions'>('sales')
+    const [activeTab, setActiveTab] = useState<'sales' | 'profit' | 'inventory' | 'export' | 'transactions'>('sales')
     const [settings] = useState(companyService.getSettings())
     const { t, dateLocale, locale } = useTranslation()
 
@@ -116,12 +119,14 @@ export function Reports() {
     const loadData = async () => {
         try {
             setLoading(true)
-            const [productsData, salesData] = await Promise.all([
+            const [productsData, salesData, expensesData] = await Promise.all([
                 productService.getAll(),
-                saleService.getAll()
+                saleService.getAll(),
+                expenseService.getAll()
             ])
             setProducts(productsData)
             setSales(salesData)
+            setExpenses(expensesData)
         } catch (error) {
             console.error('Error loading data:', error)
             // Non-reactive translate keeps the load function free of hook dependencies
@@ -178,68 +183,6 @@ export function Reports() {
         }
     })
 
-    // --- PROFIT ANALYSIS ---
-    // Calcular Costo de Productos Vendidos (COGS) y Utilidad Bruta
-    let totalCost = 0
-    let totalRevenue = 0
-    const productProfitability: Map<number, {
-        product: Product
-        revenue: number
-        cost: number
-        profit: number
-        margin: number
-        quantity: number
-    }> = new Map()
-
-    sales.forEach(sale => {
-        if (sale.status === 'cancelled') return
-
-        sale.items.forEach(item => {
-            const product = products.find(p => p.id === item.product_id)
-            const itemRevenue = item.subtotal
-            const itemCost = (product?.cost || 0) * item.quantity
-            const itemProfit = itemRevenue - itemCost
-
-            totalRevenue += itemRevenue
-            totalCost += itemCost
-
-            // Agregar a análisis por producto
-            if (product) {
-                const existing = productProfitability.get(item.product_id) || {
-                    product,
-                    revenue: 0,
-                    cost: 0,
-                    profit: 0,
-                    margin: 0,
-                    quantity: 0
-                }
-
-                existing.revenue += itemRevenue
-                existing.cost += itemCost
-                existing.profit += itemProfit
-                existing.quantity += item.quantity
-                existing.margin = existing.revenue > 0 ? (existing.profit / existing.revenue) * 100 : 0
-
-                productProfitability.set(item.product_id, existing)
-            }
-        })
-    })
-
-    const grossProfit = totalRevenue - totalCost
-    const profitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
-
-    // Top productos por rentabilidad (mejores márgenes)
-    const topProfitableProducts = Array.from(productProfitability.values())
-        .filter(item => item.quantity > 0)
-        .sort((a, b) => b.profit - a.profit)
-        .slice(0, 10)
-
-    // Productos con bajo margen (alerta)
-    const lowMarginProducts = Array.from(productProfitability.values())
-        .filter(item => item.quantity > 0 && item.margin < 20) // Menos del 20% de margen
-        .sort((a, b) => a.margin - b.margin)
-        .slice(0, 10)
-
     // --- HANDLERS ---
 
     const handleCancelSale = async () => {
@@ -291,6 +234,7 @@ export function Reports() {
 
     const tabs = [
         { id: 'sales', label: t('rep.tab.sales'), icon: DollarSign },
+        { id: 'profit', label: t('rep.tab.profit'), icon: Scale },
         { id: 'inventory', label: t('rep.tab.inventory'), icon: Package },
         { id: 'transactions', label: t('rep.tab.transactions'), icon: Calendar },
         { id: 'export', label: t('rep.tab.export'), icon: Download },
@@ -310,7 +254,7 @@ export function Reports() {
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as 'sales' | 'inventory' | 'transactions' | 'export')}
+                            onClick={() => setActiveTab(tab.id as 'sales' | 'profit' | 'inventory' | 'transactions' | 'export')}
                             className={cn(
                                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                                 activeTab === tab.id
@@ -358,58 +302,6 @@ export function Reports() {
                                     icon={Activity}
                                     color="purple"
                                 />
-                            </div>
-
-                            {/* Profit Analysis Section */}
-                            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-2xl p-6 border border-emerald-200 dark:border-emerald-800">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-3 bg-emerald-500 rounded-xl">
-                                        <TrendingUp className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('rep.profitAnalysis')}</h3>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">{t('rep.profitAnalysisDesc')}</p>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('rep.revenue')}</p>
-                                        <p className="text-2xl font-black text-gray-900 dark:text-white">
-                                            {settings.currencySymbol}{totalRevenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">{t('rep.revenueDesc')}</p>
-                                    </div>
-
-                                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('rep.cost')}</p>
-                                        <p className="text-2xl font-black text-red-600 dark:text-red-400">
-                                            {settings.currencySymbol}{totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">{t('rep.costDesc')}</p>
-                                    </div>
-
-                                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-emerald-500 dark:border-emerald-600 ring-2 ring-emerald-500/20">
-                                        <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase mb-1">{t('rep.grossProfit')}</p>
-                                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                                            {settings.currencySymbol}{grossProfit.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">{t('rep.netGain')}</p>
-                                    </div>
-
-                                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('rep.margin')}</p>
-                                        <p className={cn(
-                                            "text-2xl font-black",
-                                            profitMargin >= 30 ? "text-green-600 dark:text-green-400" :
-                                                profitMargin >= 15 ? "text-amber-600 dark:text-amber-400" :
-                                                    "text-red-600 dark:text-red-400"
-                                        )}>
-                                            {profitMargin.toFixed(1)}%
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">{t('rep.marginDesc')}</p>
-                                    </div>
-                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -519,135 +411,13 @@ export function Reports() {
                                 </div>
                             </div>
 
-                            {/* Profitability Analysis Tables */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {/* Most Profitable Products */}
-                                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-300 dark:border-gray-700">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('rep.mostProfitable')}</h3>
-                                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                                            <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                                        {topProfitableProducts.map((item, index) => (
-                                            <div key={item.product.id} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className={cn(
-                                                                "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
-                                                                index === 0 ? "bg-yellow-400 text-yellow-900" :
-                                                                    index === 1 ? "bg-gray-300 text-gray-700" :
-                                                                        index === 2 ? "bg-amber-600 text-white" :
-                                                                            "bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                            )}>
-                                                                {index + 1}
-                                                            </span>
-                                                            <p className="font-bold text-gray-900 dark:text-white text-sm line-clamp-1">
-                                                                {item.product.name}
-                                                            </p>
-                                                        </div>
-                                                        <p className="text-xs text-gray-500 font-mono mt-1">{item.product.code}</p>
-                                                    </div>
-                                                    <div className="text-right ml-2">
-                                                        <p className="text-sm font-black text-green-600 dark:text-green-400">
-                                                            {settings.currencySymbol}{item.profit.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500">{t('rep.soldCount', { count: item.quantity })}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                                                    <span className="text-gray-500">{t('rep.marginLabel')}</span>
-                                                    <span className={cn(
-                                                        "font-bold",
-                                                        item.margin >= 40 ? "text-green-600" :
-                                                            item.margin >= 20 ? "text-blue-600" :
-                                                                "text-amber-600"
-                                                    )}>
-                                                        {item.margin.toFixed(1)}%
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {topProfitableProducts.length === 0 && (
-                                            <div className="text-center py-10 text-gray-400 text-sm">
-                                                {t('rep.notEnoughData')}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Low Margin Products - Warning */}
-                                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-amber-300 dark:border-amber-700">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('rep.lowMargin')}</h3>
-                                        <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                                            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3 p-3 mb-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
-                                        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-                                        <p className="text-xs font-medium leading-relaxed">
-                                            {t('rep.lowMarginHint')}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-3 max-h-[350px] overflow-y-auto">
-                                        {lowMarginProducts.map((item) => (
-                                            <div key={item.product.id} className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-800/50">
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div className="flex-1">
-                                                        <p className="font-bold text-gray-900 dark:text-white text-sm line-clamp-1">
-                                                            {item.product.name}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500 font-mono">{item.product.code}</p>
-                                                    </div>
-                                                    <div className="text-right ml-2">
-                                                        <p className={cn(
-                                                            "text-sm font-black",
-                                                            item.margin < 10 ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"
-                                                        )}>
-                                                            {item.margin.toFixed(1)}%
-                                                        </p>
-                                                        <p className="text-xs text-gray-500">{t('rep.marginLower')}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-amber-200 dark:border-amber-800/50 text-xs">
-                                                    <div>
-                                                        <p className="text-gray-500">{t('rep.sale')}</p>
-                                                        <p className="font-semibold text-gray-900 dark:text-white">
-                                                            {settings.currencySymbol}{item.revenue.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-gray-500">{t('rep.cost')}</p>
-                                                        <p className="font-semibold text-red-600 dark:text-red-400">
-                                                            {settings.currencySymbol}{item.cost.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-gray-500">{t('rep.profit')}</p>
-                                                        <p className="font-semibold text-green-600 dark:text-green-400">
-                                                            {settings.currencySymbol}{item.profit.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {lowMarginProducts.length === 0 && (
-                                            <div className="text-center py-10 text-green-600 dark:text-green-400">
-                                                <CheckCircle2 className="w-12 h-12 mx-auto mb-2" />
-                                                <p className="text-sm font-medium">{t('rep.excellent')}</p>
-                                                <p className="text-xs text-gray-500 mt-1">{t('rep.goodMargins')}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Top Products Section */}
 
                         </div>
+                    )}
+
+                    {activeTab === 'profit' && (
+                        <ProfitReport sales={sales} expenses={expenses} products={products} />
                     )}
 
                     {activeTab === 'inventory' && (
@@ -1088,8 +858,10 @@ function MetricCard({ title, value, subtitle, icon: Icon, color }: any) {
 }
 
 function ExportSection({ sales, products, settings }: { sales: Sale[]; products: Product[]; settings: any }) {
-    const { t } = useTranslation()
-    const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all'>('today')
+    const { t, locale, dateLocale } = useTranslation()
+    const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all' | 'custom'>('today')
+    // Inclusive local days ('YYYY-MM-DD'); an empty end means no limit
+    const [customRange, setCustomRange] = useState<{ from?: string; to?: string }>({})
 
     // Filter Logic
     const getFilteredSales = () => {
@@ -1101,13 +873,16 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
             if (timeRange === 'today') {
                 return date.toDateString() === now.toDateString()
             }
+            // Calendar periods so far; the week starts on the language's first weekday (Mon in es, Sun in en)
             if (timeRange === 'week') {
-                const weekAgo = subDays(now, 7)
-                return date >= weekAgo
+                return date >= startOfWeek(now, { locale: dateLocale })
             }
             if (timeRange === 'month') {
-                const monthAgo = subDays(now, 30)
-                return date >= monthAgo
+                return date >= startOfMonth(now)
+            }
+            if (timeRange === 'custom') {
+                const day = saleDay(sale)
+                return (!customRange.from || day >= customRange.from) && (!customRange.to || day <= customRange.to)
             }
             return true
         })
@@ -1118,6 +893,23 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
     // However, for "Low Stock" we just filter by logic. Used products remains full list usually.
 
     const lowStock = products.filter(p => p.stock <= Math.max(p.min_stock, settings.inventory?.lowStockThreshold || 0))
+
+    const formatDay = (day: string) => parseISO(day).toLocaleDateString(locale)
+    const customLabel = () => {
+        const { from, to } = customRange
+        if (from && to) return t('rep.range.between', { from: formatDay(from), to: formatDay(to) })
+        if (from) return t('rep.range.since', { date: formatDay(from) })
+        if (to) return t('rep.range.until', { date: formatDay(to) })
+        return t('rep.range.all')
+    }
+    const rangeLabel = timeRange === 'custom' ? customLabel() : {
+        'today': t('rep.range.today'),
+        'week': t('rep.range.week'),
+        'month': t('rep.range.month'),
+        'all': t('rep.range.all')
+    }[timeRange]
+
+    const dateInputClass = "px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
 
     const handleExport = (type: 'sales' | 'inventory' | 'low-stock' | 'daily-closing') => {
         const titleMap = {
@@ -1146,13 +938,6 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
         if (type === 'inventory') dataToExport = products
         if (type === 'low-stock') dataToExport = lowStock
 
-        const rangeLabel = {
-            'today': t('rep.range.today'),
-            'week': t('rep.range.week'),
-            'month': t('rep.range.month'),
-            'all': t('rep.range.all')
-        }[timeRange]
-
         toast.promise(
             pdfGenerator.generateReport(
                 exportTitle,
@@ -1173,26 +958,40 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
     return (
         <div className="space-y-6">
             {/* Time Filter Controls */}
-            <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-md border border-gray-300 dark:border-gray-700">
+            <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-md border border-gray-300 dark:border-gray-700">
                 <span className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-indigo-500" />
                     {t('rep.export.period')}
                 </span>
-                <div className="flex bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl">
-                    {(['today', 'week', 'month', 'all'] as const).map((range) => (
-                        <button
-                            key={range}
-                            onClick={() => setTimeRange(range)}
-                            className={cn(
-                                "px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize",
-                                timeRange === range
-                                    ? "bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                            )}
-                        >
-                            {t(`rep.filter.${range}`)}
-                        </button>
-                    ))}
+                <div className="flex flex-wrap items-center gap-2">
+                    {timeRange === 'custom' && (
+                        <>
+                            <label className="flex items-center gap-2 text-sm text-gray-500">
+                                {t('rep.filter.from')}
+                                <input type="date" value={customRange.from ?? ''} max={customRange.to} onChange={(e) => setCustomRange(r => ({ ...r, from: e.target.value || undefined }))} className={dateInputClass} />
+                            </label>
+                            <label className="flex items-center gap-2 text-sm text-gray-500">
+                                {t('rep.filter.to')}
+                                <input type="date" value={customRange.to ?? ''} min={customRange.from} onChange={(e) => setCustomRange(r => ({ ...r, to: e.target.value || undefined }))} className={dateInputClass} />
+                            </label>
+                        </>
+                    )}
+                    <div className="flex bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl overflow-x-auto">
+                        {(['today', 'week', 'month', 'all', 'custom'] as const).map((range) => (
+                            <button
+                                key={range}
+                                onClick={() => setTimeRange(range)}
+                                className={cn(
+                                    "px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize whitespace-nowrap",
+                                    timeRange === range
+                                        ? "bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                                        : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                )}
+                            >
+                                {t(`rep.filter.${range}`)}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -1200,7 +999,7 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
                 {/* Sales Report Card */}
                 <NewExportCard
                     title={t('rep.export.salesTitle')}
-                    description={t('rep.export.salesDesc', { range: timeRange === 'today' ? t('rep.export.descToday') : timeRange === 'all' ? t('rep.export.descAll') : t('rep.export.descPeriod') })}
+                    description={t('rep.export.salesDesc', { range: timeRange === 'today' ? t('rep.export.descToday') : timeRange === 'all' ? t('rep.export.descAll') : rangeLabel })}
                     count={filteredSales.length}
                     total={filteredSales.reduce((s, x) => s + x.total, 0)}
                     currencySymbol={settings.currencySymbol}

@@ -17,6 +17,7 @@ import { dashboard } from './es/dashboard'
 import { printTexts } from './es/print'
 import { shell } from './es/shell'
 import { exportTexts } from './es/exports'
+import { expenses } from './es/expenses'
 
 export const es = {
     ...common,
@@ -38,6 +39,7 @@ export const es = {
     ...printTexts,
     ...shell,
     ...exportTexts,
+    ...expenses,
 
     // Navigation
     'nav.dashboard': 'Dashboard',
@@ -45,6 +47,7 @@ export const es = {
     'nav.sales': 'Ventas',
     'nav.suppliers': 'Proveedores',
     'nav.clients': 'Clientes',
+    'nav.expenses': 'Gastos',
     'nav.reports': 'Reportes',
     'nav.settings': 'Configuración',
     'nav.users': 'Usuarios',
