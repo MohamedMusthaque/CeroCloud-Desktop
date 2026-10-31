@@ -6,6 +6,7 @@ import { useTranslation } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { computeProfit, computeProductProfit, type ProfitPeriod } from '@/lib/profit'
 import type { Expense, Product, Sale } from '@/types/database'
+import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
 
 type PeriodPreset = 'thisMonth' | 'lastMonth' | 'thisYear' | 'all' | 'custom'
 
@@ -82,8 +83,6 @@ export function ProfitReport({ sales, expenses, products }: ProfitReportProps) {
         { label: t('profit.line.netProfit'), amount: summary.netProfit, kind: 'total' }
     ]
 
-    const dateInputClass = "px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-
     return (
         <div className="space-y-6">
             {/* Title + period */}
@@ -109,18 +108,7 @@ export function ProfitReport({ sales, expenses, products }: ProfitReportProps) {
                             </button>
                         ))}
                     </div>
-                    {preset === 'custom' && (
-                        <>
-                            <label className="flex items-center gap-2 text-sm text-gray-500">
-                                {t('profit.from')}
-                                <input type="date" value={custom.from ?? ''} max={custom.to} onChange={(e) => setCustom(c => ({ ...c, from: e.target.value || undefined }))} className={dateInputClass} />
-                            </label>
-                            <label className="flex items-center gap-2 text-sm text-gray-500">
-                                {t('profit.to')}
-                                <input type="date" value={custom.to ?? ''} min={custom.from} onChange={(e) => setCustom(c => ({ ...c, to: e.target.value || undefined }))} className={dateInputClass} />
-                            </label>
-                        </>
-                    )}
+                    {preset === 'custom' && <DateRangeInputs value={custom} onChange={setCustom} />}
                 </div>
             </div>
 

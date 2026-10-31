@@ -13,8 +13,6 @@ export const expenses: Record<keyof typeof es, string> = {
     'exp.statTopType': 'Top type',
     'exp.searchPlaceholder': 'Search description or type...',
     'exp.allTypes': 'All types',
-    'exp.from': 'From',
-    'exp.to': 'To',
     'exp.clearFilters': 'Clear filters',
     'exp.loading': 'Loading expenses...',
     'exp.empty': 'No expenses yet',

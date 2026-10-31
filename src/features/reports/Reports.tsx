@@ -36,8 +36,9 @@ import { companyService } from '@/services/companyService'
 import { Expense, Product, Sale } from '@/types/database'
 import { expenseService } from '@/services/expenseService'
 import { ProfitReport } from './ProfitReport'
-import { format, subDays, startOfDay, startOfWeek, startOfMonth, parseISO } from 'date-fns'
-import { saleDay } from '@/lib/profit'
+import { format, subDays, startOfDay } from 'date-fns'
+import { ReportPeriodFilter } from './ReportPeriodFilter'
+import { filterSalesByPeriod, periodLabel, type ReportPeriod } from '@/lib/reportPeriod'
 import { useTranslation, paymentMethodLabel, t as translateNow } from '@/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn, getImageSrc } from '@/lib/utils'
@@ -57,9 +58,10 @@ export function Reports() {
     const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null)
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
+    const [historyPeriod, setHistoryPeriod] = useState<ReportPeriod>({ range: 'all' })
 
     const sortedSales = useMemo(() => {
-        let sortableSales = [...sales]
+        let sortableSales = filterSalesByPeriod(sales, historyPeriod, dateLocale)
 
         // Filter by Search Term
         if (searchTerm.trim()) {
@@ -102,7 +104,7 @@ export function Reports() {
             sortableSales.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
         }
         return sortableSales
-    }, [sales, sortConfig, searchTerm, t])
+    }, [sales, historyPeriod, dateLocale, sortConfig, searchTerm, t])
 
     const requestSort = (key: string) => {
         let direction: 'asc' | 'desc' = 'asc'
@@ -702,6 +704,15 @@ export function Reports() {
                                 </div>
                             </div>
 
+                            {/* Period filter */}
+                            <div className="px-6 py-3 border-b border-gray-100 dark:border-gray-700 flex flex-col lg:flex-row justify-between lg:items-center gap-3">
+                                <span className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-indigo-500" />
+                                    {t('rep.export.period')}
+                                </span>
+                                <ReportPeriodFilter value={historyPeriod} onChange={setHistoryPeriod} />
+                            </div>
+
                             {/* Sortable Header */}
                             <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 dark:bg-gray-900/50 text-xs font-semibold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700 select-none">
                                 <div
@@ -859,57 +870,16 @@ function MetricCard({ title, value, subtitle, icon: Icon, color }: any) {
 
 function ExportSection({ sales, products, settings }: { sales: Sale[]; products: Product[]; settings: any }) {
     const { t, locale, dateLocale } = useTranslation()
-    const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all' | 'custom'>('today')
-    // Inclusive local days ('YYYY-MM-DD'); an empty end means no limit
-    const [customRange, setCustomRange] = useState<{ from?: string; to?: string }>({})
+    const [period, setPeriod] = useState<ReportPeriod>({ range: 'today' })
+    const timeRange = period.range
 
-    // Filter Logic
-    const getFilteredSales = () => {
-        const now = new Date()
-        return sales.filter(sale => {
-            if (!sale.created_at) return false
-            const date = new Date(sale.created_at)
-
-            if (timeRange === 'today') {
-                return date.toDateString() === now.toDateString()
-            }
-            // Calendar periods so far; the week starts on the language's first weekday (Mon in es, Sun in en)
-            if (timeRange === 'week') {
-                return date >= startOfWeek(now, { locale: dateLocale })
-            }
-            if (timeRange === 'month') {
-                return date >= startOfMonth(now)
-            }
-            if (timeRange === 'custom') {
-                const day = saleDay(sale)
-                return (!customRange.from || day >= customRange.from) && (!customRange.to || day <= customRange.to)
-            }
-            return true
-        })
-    }
-
-    const filteredSales = getFilteredSales()
+    const filteredSales = filterSalesByPeriod(sales, period, dateLocale)
     // Products don't usually filter by date unless it's "created_at", but for inventory snapshots we usually want current state.
     // However, for "Low Stock" we just filter by logic. Used products remains full list usually.
 
     const lowStock = products.filter(p => p.stock <= Math.max(p.min_stock, settings.inventory?.lowStockThreshold || 0))
 
-    const formatDay = (day: string) => parseISO(day).toLocaleDateString(locale)
-    const customLabel = () => {
-        const { from, to } = customRange
-        if (from && to) return t('rep.range.between', { from: formatDay(from), to: formatDay(to) })
-        if (from) return t('rep.range.since', { date: formatDay(from) })
-        if (to) return t('rep.range.until', { date: formatDay(to) })
-        return t('rep.range.all')
-    }
-    const rangeLabel = timeRange === 'custom' ? customLabel() : {
-        'today': t('rep.range.today'),
-        'week': t('rep.range.week'),
-        'month': t('rep.range.month'),
-        'all': t('rep.range.all')
-    }[timeRange]
-
-    const dateInputClass = "px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+    const rangeLabel = periodLabel(period, t, locale)
 
     const handleExport = (type: 'sales' | 'inventory' | 'low-stock' | 'daily-closing') => {
         const titleMap = {
@@ -963,36 +933,7 @@ function ExportSection({ sales, products, settings }: { sales: Sale[]; products:
                     <Calendar className="w-5 h-5 text-indigo-500" />
                     {t('rep.export.period')}
                 </span>
-                <div className="flex flex-wrap items-center gap-2">
-                    {timeRange === 'custom' && (
-                        <>
-                            <label className="flex items-center gap-2 text-sm text-gray-500">
-                                {t('rep.filter.from')}
-                                <input type="date" value={customRange.from ?? ''} max={customRange.to} onChange={(e) => setCustomRange(r => ({ ...r, from: e.target.value || undefined }))} className={dateInputClass} />
-                            </label>
-                            <label className="flex items-center gap-2 text-sm text-gray-500">
-                                {t('rep.filter.to')}
-                                <input type="date" value={customRange.to ?? ''} min={customRange.from} onChange={(e) => setCustomRange(r => ({ ...r, to: e.target.value || undefined }))} className={dateInputClass} />
-                            </label>
-                        </>
-                    )}
-                    <div className="flex bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl overflow-x-auto">
-                        {(['today', 'week', 'month', 'all', 'custom'] as const).map((range) => (
-                            <button
-                                key={range}
-                                onClick={() => setTimeRange(range)}
-                                className={cn(
-                                    "px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize whitespace-nowrap",
-                                    timeRange === range
-                                        ? "bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                                        : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                )}
-                            >
-                                {t(`rep.filter.${range}`)}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <ReportPeriodFilter value={period} onChange={setPeriod} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

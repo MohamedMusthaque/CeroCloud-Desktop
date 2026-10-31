@@ -10,6 +10,9 @@ export const common = {
     'common.next': 'Siguiente',
     'common.loading': 'Cargando...',
     'common.na': 'N/A',
+    'common.from': 'Desde',
+    'common.to': 'Hasta',
+    'common.clearDates': 'Borrar fechas',
     'common.walkInCustomer': 'Cliente general',
 
     // Payment methods

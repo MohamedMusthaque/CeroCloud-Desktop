@@ -4,6 +4,7 @@ import { Plus, Search, Edit2, Trash2, Wallet, Shapes, CalendarDays, Receipt, Tre
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
 import { expenseService, expenseTypeService } from '@/services/expenseService'
 import { cn, formatCurrency } from '@/lib/utils'
 import type { Expense, ExpenseType } from '@/types/database'
@@ -190,14 +191,11 @@ export function Expenses() {
                             <option value="all">{t('exp.allTypes')}</option>
                             {types.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
                         </select>
-                        <label className="flex items-center gap-2 text-sm text-gray-500">
-                            {t('exp.from')}
-                            <input type="date" value={fromDate} max={toDate || undefined} onChange={(e) => setFromDate(e.target.value)} className={filterInputClass} />
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-gray-500">
-                            {t('exp.to')}
-                            <input type="date" value={toDate} min={fromDate || undefined} onChange={(e) => setToDate(e.target.value)} className={filterInputClass} />
-                        </label>
+                        <DateRangeInputs
+                            value={{ from: fromDate || undefined, to: toDate || undefined }}
+                            onChange={(range) => { setFromDate(range.from ?? ''); setToDate(range.to ?? '') }}
+                            inputClassName={filterInputClass}
+                        />
                         {hasFilters && (
                             <button
                                 onClick={clearFilters}
