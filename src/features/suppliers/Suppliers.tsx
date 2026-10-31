@@ -11,6 +11,7 @@ import { type Supplier, type Product } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { SupplierForm } from './SupplierForm'
 import { cn, getImageSrc } from '@/lib/utils'
 import { companyService } from '@/services/companyService'
@@ -149,6 +150,9 @@ export function Suppliers() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-transparent border-none focus:ring-0 text-gray-900 dark:text-white placeholder-gray-400"
                     />
+                </div>
+                <div className="flex items-center">
+                    <ClearFiltersButton visible={!!searchTerm} onClick={() => setSearchTerm('')} />
                 </div>
                 <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-4">
                     <button

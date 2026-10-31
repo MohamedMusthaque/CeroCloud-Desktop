@@ -15,6 +15,7 @@ export const common: Record<keyof typeof es, string> = {
     'common.from': 'From',
     'common.to': 'To',
     'common.clearDates': 'Clear dates',
+    'common.clearFilters': 'Clear filters',
     'common.walkInCustomer': 'Walk-in customer',
 
     // Payment methods

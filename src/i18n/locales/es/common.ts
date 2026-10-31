@@ -13,6 +13,7 @@ export const common = {
     'common.from': 'Desde',
     'common.to': 'Hasta',
     'common.clearDates': 'Borrar fechas',
+    'common.clearFilters': 'Limpiar filtros',
     'common.walkInCustomer': 'Cliente general',
 
     // Payment methods

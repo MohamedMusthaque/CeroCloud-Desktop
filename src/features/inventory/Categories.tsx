@@ -5,6 +5,7 @@ import { Plus, Search, Edit2, Trash2, Tags, X, Save, Loader2 } from 'lucide-reac
 import { toast } from 'sonner'
 import { useTranslation, type TranslationKey } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { categoryService, CategoryServiceError } from '@/services/categoryService'
 import type { Category } from '@/types/database'
 
@@ -78,15 +79,18 @@ export function Categories({ onProductsChanged }: CategoriesProps) {
         <div className="space-y-6">
             {/* Toolbar */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-md border border-gray-300 dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                <div className="relative w-full sm:max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder={t('cat.searchPlaceholder')}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-                    />
+                <div className="flex items-center gap-2 w-full sm:max-w-xl">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder={t('cat.searchPlaceholder')}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
+                        />
+                    </div>
+                    <ClearFiltersButton visible={!!searchTerm} onClick={() => setSearchTerm('')} />
                 </div>
                 <button
                     onClick={() => { setEditing(null); setFormOpen(true) }}

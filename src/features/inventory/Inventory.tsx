@@ -21,6 +21,7 @@ import { companyService } from '@/services/companyService'
 import { Product } from '@/types/database'
 import { ProductForm } from './ProductForm'
 import { Categories } from './Categories'
+import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { ImportWizard } from '@/components/inventory/ImportWizard'
 import { useUIStore } from '@/stores/uiStore'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -278,6 +279,11 @@ export function Inventory() {
                             </div>
                         )}
                     </div>
+
+                    <ClearFiltersButton
+                        visible={!!searchTerm || selectedCategory !== 'all'}
+                        onClick={() => { setSearchTerm(''); setSelectedCategory('all') }}
+                    />
 
                     <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden lg:block" />
 

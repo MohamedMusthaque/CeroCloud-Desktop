@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
-import { Plus, Search, Edit2, Trash2, Wallet, Shapes, CalendarDays, Receipt, TrendingUp, FilterX } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Wallet, Shapes, CalendarDays, Receipt, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
 import { expenseService, expenseTypeService } from '@/services/expenseService'
 import { cn, formatCurrency } from '@/lib/utils'
@@ -196,15 +197,7 @@ export function Expenses() {
                             onChange={(range) => { setFromDate(range.from ?? ''); setToDate(range.to ?? '') }}
                             inputClassName={filterInputClass}
                         />
-                        {hasFilters && (
-                            <button
-                                onClick={clearFilters}
-                                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors w-fit"
-                            >
-                                <FilterX className="w-4 h-4" />
-                                {t('exp.clearFilters')}
-                            </button>
-                        )}
+                        <ClearFiltersButton visible={!!hasFilters} onClick={clearFilters} />
                     </div>
 
                     {/* List */}

@@ -44,6 +44,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn, getImageSrc } from '@/lib/utils'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { PAYMENT_METHODS } from '@/stores/cartStore'
 
 // Client filter value for bills without a customer name
@@ -753,6 +754,10 @@ export function Reports() {
                                             className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                                         />
                                     </div>
+                                    <ClearFiltersButton
+                                        visible={!!searchTerm || !!clientFilter || !!typeFilter || historyPeriod.range !== 'all'}
+                                        onClick={() => { setSearchTerm(''); setClientFilter(''); setTypeFilter(''); setHistoryPeriod({ range: 'all' }) }}
+                                    />
                                     <span className="text-xs text-gray-500 whitespace-nowrap hidden sm:inline-block">
                                         {t('rep.recordsCount', { count: sortedSales.length })}
                                     </span>

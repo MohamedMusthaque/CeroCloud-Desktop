@@ -11,7 +11,6 @@ export const expenses = {
     'exp.statTopType': 'Tipo principal',
     'exp.searchPlaceholder': 'Buscar por descripción o tipo...',
     'exp.allTypes': 'Todos los tipos',
-    'exp.clearFilters': 'Limpiar filtros',
     'exp.loading': 'Cargando gastos...',
     'exp.empty': 'No hay gastos registrados',
     'exp.emptyDesc': 'Registra el primer gasto de tu negocio.',
