@@ -1,7 +1,7 @@
 import { ipcMain, app } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, type AuthUser } from './database'
+import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
 
@@ -13,6 +13,11 @@ function currentUser(): AuthUser | null {
     if (!sessionUser) return null
     sessionUser = userQueries.getById(sessionUser.id)
     return sessionUser
+}
+
+// Username recorded as created_by / updated_by on records changed by this session
+function actorName(): Actor {
+    return currentUser()?.username ?? null
 }
 
 // Runs a user-management action only for users allowed on the Users page
@@ -93,7 +98,7 @@ export function registerIpcHandlers() {
 
     ipcMain.handle('products:create', (_event, product) => {
         try {
-            return productQueries.create(product)
+            return productQueries.create(product, actorName())
         } catch (error) {
             logger.error('Products Create', error)
             throw error
@@ -101,11 +106,11 @@ export function registerIpcHandlers() {
     })
 
     ipcMain.handle('products:createOrUpdate', (_event, product) => {
-        return productQueries.createOrUpdate(product)
+        return productQueries.createOrUpdate(product, actorName())
     })
 
     ipcMain.handle('products:update', (_event, id: number, product) => {
-        const result = productQueries.update(id, product)
+        const result = productQueries.update(id, product, actorName())
         return result || { id, ...product }
     })
 
@@ -187,13 +192,13 @@ export function registerIpcHandlers() {
     })
 
     ipcMain.handle('categories:create', (_event, name: string, description?: string) =>
-        withCategoryErrors(() => categoryQueries.create(name, description)))
+        withCategoryErrors(() => categoryQueries.create(name, description, actorName())))
 
     ipcMain.handle('categories:update', (_event, id: number, data: { name?: string; description?: string }) =>
-        withCategoryErrors(() => categoryQueries.update(id, data ?? {})))
+        withCategoryErrors(() => categoryQueries.update(id, data ?? {}, actorName())))
 
     ipcMain.handle('categories:delete', (_event, id: number) =>
-        withCategoryErrors(() => categoryQueries.delete(id)))
+        withCategoryErrors(() => categoryQueries.delete(id, actorName())))
 
     // Sales
     ipcMain.handle('sales:getAll', () => {
@@ -205,7 +210,7 @@ export function registerIpcHandlers() {
     })
 
     ipcMain.handle('sales:create', (_event, sale) => {
-        return saleQueries.create(sale)
+        return saleQueries.create(sale, actorName())
     })
 
     ipcMain.handle('sales:getRecent', (_event, limit?: number) => {
@@ -221,7 +226,7 @@ export function registerIpcHandlers() {
     })
 
     ipcMain.handle('sales:cancel', (_event, id: number) => {
-        return cancelSale(id)
+        return cancelSale(id, actorName())
     })
 
     ipcMain.handle('sales:getByCustomerName', (_event, name: string) => {
@@ -239,7 +244,7 @@ export function registerIpcHandlers() {
 
     ipcMain.handle('suppliers:create', (_event, supplier) => {
         try {
-            return supplierQueries.create(supplier)
+            return supplierQueries.create(supplier, actorName())
         } catch (error) {
             logger.error('Suppliers Create', error)
             throw error
@@ -247,7 +252,7 @@ export function registerIpcHandlers() {
     })
 
     ipcMain.handle('suppliers:update', (_event, id: number, supplier) => {
-        const result = supplierQueries.update(id, supplier)
+        const result = supplierQueries.update(id, supplier, actorName())
         return result || { id, ...supplier }
     })
 
@@ -271,7 +276,7 @@ export function registerIpcHandlers() {
 
     ipcMain.handle('clients:create', (_event, client) => {
         try {
-            return clientQueries.create(client)
+            return clientQueries.create(client, actorName())
         } catch (error) {
             logger.error('Clients Create', error)
             throw error
@@ -279,7 +284,7 @@ export function registerIpcHandlers() {
     })
 
     ipcMain.handle('clients:update', (_event, id: number, client) => {
-        const result = clientQueries.update(id, client)
+        const result = clientQueries.update(id, client, actorName())
         return result || { id, ...client }
     })
 
@@ -315,8 +320,8 @@ export function registerIpcHandlers() {
 
     // Users (management requires access to the Users page)
     ipcMain.handle('users:getAll', () => withUserAdmin(() => userQueries.getAll()))
-    ipcMain.handle('users:create', (_event, input) => withUserAdmin(() => userQueries.create(input ?? {})))
-    ipcMain.handle('users:update', (_event, id: number, input) => withUserAdmin(actor => userQueries.update(id, input ?? {}, actor.id)))
+    ipcMain.handle('users:create', (_event, input) => withUserAdmin(actor => userQueries.create(input ?? {}, actor)))
+    ipcMain.handle('users:update', (_event, id: number, input) => withUserAdmin(actor => userQueries.update(id, input ?? {}, actor)))
     ipcMain.handle('users:delete', (_event, id: number) => withUserAdmin(actor => userQueries.delete(id, actor.id)))
 
     // Inventory Logs handlers REMOVED

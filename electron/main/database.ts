@@ -27,6 +27,22 @@ function addColumnIfMissing(table: string, column: string, definition: string) {
 }
 
 // ==========================================
+// Auditoría: quién y cuándo creó / modificó cada registro
+// ==========================================
+
+// Nombre del usuario que realiza la acción (null = sistema, p. ej. datos de demostración)
+export type Actor = string | null
+
+const AUDITED_TABLES = ['products', 'categories', 'suppliers', 'clients', 'sales', 'users']
+
+// Las columnas de auditoría las asigna el proceso principal, nunca los datos enviados por la interfaz
+const AUDIT_COLUMNS = ['created_at', 'created_by', 'updated_at', 'updated_by']
+
+function editableFields(data: object): string[] {
+  return Object.keys(data).filter(key => key !== 'id' && !AUDIT_COLUMNS.includes(key))
+}
+
+// ==========================================
 // Autenticación: contraseñas con scrypt + salt aleatorio ("salt:hash" en hex)
 // ==========================================
 
@@ -58,6 +74,9 @@ export type { AuthUser }
 
 export interface ManagedUser extends AuthUser {
   created_at?: string
+  created_by?: string | null
+  updated_at?: string | null
+  updated_by?: string | null
 }
 
 export interface UserInput {
@@ -76,7 +95,10 @@ export class UserError extends Error {
 
 const MIN_PASSWORD_LENGTH = 4
 
-type UserRow = { id: number; username: string; role: string; permissions: string | null; password_hash: string; created_at?: string }
+type UserRow = {
+  id: number; username: string; role: string; permissions: string | null; password_hash: string
+  created_at?: string; created_by?: string | null; updated_at?: string | null; updated_by?: string | null
+}
 
 function rowToUser(row: UserRow): ManagedUser {
   let permissions: unknown = []
@@ -86,7 +108,10 @@ function rowToUser(row: UserRow): ManagedUser {
     username: row.username,
     role: row.role === 'admin' ? 'admin' : 'user',
     permissions: sanitizePermissions(permissions),
-    created_at: row.created_at
+    created_at: row.created_at,
+    created_by: row.created_by,
+    updated_at: row.updated_at,
+    updated_by: row.updated_by
   }
 }
 
@@ -110,24 +135,26 @@ export const userQueries = {
     return (db.prepare('SELECT * FROM users ORDER BY username COLLATE NOCASE').all() as UserRow[]).map(rowToUser)
   },
 
-  create: (input: UserInput): ManagedUser => {
+  create: (input: UserInput, actor: AuthUser): ManagedUser => {
     const username = (input.username ?? '').trim()
     if (!username) throw new UserError('USERNAME_REQUIRED')
     if (!input.password || input.password.length < MIN_PASSWORD_LENGTH) throw new UserError('PASSWORD_TOO_SHORT')
     if (db.prepare('SELECT 1 FROM users WHERE username = ?').get(username)) throw new UserError('USERNAME_TAKEN')
 
-    const info = db.prepare('INSERT INTO users(username, password_hash, role, permissions, created_at) VALUES(?, ?, ?, ?, ?)').run(
+    const now = new Date().toISOString()
+    const info = db.prepare('INSERT INTO users(username, password_hash, role, permissions, created_at, created_by, updated_at, updated_by) VALUES(?, ?, ?, ?, ?, ?, ?, ?)').run(
       username,
       hashPassword(input.password),
       input.role === 'admin' ? 'admin' : 'user',
       JSON.stringify(sanitizePermissions(input.permissions)),
-      new Date().toISOString()
+      now, actor.username, now, actor.username
     )
     return userQueries.getById(Number(info.lastInsertRowid))!
   },
 
-  // actorId: usuario que realiza el cambio (no puede quitarse el rol de administrador)
-  update: (id: number, input: UserInput, actorId: number): ManagedUser => {
+  // actor: usuario que realiza el cambio (no puede quitarse el rol de administrador)
+  update: (id: number, input: UserInput, actor: AuthUser): ManagedUser => {
+    const actorId = actor.id
     const existing = userQueries.getById(id)
     if (!existing) throw new UserError('NOT_FOUND')
 
@@ -157,7 +184,8 @@ export const userQueries = {
 
     const fields = Object.keys(updates)
     if (fields.length > 0) {
-      db.prepare(`UPDATE users SET ${fields.map(f => `${f} = @${f}`).join(', ')} WHERE id = @id`).run({ ...updates, id })
+      db.prepare(`UPDATE users SET ${fields.map(f => `${f} = @${f}`).join(', ')}, updated_at = @updated_at, updated_by = @updated_by WHERE id = @id`)
+        .run({ ...updates, id, updated_at: new Date().toISOString(), updated_by: actor.username })
     }
     return userQueries.getById(id)!
   },
@@ -280,6 +308,11 @@ function initSchema() {
   // Columnas agregadas después de la versión inicial (bases de datos existentes)
   addColumnIfMissing('clients', 'credit_limit', 'REAL DEFAULT 0')
   addColumnIfMissing('sales', 'client_id', 'INTEGER')
+  for (const table of AUDITED_TABLES) {
+    addColumnIfMissing(table, 'created_by', 'TEXT')
+    addColumnIfMissing(table, 'updated_at', 'TEXT')
+    addColumnIfMissing(table, 'updated_by', 'TEXT')
+  }
 
   // Índices Estratégicos para Rendimiento
   db.exec(`
@@ -425,13 +458,19 @@ export const productQueries = {
     `).all(pattern, pattern, pattern, pattern) as Product[]
   },
 
-  create: (product: Omit<Product, 'id'> & { id?: number }): Product => {
+  create: (product: Omit<Product, 'id'> & { id?: number }, actor: Actor = null): Product => {
     // Permitir insertar ID explícito (para restauraciones) o NULL (autoincrement)
     const stmt = db.prepare(`
-            INSERT INTO products(id, code, name, description, category, price, cost, stock, min_stock, unit, image, supplier_id, created_at, updated_at)
-  VALUES(@id, @code, @name, @description, @category, @price, @cost, @stock, @min_stock, @unit, @image, @supplier_id, @created_at, @updated_at)
+            INSERT INTO products(id, code, name, description, category, price, cost, stock, min_stock, unit, image, supplier_id, created_at, created_by, updated_at, updated_by)
+  VALUES(@id, @code, @name, @description, @category, @price, @cost, @stock, @min_stock, @unit, @image, @supplier_id, @created_at, @created_by, @updated_at, @updated_by)
     `)
 
+    const audit = {
+      created_at: product.created_at || new Date().toISOString(),
+      created_by: actor,
+      updated_at: product.updated_at || new Date().toISOString(),
+      updated_by: actor
+    }
     const info = stmt.run({
       ...product,
       id: product.id || null,
@@ -441,16 +480,15 @@ export const productQueries = {
       unit: product.unit || 'unidad',
       image: product.image || null,
       supplier_id: product.supplier_id || null,
-      created_at: product.created_at || new Date().toISOString(),
-      updated_at: product.updated_at || new Date().toISOString()
+      ...audit
     })
 
     const newId = Number(info.lastInsertRowid)
 
-    return { ...product, id: newId }
+    return { ...product, ...audit, id: newId }
   },
 
-  createOrUpdate: (product: Omit<Product, 'id'> & { id?: number }): { product: Product; isNew: boolean } => {
+  createOrUpdate: (product: Omit<Product, 'id'> & { id?: number }, actor: Actor = null): { product: Product; isNew: boolean } => {
     // Verificar si existe un producto con el mismo código
     const existing = db.prepare('SELECT * FROM products WHERE code = ?').get(product.code) as Product | undefined
 
@@ -468,67 +506,48 @@ export const productQueries = {
     unit = @unit,
     image = @image,
     supplier_id = @supplier_id,
-    updated_at = @updated_at 
+    updated_at = @updated_at,
+    updated_by = @updated_by
         WHERE code = @code
     `)
 
+      const audit = { updated_at: new Date().toISOString(), updated_by: actor }
       updateStmt.run({
         ...product,
         image: product.image || null,
         supplier_id: product.supplier_id || null,
-        updated_at: new Date().toISOString()
+        ...audit
       })
 
       // Log de actualización ELIMINADO
 
       return {
-        product: { ...existing, ...product, id: existing.id },
+        product: { ...existing, ...product, ...audit, id: existing.id },
         isNew: false
       }
     } else {
       // Crear nuevo producto
-      const insertStmt = db.prepare(`
-        INSERT INTO products(id, code, name, description, category, price, cost, stock, min_stock, unit, image, supplier_id, created_at, updated_at)
-  VALUES(@id, @code, @name, @description, @category, @price, @cost, @stock, @min_stock, @unit, @image, @supplier_id, @created_at, @updated_at)
-      `)
-
-      const info = insertStmt.run({
-        ...product,
-        id: product.id || null,
-        description: product.description || '',
-        category: product.category || '',
-        cost: product.cost || 0,
-        unit: product.unit || 'unidad',
-        image: product.image || null,
-        supplier_id: product.supplier_id || null,
-        created_at: product.created_at || new Date().toISOString(),
-        updated_at: product.updated_at || new Date().toISOString()
-      })
-
-      const newId = Number(info.lastInsertRowid)
-
-
-
       return {
-        product: { ...product, id: newId },
+        product: productQueries.create(product, actor),
         isNew: true
       }
     }
   },
 
-  update: (id: number, productData: Partial<Product>): Product | null => {
-    const fields = Object.keys(productData).filter(key => key !== 'id' && key !== 'created_at')
+  update: (id: number, productData: Partial<Product>, actor: Actor = null): Product | null => {
+    const fields = editableFields(productData)
     if (fields.length === 0) return productQueries.getById(id) || null
 
 
 
     const setClause = fields.map(field => `${field} = @${field} `).join(', ')
-    const stmt = db.prepare(`UPDATE products SET ${setClause}, updated_at = @updated_at WHERE id = @id`)
+    const stmt = db.prepare(`UPDATE products SET ${setClause}, updated_at = @updated_at, updated_by = @updated_by WHERE id = @id`)
 
     stmt.run({
       ...productData,
       id,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      updated_by: actor
     })
 
     // Registrar log si fue un ajuste de stock ELIMINADO
@@ -571,18 +590,22 @@ export const categoryQueries = {
     `).all() as Category[]
   },
 
-  create: (name: string, description?: string): Category => {
+  create: (name: string, description?: string, actor: Actor = null): Category => {
     const trimmed = (name ?? '').trim()
     if (!trimmed) throw new CategoryError('NAME_REQUIRED')
     if (db.prepare('SELECT 1 FROM categories WHERE name = ? COLLATE NOCASE').get(trimmed)) throw new CategoryError('NAME_TAKEN')
 
     const createdAt = new Date().toISOString()
-    const info = db.prepare('INSERT INTO categories (name, description, created_at) VALUES (?, ?, ?)').run(trimmed, description?.trim() || '', createdAt)
-    return { id: Number(info.lastInsertRowid), name: trimmed, description: description?.trim() || '', created_at: createdAt, products_count: 0 }
+    const info = db.prepare('INSERT INTO categories (name, description, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(trimmed, description?.trim() || '', createdAt, actor, createdAt, actor)
+    return {
+      id: Number(info.lastInsertRowid), name: trimmed, description: description?.trim() || '',
+      created_at: createdAt, created_by: actor, updated_at: createdAt, updated_by: actor, products_count: 0
+    }
   },
 
   // Renombrar también actualiza los productos que usan la categoría
-  update: (id: number, data: { name?: string; description?: string }): Category => {
+  update: (id: number, data: { name?: string; description?: string }, actor: Actor = null): Category => {
     const existing = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
     if (!existing) throw new CategoryError('NOT_FOUND')
 
@@ -591,25 +614,27 @@ export const categoryQueries = {
     if (db.prepare('SELECT 1 FROM categories WHERE name = ? COLLATE NOCASE AND id != ?').get(name, id)) throw new CategoryError('NAME_TAKEN')
     const description = data.description !== undefined ? data.description.trim() : (existing.description || '')
 
+    const updatedAt = new Date().toISOString()
     db.transaction(() => {
-      db.prepare('UPDATE categories SET name = ?, description = ? WHERE id = ?').run(name, description, id)
+      db.prepare('UPDATE categories SET name = ?, description = ?, updated_at = ?, updated_by = ? WHERE id = ?')
+        .run(name, description, updatedAt, actor, id)
       if (name !== existing.name) {
-        db.prepare('UPDATE products SET category = ?, updated_at = ? WHERE TRIM(category) = ? COLLATE NOCASE')
-          .run(name, new Date().toISOString(), existing.name)
+        db.prepare('UPDATE products SET category = ?, updated_at = ?, updated_by = ? WHERE TRIM(category) = ? COLLATE NOCASE')
+          .run(name, updatedAt, actor, existing.name)
       }
     })()
 
-    return { ...existing, name, description }
+    return { ...existing, name, description, updated_at: updatedAt, updated_by: actor }
   },
 
   // Eliminar deja sus productos sin categoría
-  delete: (id: number): void => {
+  delete: (id: number, actor: Actor = null): void => {
     const existing = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
     if (!existing) throw new CategoryError('NOT_FOUND')
 
     db.transaction(() => {
-      db.prepare("UPDATE products SET category = '', updated_at = ? WHERE TRIM(category) = ? COLLATE NOCASE")
-        .run(new Date().toISOString(), existing.name)
+      db.prepare("UPDATE products SET category = '', updated_at = ?, updated_by = ? WHERE TRIM(category) = ? COLLATE NOCASE")
+        .run(new Date().toISOString(), actor, existing.name)
       db.prepare('DELETE FROM categories WHERE id = ?').run(id)
     })()
   }
@@ -632,12 +657,18 @@ export const clientQueries = {
         `).all(pattern, pattern, pattern) as Client[]
   },
 
-  create: (client: Omit<Client, 'id'> & { id?: number }): Client => {
+  create: (client: Omit<Client, 'id'> & { id?: number }, actor: Actor = null): Client => {
     const stmt = db.prepare(`
-            INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, created_at, updated_at)
-            VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @created_at, @updated_at)
+            INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, created_at, created_by, updated_at, updated_by)
+            VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @created_at, @created_by, @updated_at, @updated_by)
         `)
 
+    const audit = {
+      created_at: client.created_at || new Date().toISOString(),
+      created_by: actor,
+      updated_at: client.updated_at || new Date().toISOString(),
+      updated_by: actor
+    }
     const info = stmt.run({
       ...client,
       id: client.id || null,
@@ -647,24 +678,24 @@ export const clientQueries = {
       email: client.email || null,
       notes: client.notes || '',
       credit_limit: client.credit_limit || 0,
-      created_at: client.created_at || new Date().toISOString(),
-      updated_at: client.updated_at || new Date().toISOString()
+      ...audit
     })
 
-    return { ...client, id: Number(info.lastInsertRowid) }
+    return { ...client, ...audit, id: Number(info.lastInsertRowid) }
   },
 
-  update: (id: number, clientData: Partial<Client>): Client | null => {
-    const fields = Object.keys(clientData).filter(key => key !== 'id' && key !== 'created_at')
+  update: (id: number, clientData: Partial<Client>, actor: Actor = null): Client | null => {
+    const fields = editableFields(clientData)
     if (fields.length === 0) return clientQueries.getById(id) || null
 
     const setClause = fields.map(field => `${field} = @${field}`).join(', ')
-    const stmt = db.prepare(`UPDATE clients SET ${setClause}, updated_at = @updated_at WHERE id = @id`)
+    const stmt = db.prepare(`UPDATE clients SET ${setClause}, updated_at = @updated_at, updated_by = @updated_by WHERE id = @id`)
 
     stmt.run({
       ...clientData,
       id,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      updated_by: actor
     })
 
     return clientQueries.getById(id) || null
@@ -700,11 +731,13 @@ export const supplierQueries = {
     return db.prepare('SELECT * FROM suppliers WHERE id = ?').get(id) as Supplier | undefined
   },
 
-  create: (supplier: Omit<Supplier, 'id'> & { id?: number }): Supplier => {
+  create: (supplier: Omit<Supplier, 'id'> & { id?: number }, actor: Actor = null): Supplier => {
     const stmt = db.prepare(`
-            INSERT INTO suppliers(id, name, contact, phone, email, address, created_at)
-  VALUES(@id, @name, @contact, @phone, @email, @address, @created_at)
+            INSERT INTO suppliers(id, name, contact, phone, email, address, created_at, created_by, updated_at, updated_by)
+  VALUES(@id, @name, @contact, @phone, @email, @address, @created_at, @created_by, @updated_at, @updated_by)
         `)
+    const createdAt = supplier.created_at || new Date().toISOString()
+    const audit = { created_at: createdAt, created_by: actor, updated_at: createdAt, updated_by: actor }
     const info = stmt.run({
       ...supplier,
       id: supplier.id || null,
@@ -712,19 +745,19 @@ export const supplierQueries = {
       phone: supplier.phone || null,
       email: supplier.email || null,
       address: supplier.address || null,
-      created_at: supplier.created_at || new Date().toISOString()
+      ...audit
     })
-    return { ...supplier, id: Number(info.lastInsertRowid) }
+    return { ...supplier, ...audit, id: Number(info.lastInsertRowid) }
   },
 
-  update: (id: number, supplierData: Partial<Supplier>): Supplier | null => {
-    const fields = Object.keys(supplierData).filter(key => key !== 'id' && key !== 'created_at')
+  update: (id: number, supplierData: Partial<Supplier>, actor: Actor = null): Supplier | null => {
+    const fields = editableFields(supplierData)
     if (fields.length === 0) return supplierQueries.getById(id) || null
 
     const setClause = fields.map(field => `${field} = @${field} `).join(', ')
-    const stmt = db.prepare(`UPDATE suppliers SET ${setClause} WHERE id = @id`)
+    const stmt = db.prepare(`UPDATE suppliers SET ${setClause}, updated_at = @updated_at, updated_by = @updated_by WHERE id = @id`)
 
-    stmt.run({ ...supplierData, id })
+    stmt.run({ ...supplierData, id, updated_at: new Date().toISOString(), updated_by: actor })
     return supplierQueries.getById(id) || null
   },
 
@@ -753,21 +786,23 @@ export const saleQueries = {
     return sale
   },
 
-  create: (sale: Omit<Sale, 'id'> & { id?: number }): Sale => {
+  create: (sale: Omit<Sale, 'id'> & { id?: number }, actor: Actor = null): Sale => {
     const createTx = db.transaction(() => {
       // 1. Insertar Venta (Permite restaurar ID, status y fechas originales)
       const insertSale = db.prepare(`
-                INSERT INTO sales(id, subtotal, tax, discount, total, payment_method, customer_name, client_id, notes, status, created_at)
-  VALUES(@id, @subtotal, @tax, @discount, @total, @payment_method, @customer_name, @client_id, @notes, @status, @created_at)
+                INSERT INTO sales(id, subtotal, tax, discount, total, payment_method, customer_name, client_id, notes, status, created_at, created_by, updated_at, updated_by)
+  VALUES(@id, @subtotal, @tax, @discount, @total, @payment_method, @customer_name, @client_id, @notes, @status, @created_at, @created_by, @updated_at, @updated_by)
     `)
 
+      const createdAt = sale.created_at || new Date().toISOString()
+      const audit = { created_at: createdAt, created_by: actor, updated_at: createdAt, updated_by: actor }
       const info = insertSale.run({
         ...sale,
         id: sale.id || null,
         client_id: sale.client_id ?? null,
         notes: sale.notes || '',
         status: sale.status || 'completed',
-        created_at: sale.created_at || new Date().toISOString()
+        ...audit
       })
       const saleId = Number(info.lastInsertRowid)
 
@@ -810,7 +845,7 @@ export const saleQueries = {
         }
       }
 
-      return { ...sale, id: saleId, status: sale.status || 'completed' } as Sale
+      return { ...sale, ...audit, id: saleId, status: sale.status || 'completed' } as Sale
     })
 
     return createTx()
@@ -851,12 +886,13 @@ export const saleQueries = {
   }
 }
 
-export const cancelSale = (id: number): Sale | null => {
+export const cancelSale = (id: number, actor: Actor = null): Sale | null => {
   const cancelTx = db.transaction(() => {
     const sale = db.prepare('SELECT * FROM sales WHERE id = ?').get(id) as Sale
     if (!sale || sale.status === 'cancelled') return null
 
-    db.prepare("UPDATE sales SET status = 'cancelled' WHERE id = ?").run(id)
+    db.prepare("UPDATE sales SET status = 'cancelled', updated_at = ?, updated_by = ? WHERE id = ?")
+      .run(new Date().toISOString(), actor, id)
 
     const items = db.prepare('SELECT * FROM sale_items WHERE sale_id = ?').all(id) as SaleItem[]
     const updateStock = db.prepare('UPDATE products SET stock = stock + @qty WHERE id = @id')
@@ -898,25 +934,29 @@ export function restoreDatabase(data: any) {
     db.prepare('DELETE FROM clients').run()
     db.prepare('DELETE FROM sqlite_sequence').run()
 
+    // Auditoría original del backup (los backups antiguos no la incluyen)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const auditOf = (r: any) => ({ created_by: r.created_by ?? null, updated_by: r.updated_by ?? null })
+
     // Prepared Statements
     const insertSupplier = db.prepare(`
-        INSERT INTO suppliers(id, name, contact, phone, email, address, created_at)
-  VALUES(@id, @name, @contact, @phone, @email, @address, @created_at)
+        INSERT INTO suppliers(id, name, contact, phone, email, address, created_at, created_by, updated_at, updated_by)
+  VALUES(@id, @name, @contact, @phone, @email, @address, @created_at, @created_by, @updated_at, @updated_by)
     `)
 
     const insertCategory = db.prepare(`
-        INSERT INTO categories(id, name, description, created_at)
-  VALUES(@id, @name, @description, @created_at)
+        INSERT INTO categories(id, name, description, created_at, created_by, updated_at, updated_by)
+  VALUES(@id, @name, @description, @created_at, @created_by, @updated_at, @updated_by)
     `)
 
     const insertProduct = db.prepare(`
-        INSERT INTO products(id, code, name, description, category, price, cost, stock, min_stock, unit, image, supplier_id, created_at, updated_at)
-  VALUES(@id, @code, @name, @description, @category, @price, @cost, @stock, @min_stock, @unit, @image, @supplier_id, @created_at, @updated_at)
+        INSERT INTO products(id, code, name, description, category, price, cost, stock, min_stock, unit, image, supplier_id, created_at, created_by, updated_at, updated_by)
+  VALUES(@id, @code, @name, @description, @category, @price, @cost, @stock, @min_stock, @unit, @image, @supplier_id, @created_at, @created_by, @updated_at, @updated_by)
     `)
 
     const insertSale = db.prepare(`
-        INSERT INTO sales(id, subtotal, tax, discount, total, payment_method, customer_name, client_id, notes, status, created_at)
-  VALUES(@id, @subtotal, @tax, @discount, @total, @payment_method, @customer_name, @client_id, @notes, @status, @created_at)
+        INSERT INTO sales(id, subtotal, tax, discount, total, payment_method, customer_name, client_id, notes, status, created_at, created_by, updated_at, updated_by)
+  VALUES(@id, @subtotal, @tax, @discount, @total, @payment_method, @customer_name, @client_id, @notes, @status, @created_at, @created_by, @updated_at, @updated_by)
     `)
 
     const insertSaleItem = db.prepare(`
@@ -929,7 +969,8 @@ export function restoreDatabase(data: any) {
       for (const s of data.suppliers) {
         insertSupplier.run({
           id: s.id, name: s.name, contact: s.contact || '', phone: s.phone || '',
-          email: s.email || '', address: s.address || '', created_at: s.created_at || new Date().toISOString()
+          email: s.email || '', address: s.address || '', created_at: s.created_at || new Date().toISOString(),
+          updated_at: s.updated_at ?? null, ...auditOf(s)
         })
       }
     }
@@ -938,7 +979,8 @@ export function restoreDatabase(data: any) {
     if (data.categories) {
       for (const c of data.categories) {
         insertCategory.run({
-          id: c.id, name: c.name, description: c.description || '', created_at: c.created_at || new Date().toISOString()
+          id: c.id, name: c.name, description: c.description || '', created_at: c.created_at || new Date().toISOString(),
+          updated_at: c.updated_at ?? null, ...auditOf(c)
         })
       }
     }
@@ -951,7 +993,8 @@ export function restoreDatabase(data: any) {
           price: p.price, cost: p.cost || 0, stock: p.stock, min_stock: p.min_stock,
           unit: p.unit || 'unidad', image: p.image || null, supplier_id: p.supplier_id || null,
           created_at: p.created_at || new Date().toISOString(),
-          updated_at: p.updated_at || new Date().toISOString()
+          updated_at: p.updated_at || new Date().toISOString(),
+          ...auditOf(p)
         })
       }
     }
@@ -964,7 +1007,8 @@ export function restoreDatabase(data: any) {
           payment_method: s.payment_method, customer_name: s.customer_name || '',
           client_id: s.client_id ?? null,
           notes: s.notes || '', status: s.status || 'completed',
-          created_at: s.created_at || new Date().toISOString()
+          created_at: s.created_at || new Date().toISOString(),
+          updated_at: s.updated_at ?? null, ...auditOf(s)
         })
 
         if (s.items) {
@@ -981,8 +1025,8 @@ export function restoreDatabase(data: any) {
     // 6. Restaurar Clientes
     if (data.clients) {
       const insertClient = db.prepare(`
-        INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, created_at, updated_at)
-        VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @created_at, @updated_at)
+        INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @created_at, @created_by, @updated_at, @updated_by)
       `)
 
       for (const c of data.clients) {
@@ -991,7 +1035,8 @@ export function restoreDatabase(data: any) {
           phone: c.phone || null, email: c.email || null, notes: c.notes || '',
           credit_limit: c.credit_limit || 0,
           created_at: c.created_at || new Date().toISOString(),
-          updated_at: c.updated_at || new Date().toISOString()
+          updated_at: c.updated_at || new Date().toISOString(),
+          ...auditOf(c)
         })
       }
     }

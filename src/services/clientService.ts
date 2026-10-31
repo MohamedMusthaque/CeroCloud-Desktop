@@ -1,5 +1,6 @@
+import type { AuditFields } from '@/types/database'
 
-export interface Client {
+export interface Client extends AuditFields {
     id?: number
     name: string
     tax_id?: string
@@ -8,8 +9,6 @@ export interface Client {
     email?: string
     notes?: string
     credit_limit?: number
-    created_at?: string
-    updated_at?: string
 }
 
 class ClientService {
@@ -34,14 +33,14 @@ class ClientService {
         return window.electronAPI.clients.search(term)
     }
 
-    async create(client: Omit<Client, 'id' | 'created_at' | 'updated_at'>): Promise<Client> {
+    async create(client: Omit<Client, 'id' | keyof AuditFields>): Promise<Client> {
         if (!window.electronAPI?.clients) {
             throw new Error('Client API not available')
         }
         return window.electronAPI.clients.create(client)
     }
 
-    async update(id: number, client: Partial<Omit<Client, 'id' | 'created_at'>>): Promise<Client> {
+    async update(id: number, client: Partial<Omit<Client, 'id' | keyof AuditFields>>): Promise<Client> {
         if (!window.electronAPI?.clients) {
             throw new Error('Client API not available')
         }

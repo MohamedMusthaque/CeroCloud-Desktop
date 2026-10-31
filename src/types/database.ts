@@ -1,4 +1,12 @@
-export interface Product {
+// Auditoría: la asigna el proceso principal con el usuario de la sesión
+export interface AuditFields {
+    created_at?: string
+    created_by?: string | null
+    updated_at?: string | null
+    updated_by?: string | null
+}
+
+export interface Product extends AuditFields {
     id?: number
     code: string
     name: string
@@ -12,22 +20,19 @@ export interface Product {
     stock: number
     min_stock: number
     unit: string
-    created_at?: string
-    updated_at?: string
 }
 
-export interface Supplier {
+export interface Supplier extends AuditFields {
     id?: number
     name: string
     contact?: string
     phone?: string
     email?: string
     address?: string
-    created_at?: string
     products_count?: number
 }
 
-export interface Client {
+export interface Client extends AuditFields {
     id?: number
     name: string
     tax_id?: string
@@ -36,19 +41,16 @@ export interface Client {
     email?: string
     notes?: string
     credit_limit?: number
-    created_at?: string
-    updated_at?: string
 }
 
-export interface Category {
+export interface Category extends AuditFields {
     id?: number
     name: string
     description?: string
-    created_at?: string
     products_count?: number
 }
 
-export interface Sale {
+export interface Sale extends AuditFields {
     id?: number
     items: SaleItem[]
     subtotal: number
@@ -60,7 +62,6 @@ export interface Sale {
     client_id?: number
     notes?: string
     status: 'completed' | 'cancelled'
-    created_at?: string
 }
 
 export interface SaleItem {

@@ -1,8 +1,7 @@
 import type { AuthUser, PageId, UserRole } from '@/lib/permissions'
+import type { AuditFields } from '@/types/database'
 
-export interface ManagedUser extends AuthUser {
-    created_at?: string
-}
+export interface ManagedUser extends AuthUser, AuditFields {}
 
 export interface UserInput {
     username?: string
