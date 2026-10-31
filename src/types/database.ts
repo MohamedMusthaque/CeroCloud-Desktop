@@ -1,4 +1,4 @@
-// Auditoría: la asigna el proceso principal con el usuario de la sesión
+// Audit fields: set by the main process from the session's user
 export interface AuditFields {
     created_at?: string
     created_by?: string | null
@@ -58,6 +58,8 @@ export interface Sale extends AuditFields {
     discount: number
     total: number
     payment_method: string
+    cheque_number?: string | null // Only for payment_method 'cheque'
+    cheque_bank?: string | null
     customer_name?: string
     client_id?: number
     notes?: string
@@ -77,7 +79,7 @@ export interface Expense extends AuditFields {
     expense_type_id: number
     expense_type_name?: string
     amount: number
-    expense_date: string // Día local 'YYYY-MM-DD'
+    expense_date: string // Local day 'YYYY-MM-DD'
     payment_method: string
     description?: string
 }
@@ -90,7 +92,7 @@ export interface SaleItem {
     product_name: string
     quantity: number
     unit_price: number
-    unit_cost?: number | null // Costo del producto al momento de la venta
+    unit_cost?: number | null // Product's cost at the time of sale
     subtotal: number
 }
 
@@ -105,7 +107,7 @@ export interface InventoryLog {
     product_code?: string
     product_name?: string
     movement_type: 'sale' | 'purchase' | 'adjustment' | 'return'
-    quantity: number // Positivo para entradas, negativo para salidas
+    quantity: number // Positive for stock in, negative for stock out
     stock_before: number
     stock_after: number
     reference_type?: string // 'sale', 'manual', 'purchase_order', etc.
@@ -124,17 +126,17 @@ export interface CompanySettings {
     logo?: string // Base64 or URL
     taxId?: string // RFC, NIT, etc.
 
-    // Configuración Regional / Moneda
+    // Regional settings / currency
     currency: string
     currencySymbol: string
     locale: string // 'es-GT', 'es-MX', 'en-US'
 
-    // Impuestos
+    // Taxes
     enableTax: boolean
     taxRate: number
-    taxIncluded: boolean // Si los precios ya incluyen IVA
+    taxIncluded: boolean // Whether prices already include tax (VAT)
 
-    // Ventas / POS
+    // Sales / POS
     enableDiscounts: boolean
     requireCustomerName: boolean
     askPaymentMethod: boolean
@@ -145,25 +147,27 @@ export interface CompanySettings {
         soundEffects: boolean
     }
 
-    // Métodos de Pago Habilitados
+    // Enabled payment methods
     paymentMethods: {
         cash: boolean
         card: boolean
         transfer: boolean
         other: boolean
+        credit: boolean // On account; needs a registered client with a credit limit
+        cheque: boolean
     }
 
-    // Facturación
+    // Invoicing
     invoice: {
         prefix: string
         nextNumber: number
-        disclaimer: string // Texto legal al final del ticket
+        disclaimer: string // Legal text at the end of the ticket
         paperSize?: 'a4' | 'ticket80mm'
         headerImage?: string
         footerImage?: string
     }
 
-    // Inventario
+    // Inventory
     inventory: {
         lowStockThreshold: number
         showVisualAlerts: boolean
@@ -177,7 +181,7 @@ export interface CompanySettings {
         location?: string
     }
 
-    // Apariencia
+    // Appearance
     theme: {
         mode: 'light' | 'dark' | 'system'
         density: 'normal' | 'compact'
@@ -185,14 +189,14 @@ export interface CompanySettings {
         borderRadius: 'none' | 'small' | 'normal' | 'large' // Corner radius
     }
 
-    // Seguridad
+    // Security
     security: {
         enablePin: boolean
         pin?: string
         lockSettings: boolean
     }
 
-    // Actualizaciones
+    // Updates
     updates: {
         autoCheck: boolean
     }

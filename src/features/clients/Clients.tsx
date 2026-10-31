@@ -278,7 +278,7 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
             )}
         >
             <div className="flex items-start gap-4 w-full">
-                {/* Avatar Vibrante */}
+                {/* Colorful avatar */}
                 <div className={cn(
                     "shrink-0 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg shadow-cyan-500/20",
                     "bg-gradient-to-br from-cyan-400 to-blue-600",
@@ -287,13 +287,13 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
                     {client.name ? client.name.charAt(0).toUpperCase() : <Users className="w-6 h-6" />}
                 </div>
 
-                {/* Información Principal */}
+                {/* Main information */}
                 <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex justify-between items-start">
                         <h3 className="font-bold text-gray-900 dark:text-white text-lg truncate pr-2 leading-tight">
                             {client.name}
                         </h3>
-                        {/* Menú de acciones rápido (solo en grid) */}
+                        {/* Quick actions menu (grid only) */}
                         {viewMode === 'grid' && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1">
                                 <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-colors">
@@ -321,7 +321,7 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
                         )}
                     </div>
 
-                    {/* Datos de contacto compactos */}
+                    {/* Compact contact details */}
                     <div className="flex flex-wrap gap-y-1 gap-x-3 text-xs text-gray-500 pt-1">
                         {client.phone && (
                             <a href={`tel:${client.phone}`} className="flex items-center gap-1 hover:text-cyan-600 transition-colors">
@@ -339,7 +339,7 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
                 </div>
             </div>
 
-            {/* Footer con Acción Principal */}
+            {/* Footer with the main action */}
             {viewMode === 'grid' && (
                 <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
                     <button
@@ -357,7 +357,7 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
                 </div>
             )}
 
-            {/* Acciones para modo lista */}
+            {/* Actions for list mode */}
             {viewMode === 'list' && (
                 <div className="flex items-center gap-2 ml-4 border-l border-gray-100 dark:border-gray-700 pl-4">
                     <button

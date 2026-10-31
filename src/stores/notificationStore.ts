@@ -40,7 +40,7 @@ export const useNotificationStore = create<NotificationState>()(
                 if ('Notification' in window && Notification.permission === 'granted') {
                     new Notification(data.title, {
                         body: data.message,
-                        icon: '/vite.svg', // Icono por defecto o personalizado
+                        icon: '/vite.svg', // Default or custom icon
                         silent: false
                     })
                 }

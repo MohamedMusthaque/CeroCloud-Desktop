@@ -23,7 +23,7 @@ export function MainLayout() {
                         break
 
                     // If user is NOT in input, Ctrl+V usually does nothing or Paste.
-                    // Let's stick to Ctrl+V for Venta as requested, but handle carefully.
+                    // Let's stick to Ctrl+V for Sales as requested, but handle carefully.
                     case 'v':
                         // If we are NOT in an input, we can hijack Ctrl+V safely?
                         // Browsers might try to paste. preventDefault stops it.

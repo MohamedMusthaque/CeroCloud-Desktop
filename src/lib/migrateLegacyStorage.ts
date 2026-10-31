@@ -1,5 +1,5 @@
-// La app se llamaba CeroCloud: copiar las claves antiguas de localStorage a las nuevas.
-// Se importa primero en main.tsx para que corra antes de que los stores lean localStorage.
+// The app used to be called CeroCloud: copy the old localStorage keys to the new ones.
+// Imported first in main.tsx so it runs before the stores read localStorage.
 const LEGACY_KEYS: Record<string, string> = {
     'cerocloud_company_settings': 'nexoracloud_company_settings',
     'cerocloud-language': 'nexoracloud-language',
@@ -16,7 +16,7 @@ try {
         localStorage.removeItem(oldKey)
     }
 
-    // El nombre de empresa por defecto era "CeroCloud"
+    // The default company name used to be "CeroCloud"
     const settings = localStorage.getItem('nexoracloud_company_settings')
     if (settings) {
         const parsed = JSON.parse(settings)

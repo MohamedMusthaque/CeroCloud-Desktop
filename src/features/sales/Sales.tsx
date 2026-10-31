@@ -16,7 +16,8 @@ import {
     Ticket as TicketIcon,
     ArrowUpDown,
     Camera,
-    HandCoins
+    HandCoins,
+    Landmark
 } from 'lucide-react'
 import { productService } from '@/services/productService'
 import { saleService } from '@/services/saleService'
@@ -26,11 +27,14 @@ import { Product, CartItem, Sale, SaleItem } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn, getImageSrc } from '@/lib/utils'
-import { useCartStore } from '@/stores/cartStore'
+import { useCartStore, type PaymentMethod } from '@/stores/cartStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { clientService, type Client } from '@/services/clientService'
 import { LazyImage } from '@/components/ui/LazyImage'
 import { useTranslation } from '@/i18n'
+
+// Chip order in the bill section; each one shows only when enabled in Settings > Payment Methods
+const PAYMENT_METHODS: PaymentMethod[] = ['cash', 'card', 'transfer', 'other', 'cheque', 'credit']
 
 export function Sales() {
     // Data State
@@ -65,6 +69,12 @@ export function Sales() {
     const activeTab = useMemo(() => tabs.find(tab => tab.id === activeTabId) || tabs[0], [tabs, activeTabId])
     const cart = activeTab.items
 
+    // A ticket kept on a method that was switched off in Settings moves to the first enabled one
+    const enabledMethods = useMemo(() => PAYMENT_METHODS.filter(method => settings.paymentMethods?.[method]), [settings.paymentMethods])
+    useEffect(() => {
+        if (enabledMethods.length > 0 && !enabledMethods.includes(activeTab.paymentMethod)) setPaymentMethod(enabledMethods[0])
+    }, [enabledMethods, activeTab.paymentMethod, setPaymentMethod])
+
     // Auto-generated tab names ("Ticket 2", stored by the cart store) follow the UI language; custom names show as typed
     const tabLabel = (name: string) => {
         const match = /^(?:Ticket|Bill) (\d+)$/.exec(name)
@@ -74,6 +84,9 @@ export function Sales() {
     // Checkout State
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
     const [receivedAmount, setReceivedAmount] = useState('')
+    // Cheque details for the bill being checked out
+    const [chequeNumber, setChequeNumber] = useState('')
+    const [chequeBank, setChequeBank] = useState('')
 
     // Refs
     const searchInputRef = useRef<HTMLInputElement>(null)
@@ -302,6 +315,8 @@ export function Sales() {
 
     // Credit: only for a registered client, capped by credit limit minus outstanding balance
     const isCredit = activeTab.paymentMethod === 'credit'
+    const isCheque = activeTab.paymentMethod === 'cheque'
+    const chequeError = isCheque && !chequeNumber.trim() ? t('pos.chequeNumberRequired') : null
     const availableCredit = clientCredit ? Math.max(0, clientCredit.limit - clientCredit.balance) : 0
     const creditError = !isCredit ? null
         : !activeTab.clientId ? t('pos.creditNeedsClient')
@@ -319,6 +334,10 @@ export function Sales() {
         }
         if (isCredit && !canConfirmCredit) {
             if (creditError) toast.error(creditError)
+            return
+        }
+        if (chequeError) {
+            toast.error(chequeError)
             return
         }
 
@@ -340,6 +359,8 @@ export function Sales() {
                 discount: discountAmount,
                 total,
                 payment_method: activeTab.paymentMethod,
+                cheque_number: isCheque ? chequeNumber.trim() : null,
+                cheque_bank: isCheque ? chequeBank.trim() || null : null,
                 customer_name: activeTab.customerName || undefined,
                 client_id: activeTab.clientId ?? undefined,
                 status: 'completed',
@@ -367,6 +388,8 @@ export function Sales() {
 
             // Also reset UI local state
             setReceivedAmount('')
+            setChequeNumber('')
+            setChequeBank('')
             setIsCheckoutOpen(false)
 
             // Reload products and check for low stock on affected items
@@ -390,7 +413,7 @@ export function Sales() {
         } finally {
             setLoading(false)
         }
-    }, [isPaymentSufficient, isCredit, canConfirmCredit, creditError, activeTab.paymentMethod, activeTab.customerName, activeTab.clientId, cart, subtotal, tax, discountAmount, total, settings, change, clearCart, loadProducts, addNotification, t])
+    }, [isPaymentSufficient, isCredit, canConfirmCredit, creditError, isCheque, chequeError, chequeNumber, chequeBank, activeTab.paymentMethod, activeTab.customerName, activeTab.clientId, cart, subtotal, tax, discountAmount, total, settings, change, clearCart, loadProducts, addNotification, t])
 
     // Update ref on render
     useEffect(() => {
@@ -608,7 +631,7 @@ export function Sales() {
                                         )}
                                         autoComplete="off"
                                     />
-                                    {/* Resultados Autocompletado */}
+                                    {/* Autocomplete results */}
                                     <AnimatePresence>
                                         {showClientResults && clientSearchResults.length > 0 && (
                                             <motion.div
@@ -670,14 +693,19 @@ export function Sales() {
                                 {settings.paymentMethods?.other && (
                                     <PaymentChip active={activeTab.paymentMethod === 'other'} onClick={() => setPaymentMethod('other')} icon={Package} label={t('payment.other')} />
                                 )}
-                                <PaymentChip
-                                    active={isCredit}
-                                    onClick={() => setPaymentMethod('credit')}
-                                    icon={HandCoins}
-                                    label={t('payment.credit')}
-                                    disabled={!activeTab.clientId}
-                                    title={!activeTab.clientId ? t('pos.creditNeedsClient') : undefined}
-                                />
+                                {settings.paymentMethods?.cheque && (
+                                    <PaymentChip active={isCheque} onClick={() => setPaymentMethod('cheque')} icon={Landmark} label={t('payment.cheque')} />
+                                )}
+                                {settings.paymentMethods?.credit && (
+                                    <PaymentChip
+                                        active={isCredit}
+                                        onClick={() => setPaymentMethod('credit')}
+                                        icon={HandCoins}
+                                        label={t('payment.credit')}
+                                        disabled={!activeTab.clientId}
+                                        title={!activeTab.clientId ? t('pos.creditNeedsClient') : undefined}
+                                    />
+                                )}
                             </div>
                             {isCredit && clientCredit && (
                                 <p className={cn("text-xs font-medium px-1", creditError ? "text-red-500" : "text-gray-500 dark:text-gray-400")}>
@@ -829,6 +857,32 @@ export function Sales() {
                                             {creditError ?? t('pos.creditOnAccount', { name: activeTab.customerName })}
                                         </p>
                                     </div>
+                                ) : isCheque ? (
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label htmlFor="cheque-number" className="text-sm font-bold text-gray-600 dark:text-gray-300 ml-1">{t('pos.chequeNumber')}</label>
+                                            <input
+                                                id="cheque-number"
+                                                type="text"
+                                                autoFocus
+                                                value={chequeNumber}
+                                                onChange={(e) => setChequeNumber(e.target.value)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') processSale() }}
+                                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-primary focus:ring-0 transition-all shadow-sm text-lg font-bold"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label htmlFor="cheque-bank" className="text-sm font-bold text-gray-600 dark:text-gray-300 ml-1">{t('pos.chequeBank')}</label>
+                                            <input
+                                                id="cheque-bank"
+                                                type="text"
+                                                value={chequeBank}
+                                                onChange={(e) => setChequeBank(e.target.value)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') processSale() }}
+                                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-primary focus:ring-0 transition-all shadow-sm text-base font-medium"
+                                            />
+                                        </div>
+                                    </div>
                                 ) : (
                                     <div className="text-center py-6 text-gray-500 font-medium bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
                                         <p>{t('pos.payWith', { method: activeTab.paymentMethod === 'card' ? t('payment.card') : activeTab.paymentMethod === 'transfer' ? t('payment.transfer') : t('pos.otherMethod') })}</p>
@@ -843,7 +897,7 @@ export function Sales() {
                                 </button>
                                 <button
                                     onClick={processSale}
-                                    disabled={loading || (activeTab.paymentMethod === 'cash' && !isPaymentSufficient) || !canConfirmCredit}
+                                    disabled={loading || (activeTab.paymentMethod === 'cash' && !isPaymentSufficient) || !canConfirmCredit || !!chequeError}
                                     className="flex-[2] py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                                 >
                                     {loading ? t('pos.processing') : t('pos.confirmAndFinish')}

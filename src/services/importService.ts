@@ -185,15 +185,15 @@ export const importService = {
 
         // Set column widths
         const wscols = [
-            { wch: 12 }, // codigo
-            { wch: 25 }, // nombre
-            { wch: 30 }, // descripcion
-            { wch: 15 }, // categoria
-            { wch: 10 }, // precio
-            { wch: 10 }, // costo
+            { wch: 12 }, // code
+            { wch: 25 }, // name
+            { wch: 30 }, // description
+            { wch: 15 }, // category
+            { wch: 10 }, // price
+            { wch: 10 }, // cost
             { wch: 10 }, // stock
-            { wch: 15 }, // stock_minimo
-            { wch: 10 }  // unidad
+            { wch: 15 }, // min stock
+            { wch: 10 }  // unit
         ]
         ws['!cols'] = wscols
 

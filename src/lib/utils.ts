@@ -9,8 +9,8 @@ export function cn(...inputs: ClassValue[]) {
 export function getImageSrc(imagePath?: string) {
     if (!imagePath) return undefined
     if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath
-    // Asumimos que es un archivo local gestionado por NexoraCloud
-    // Removemos posibles barras invertidas de Windows si se colaron
+    // Assume it is a local file managed by NexoraCloud
+    // Strip any Windows backslashes that slipped in
     const cleanPath = imagePath.split(/[\\/]/).pop()
     return `nexoracloud-image://${cleanPath}`
 }

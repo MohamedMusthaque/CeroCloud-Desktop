@@ -1,9 +1,9 @@
-# Script para validar commits y detectar problemas
+# Validates commits and detects problems
 
 Write-Host "🔍 Validación de Commits para Semantic Release" -ForegroundColor Cyan
 Write-Host "===============================================`n" -ForegroundColor Cyan
 
-# Obtener los últimos 10 commits
+# Get the last 10 commits
 $commits = git log --pretty=format:"%h|%s" -10
 
 Write-Host "📝 Analizando últimos 10 commits...`n" -ForegroundColor Yellow
@@ -14,17 +14,17 @@ $invalidCommits = 0
 foreach ($commit in $commits) {
     $hash, $message = $commit -split '\|', 2
     
-    # Patrones válidos para semantic-release
+    # Valid patterns for semantic-release
     $patterns = @(
-        '^feat(\(.+\))?:',      # Nueva funcionalidad
-        '^fix(\(.+\))?:',       # Corrección de bug
-        '^docs(\(.+\))?:',      # Documentación
-        '^style(\(.+\))?:',     # Formato
-        '^refactor(\(.+\))?:',  # Refactorización
-        '^perf(\(.+\))?:',      # Mejora de performance
+        '^feat(\(.+\))?:',      # New feature
+        '^fix(\(.+\))?:',       # Bug fix
+        '^docs(\(.+\))?:',      # Documentation
+        '^style(\(.+\))?:',     # Formatting
+        '^refactor(\(.+\))?:',  # Refactoring
+        '^perf(\(.+\))?:',      # Performance improvement
         '^test(\(.+\))?:',      # Tests
-        '^chore(\(.+\))?:',     # Tareas de mantenimiento
-        '^build(\(.+\))?:',     # Sistema de build
+        '^chore(\(.+\))?:',     # Maintenance tasks
+        '^build(\(.+\))?:',     # Build system
         '^ci(\(.+\))?:',        # CI/CD
         '^revert(\(.+\))?:'     # Revert
     )

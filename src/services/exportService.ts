@@ -215,6 +215,8 @@ export const exportService = {
         const cash = sales.filter(s => s.payment_method === 'cash').reduce((sum, s) => sum + s.total, 0)
         const card = sales.filter(s => s.payment_method === 'card').reduce((sum, s) => sum + s.total, 0)
         const transfer = sales.filter(s => s.payment_method === 'transfer').reduce((sum, s) => sum + s.total, 0)
+        const cheque = sales.filter(s => s.payment_method === 'cheque').reduce((sum, s) => sum + s.total, 0)
+        const credit = sales.filter(s => s.payment_method === 'credit').reduce((sum, s) => sum + s.total, 0)
 
         // Header
         doc.setFontSize(18)
@@ -236,6 +238,8 @@ export const exportService = {
         doc.text(`${t('payment.cash')}: $${cash.toFixed(2)}`, 30, 103)
         doc.text(`${t('payment.card')}: $${card.toFixed(2)}`, 30, 111)
         doc.text(`${t('payment.transfer')}: $${transfer.toFixed(2)}`, 30, 119)
+        doc.text(`${t('payment.cheque')}: $${cheque.toFixed(2)}`, 30, 127)
+        doc.text(`${t('payment.credit')}: $${credit.toFixed(2)}`, 30, 135)
 
         // Table
         doc.setFontSize(10)

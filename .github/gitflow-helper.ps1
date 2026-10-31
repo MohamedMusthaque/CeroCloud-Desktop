@@ -1,5 +1,5 @@
-# Gitflow Helper Script para NexoraCloud
-# Este script ayuda a crear y gestionar ramas siguiendo Gitflow
+# Gitflow helper script for NexoraCloud
+# Helps create and manage branches following Gitflow
 
 param(
     [Parameter(Mandatory=$true)]
@@ -42,7 +42,7 @@ function Start-Release {
         exit 1
     }
     
-    # Remover 'v' si está presente
+    # Strip a leading 'v' if present
     $CleanVersion = $Version -replace '^v', ''
     
     Write-Host "📦 Creando release branch: release/v$CleanVersion" -ForegroundColor Cyan
@@ -115,7 +115,7 @@ function Finish-Branch {
     git merge --no-ff $CurrentBranch
     git push origin develop
     
-    # Eliminar branch local y remota
+    # Delete the local and remote branch
     Write-Host "🗑️  Eliminando branch $CurrentBranch..." -ForegroundColor Yellow
     git branch -d $CurrentBranch
     git push origin --delete $CurrentBranch
@@ -124,7 +124,7 @@ function Finish-Branch {
     Write-Host "🚀 El release se creará automáticamente en GitHub Actions" -ForegroundColor Cyan
 }
 
-# Ejecutar la acción correspondiente
+# Run the requested action
 switch ($Action) {
     'feature' { Start-Feature -FeatureName $Name }
     'release' { Start-Release -Version $Name }

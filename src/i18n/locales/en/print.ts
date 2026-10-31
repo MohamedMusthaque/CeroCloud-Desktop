@@ -28,6 +28,7 @@ export const printTexts: Record<keyof typeof es, string> = {
     'print.phone': 'Phone: {phone}',
     'print.counterClient': 'Walk-in customer',
     'print.paymentMethod': 'Payment Method',
+    'print.chequeNumber': 'Cheque no. {number}',
     'print.description': 'Description',
     'print.price': 'Price',
     'print.code': 'Code: {code}',

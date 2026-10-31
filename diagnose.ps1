@@ -1,9 +1,9 @@
-# Script de diagnóstico completo
+# Full diagnostic script
 
 Write-Host "🔧 Diagnóstico del Sistema de Release" -ForegroundColor Cyan
 Write-Host "======================================`n" -ForegroundColor Cyan
 
-# 1. Verificar Git
+# 1. Check Git
 Write-Host "1️⃣  Git Configuration" -ForegroundColor Yellow
 Write-Host "   Repository: " -NoNewline
 git remote get-url origin
@@ -14,21 +14,21 @@ git config user.email
 Write-Host "   Branch: " -NoNewline
 git rev-parse --abbrev-ref HEAD
 
-# 2. Verificar Node y npm
+# 2. Check Node and npm
 Write-Host "`n2️⃣  Node.js Environment" -ForegroundColor Yellow
 Write-Host "   Node: " -NoNewline
 node --version
 Write-Host "   npm: " -NoNewline
 npm --version
 
-# 3. Verificar package.json
+# 3. Check package.json
 Write-Host "`n3️⃣  Package Configuration" -ForegroundColor Yellow
 $pkg = Get-Content "package.json" -Raw | ConvertFrom-Json
 Write-Host "   Name: $($pkg.name)" -ForegroundColor White
 Write-Host "   Version: $($pkg.version)" -ForegroundColor White
 Write-Host "   Private: $($pkg.private)" -ForegroundColor White
 
-# 4. Verificar semantic-release dependencies
+# 4. Check semantic-release dependencies
 Write-Host "`n4️⃣  Semantic Release Plugins" -ForegroundColor Yellow
 $plugins = @(
     "semantic-release",
@@ -50,7 +50,7 @@ foreach ($plugin in $plugins) {
     }
 }
 
-# 5. Verificar .releaserc.json
+# 5. Check .releaserc.json
 Write-Host "`n5️⃣  Release Configuration" -ForegroundColor Yellow
 if (Test-Path ".releaserc.json") {
     Write-Host "   ✅ .releaserc.json existe" -ForegroundColor Green
@@ -67,7 +67,7 @@ if (Test-Path ".releaserc.json") {
     Write-Host "   ❌ .releaserc.json NO encontrado" -ForegroundColor Red
 }
 
-# 6. Verificar archivos de build
+# 6. Check build files
 Write-Host "`n6️⃣  Build Artifacts" -ForegroundColor Yellow
 $buildDirs = @("dist", "dist-electron", "release")
 foreach ($dir in $buildDirs) {
@@ -79,7 +79,7 @@ foreach ($dir in $buildDirs) {
     }
 }
 
-# 7. Verificar GitHub Actions
+# 7. Check GitHub Actions
 Write-Host "`n7️⃣  GitHub Actions Workflows" -ForegroundColor Yellow
 if (Test-Path ".github/workflows") {
     $workflows = Get-ChildItem ".github/workflows/*.yml"
@@ -90,11 +90,11 @@ if (Test-Path ".github/workflows") {
     Write-Host "   ❌ .github/workflows/ NO encontrado" -ForegroundColor Red
 }
 
-# 8. Simular semantic-release dry-run
+# 8. Simulate a semantic-release dry run
 Write-Host "`n8️⃣  Semantic Release Test" -ForegroundColor Yellow
 Write-Host "   Ejecutando análisis de commits..." -ForegroundColor White
 
-# Verificar si hay commits que generarían release
+# Check for commits that would trigger a release
 $lastTag = git describe --tags --abbrev=0 2>$null
 if ($lastTag) {
     Write-Host "   Último tag: $lastTag" -ForegroundColor White
@@ -104,21 +104,21 @@ if ($lastTag) {
     Write-Host "   ⚠️  No hay tags en el repositorio" -ForegroundColor Yellow
 }
 
-# 9. Verificar problemas comunes
+# 9. Check common problems
 Write-Host "`n9️⃣  Problemas Comunes" -ForegroundColor Yellow
 $issues = @()
 
-# Verificar si package.json está en .gitignore
+# Check whether package.json is in .gitignore
 if (Select-String -Path ".gitignore" -Pattern "package.json" -Quiet) {
     $issues += "   ⚠️  package.json está en .gitignore (puede causar problemas)"
 }
 
-# Verificar si changelog.md existe
+# Check that changelog.md exists
 if (-not (Test-Path "changelog.md")) {
     $issues += "   ⚠️  changelog.md no existe (se creará automáticamente)"
 }
 
-# Verificar instalación de node_modules
+# Check that node_modules is installed
 if (-not (Test-Path "node_modules")) {
     $issues += "   ❌ node_modules no instalado - ejecuta: npm ci"
 }
@@ -131,7 +131,7 @@ if ($issues.Count -eq 0) {
     }
 }
 
-# Resumen final
+# Final summary
 Write-Host "`n" + "="*50 -ForegroundColor Cyan
 Write-Host "📋 RESUMEN" -ForegroundColor Cyan
 Write-Host "="*50 -ForegroundColor Cyan

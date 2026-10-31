@@ -34,7 +34,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
         try {
             const loadingToast = toast.loading(t('rw.analyzing'))
 
-            // Simular un pequeño delay para UX
+            // Simulate a short delay for UX
             await new Promise(resolve => setTimeout(resolve, 600))
 
             const info = await zipBackupService.getBackupInfo(file)
@@ -86,7 +86,7 @@ export function RestoreWizard({ onClose, onRestoreComplete }: RestoreWizardProps
 
             const { data, settings } = result
 
-            // Usar restauración nativa del backend (más rápido y seguro)
+            // Use the backend restore (faster and safer)
             const restoreResult = await window.electronAPI.database.restore({
                 version: '1.0',
                 data: data

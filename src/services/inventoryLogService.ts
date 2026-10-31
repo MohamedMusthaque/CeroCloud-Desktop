@@ -1,30 +1,30 @@
 import { InventoryLog } from '@/types/database'
 
-// Mock IPC para desarrollo web
+// Mock IPC for web development
 const isMockMode = !window.electronAPI
 
 const mockLogs: InventoryLog[] = []
 
 export const inventoryLogService = {
-    // Obtener todos los logs
+    // Get all logs
     async getAll(): Promise<InventoryLog[]> {
         if (isMockMode) return mockLogs
         return window.electronAPI.inventoryLogs.getAll()
     },
 
-    // Obtener logs de un producto específico
+    // Get a specific product's logs
     async getByProductId(productId: number): Promise<InventoryLog[]> {
         if (isMockMode) return mockLogs.filter(log => log.product_id === productId)
         return window.electronAPI.inventoryLogs.getByProductId(productId)
     },
 
-    // Obtener logs por tipo de movimiento
+    // Get logs by movement type
     async getByMovementType(movementType: string): Promise<InventoryLog[]> {
         if (isMockMode) return mockLogs.filter(log => log.movement_type === movementType)
         return window.electronAPI.inventoryLogs.getByMovementType(movementType)
     },
 
-    // Obtener logs en un rango de fechas
+    // Get logs within a date range
     async getByDateRange(startDate: string, endDate: string): Promise<InventoryLog[]> {
         if (isMockMode) {
             return mockLogs.filter(log =>
@@ -34,13 +34,13 @@ export const inventoryLogService = {
         return window.electronAPI.inventoryLogs.getByDateRange(startDate, endDate)
     },
 
-    // Obtener logs recientes
+    // Get recent logs
     async getRecent(limit: number = 50): Promise<InventoryLog[]> {
         if (isMockMode) return mockLogs.slice(0, limit)
         return window.electronAPI.inventoryLogs.getRecent(limit)
     },
 
-    // Crear log manualmente (para ajustes manuales desde UI)
+    // Create a log manually (for manual adjustments from the UI)
     async create(log: Omit<InventoryLog, 'id'>): Promise<InventoryLog> {
         if (isMockMode) {
             const newLog: InventoryLog = { ...log, id: mockLogs.length + 1 }

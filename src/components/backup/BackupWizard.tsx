@@ -429,7 +429,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                     ) : (
                                         <div className="space-y-4">
 
-                                            {/* Guía LOCAL */}
+                                            {/* LOCAL guide */}
                                             {step === 'guide-local' && (
                                                 <div className="space-y-5">
                                                     <div className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center group shadow-sm">
@@ -471,7 +471,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                 </div>
                                             )}
 
-                                            {/* Guía GOOGLE DRIVE */}
+                                            {/* GOOGLE DRIVE guide */}
                                             {step === 'guide-drive' && (
                                                 <div className="space-y-4">
                                                     <div className="text-center mb-4">
@@ -481,7 +481,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                     </div>
 
                                                     <div className="grid gap-3">
-                                                        {/* Paso 1: Descargar */}
+                                                        {/* Step 1: Download */}
                                                         <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-2xl p-3 flex items-center justify-between gap-3">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-8 h-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-[#4285F4] font-bold text-base border border-blue-100 dark:border-blue-900/50">1</div>
@@ -499,7 +499,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                             </button>
                                                         </div>
 
-                                                        {/* Pasos siguientes */}
+                                                        {/* Next steps */}
                                                         <div className="bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800 p-4 rounded-2xl space-y-3 text-left">
                                                             <div className="flex gap-3">
                                                                 <span className="flex-shrink-0 w-6 h-6 bg-[#4285F4] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md shadow-blue-500/20">2</span>
@@ -529,7 +529,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                 </div>
                                             )}
 
-                                            {/* Guía DROPBOX */}
+                                            {/* DROPBOX guide */}
                                             {step === 'guide-dropbox' && (
                                                 <div className="space-y-4">
                                                     <div className="text-center mb-4">
@@ -539,7 +539,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                     </div>
 
                                                     <div className="grid gap-3">
-                                                        {/* Paso 1: Descargar */}
+                                                        {/* Step 1: Download */}
                                                         <div className="bg-cyan-50/50 dark:bg-cyan-900/10 border border-cyan-100 dark:border-cyan-900/30 rounded-2xl p-3 flex items-center justify-between gap-3">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-8 h-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-[#0061FF] font-bold text-base border border-cyan-100 dark:border-cyan-900/50">1</div>
@@ -557,7 +557,7 @@ export function BackupWizard({ onClose }: BackupWizardProps) {
                                                             </button>
                                                         </div>
 
-                                                        {/* Pasos siguientes */}
+                                                        {/* Next steps */}
                                                         <div className="bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800 p-4 rounded-2xl space-y-3 text-left">
                                                             <div className="flex gap-3">
                                                                 <span className="flex-shrink-0 w-6 h-6 bg-[#0061FF] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md shadow-blue-600/20">2</span>

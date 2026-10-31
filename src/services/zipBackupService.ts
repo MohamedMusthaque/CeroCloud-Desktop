@@ -30,18 +30,18 @@ interface BackupData {
 
 export const zipBackupService = {
     /**
-     * Crea un backup completo con cifrado profesional opcional
-     * Si se proporciona contraseña: PBKDF2 + AES-256-GCM
+     * Creates a full backup with optional encryption
+     * With a password: PBKDF2 + AES-256-GCM
      */
     /**
-     * Crea un backup completo con cifrado profesional opcional
-     * Si se proporciona contraseña: PBKDF2 + AES-256-GCM
-     * @param password Contraseña opcional para cifrar
-     * @param download Si es true, descarga el archivo automáticamente (default true)
+     * Creates a full backup with optional encryption
+     * With a password: PBKDF2 + AES-256-GCM
+     * @param password Optional password to encrypt with
+     * @param download When true, downloads the file automatically (default true)
      */
     createZipBackup: async (password?: string, download: boolean = true): Promise<{ success: boolean; filename?: string; content?: Blob; error?: string }> => {
         try {
-            // Obtener todos los datos
+            // Get all the data
             const products = await window.electronAPI.products.getAll() as Product[]
             const categories = await window.electronAPI.categories.getAll() as Category[]
             const sales = await window.electronAPI.sales.getAll() as Sale[]
@@ -50,14 +50,14 @@ export const zipBackupService = {
             const expenseTypes = await window.electronAPI.expenseTypes.getAll() as ExpenseType[]
             const expenses = await window.electronAPI.expenses.getAll() as Expense[]
 
-            // Obtener configuración 
+            // Get the settings 
             const settingsStr = localStorage.getItem('companySettings')
             const settings = settingsStr ? JSON.parse(settingsStr) : {}
 
-            // Crear el ZIP
+            // Create the ZIP
             const zip = new JSZip()
 
-            // 1. metadata.json (NUNCA cifrado - necesario para detectar)
+            // 1. metadata.json (NEVER encrypted - needed for detection)
             const metadata: BackupMetadata = {
                 app: 'NexoraCloud',
                 createdAt: new Date().toISOString(),
@@ -67,14 +67,14 @@ export const zipBackupService = {
             }
             zip.file('metadata.json', JSON.stringify(metadata, null, 2))
 
-            // 2. version.json (nunca cifrado)
+            // 2. version.json (never encrypted)
             const versionInfo: VersionInfo = {
                 backupFormatVersion: 1,
                 minAppVersion: '0.2.0'
             }
             zip.file('version.json', JSON.stringify(versionInfo, null, 2))
 
-            // 3. database/data.json (CIFRADO con PBKDF2 + AES-256-GCM)
+            // 3. database/data.json (ENCRYPTED with PBKDF2 + AES-256-GCM)
             const databaseData: BackupData = {
                 products,
                 categories,
@@ -92,7 +92,7 @@ export const zipBackupService = {
             zip.folder('database')
             zip.file('database/data.json', databaseContent)
 
-            // 4. config/settings.json (CIFRADO si hay password)
+            // 4. config/settings.json (ENCRYPTED when there is a password)
             const settingsJson = JSON.stringify(settings, null, 2)
             const settingsContent = password
                 ? await secureEncryptionService.encrypt(settingsJson, password)
@@ -101,22 +101,22 @@ export const zipBackupService = {
             zip.folder('config')
             zip.file('config/settings.json', settingsContent)
 
-            // 5. images/ (Respaldo físico de imágenes)
+            // 5. images/ (copies of the image files)
             zip.folder('images')
             const imagesFolder = zip.folder('images/products')
 
             if (imagesFolder) {
-                // Iterar productos y buscar imágenes
+                // Go through products and collect their images
                 for (const product of products) {
                     if (product.image) {
                         try {
-                            // Extraer solo el nombre del archivo si viene una ruta completa
-                            // Asumimos que si es ruta absoluta, igual intentamos leerla,
-                            // pero idealmente deberíamos tener el filename guardado por saveImage
+                            // Keep only the file name when a full path is given
+                            // If it is an absolute path we still try to read it,
+                            // but ideally we have the filename stored by saveImage
                             const filename = product.image.split(/[\\/]/).pop()
 
                             if (filename) {
-                                // Pedir buffer al main process
+                                // Ask the main process for the buffer
                                 const imageResult = await window.electronAPI.products.getImage(filename)
 
                                 if (imageResult.success && imageResult.buffer) {
@@ -130,19 +130,19 @@ export const zipBackupService = {
                 }
             }
 
-            // Generar el archivo ZIP
+            // Generate the ZIP file
             const content = await zip.generateAsync({
                 type: 'blob',
                 compression: 'DEFLATE',
                 compressionOptions: { level: 9 }
             })
 
-            // Nombre del archivo con extensión .cerobak
+            // File name with the .cerobak extension
             const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0]
             const secureFlag = password ? t('zipBackup.protectedSuffix') : ''
             const filename = `nexoracloud_backup${secureFlag}_${timestamp}.cerobak`
 
-            // Descargar solo si download es true
+            // Download only when download is true
             if (download) {
                 saveAs(content, filename)
             }
@@ -155,7 +155,7 @@ export const zipBackupService = {
     },
 
     /**
-     * Restaura un backup desde un archivo .cerobak con descifrado profesional
+     * Restores a backup from a .cerobak file, decrypting it when needed
      */
     restoreZipBackup: async (file: File, password?: string): Promise<{
         success: boolean
@@ -165,25 +165,25 @@ export const zipBackupService = {
         error?: string
     }> => {
         try {
-            // Leer el archivo ZIP
+            // Read the ZIP file
             const zip = await JSZip.loadAsync(file)
 
-            // 1. Validar estructura
+            // 1. Validate the structure
             if (!zip.files['metadata.json'] || !zip.files['version.json'] || !zip.files['database/data.json']) {
                 return { success: false, error: t('zipBackup.invalidFile') }
             }
 
-            // 2. Leer metadata // Fixed below lines by referencing original code context not shown here but following logic
+            // 2. Read the metadata // Fixed below lines by referencing original code context not shown here but following logic
             // ... (rest of function until settings)
             const metadataContent = await zip.files['metadata.json'].async('string')
             const metadata: BackupMetadata = JSON.parse(metadataContent)
 
-            // Verificar si requiere contraseña
+            // Check whether a password is required
             if (metadata.encrypted && !password) {
                 return { success: false, error: t('zipBackup.passwordRequired') }
             }
 
-            // 3. Leer version y validar compatibilidad
+            // 3. Read the version and check compatibility
             const versionContent = await zip.files['version.json'].async('string')
             const versionInfo: VersionInfo = JSON.parse(versionContent)
 
@@ -194,7 +194,7 @@ export const zipBackupService = {
                 }
             }
 
-            // 4. Leer y descifrar datos (con PBKDF2 + AES-256-GCM)
+            // 4. Read and decrypt the data (PBKDF2 + AES-256-GCM)
             const databaseRaw = await zip.files['database/data.json'].async('string')
             let databaseContent = databaseRaw
 
@@ -208,7 +208,7 @@ export const zipBackupService = {
 
             const data: BackupData = JSON.parse(databaseContent)
 
-            // 5. Leer y descifrar configuración
+            // 5. Read and decrypt the settings
             let settings: CompanySettings = {} as CompanySettings
             if (zip.files['config/settings.json']) {
                 const settingsRaw = await zip.files['config/settings.json'].async('string')
@@ -227,13 +227,13 @@ export const zipBackupService = {
                 }
             }
 
-            // 6. Restaurar Imágenes
+            // 6. Restore images
             const imagesFolder = zip.folder('images/products')
             if (imagesFolder) {
                 const imagePromises: Promise<void>[] = []
                 imagesFolder.forEach((relativePath, file) => {
-                    // relativePath es el nombre del archivo si la estructura es plana dentro de images/products
-                    // file es el objeto JSZipObject
+                    // relativePath is the file name when images/products is flat
+                    // file is the JSZipObject
                     if (!file.dir) {
                         const promise = (async () => {
                             try {
@@ -246,7 +246,7 @@ export const zipBackupService = {
                         imagePromises.push(promise)
                     }
                 })
-                // Esperar a que todas las imágenes se guarden (opcional, pero recomendable para asegurar integridad)
+                // Wait for every image to be saved (optional, but recommended for integrity)
                 await Promise.all(imagePromises)
             }
 
@@ -263,7 +263,7 @@ export const zipBackupService = {
     },
 
     /**
-     * Valida si un archivo es un backup válido de NexoraCloud
+     * Checks whether a file is a valid NexoraCloud backup
      */
     validateZipBackup: async (file: File): Promise<{ valid: boolean; error?: string; metadata?: BackupMetadata }> => {
         try {
@@ -273,7 +273,7 @@ export const zipBackupService = {
 
             const zip = await JSZip.loadAsync(file)
 
-            // Verificar archivos requeridos
+            // Check the required files
             const requiredFiles = ['metadata.json', 'version.json', 'database/data.json']
             for (const requiredFile of requiredFiles) {
                 if (!zip.files[requiredFile]) {
@@ -281,11 +281,11 @@ export const zipBackupService = {
                 }
             }
 
-            // Leer metadata
+            // Read the metadata
             const metadataContent = await zip.files['metadata.json'].async('string')
             const metadata: BackupMetadata = JSON.parse(metadataContent)
 
-            // Validar que sea de NexoraCloud o de sus nombres anteriores (CeroCloud, CeroCloud Gestor Local)
+            // Make sure it comes from NexoraCloud or its earlier names (CeroCloud, CeroCloud Gestor Local)
             if (!['NexoraCloud', 'CeroCloud', 'CeroCloud Gestor Local'].includes(metadata.app)) {
                 return { valid: false, error: t('zipBackup.notNexoraCloud') }
             }
@@ -297,8 +297,8 @@ export const zipBackupService = {
     },
 
     /**
-     * Obtiene información sobre un backup sin restaurarlo
-     * Si está cifrado y se da contraseña, intenta descifrar para validar y mostrar stats
+     * Gets information about a backup without restoring it
+     * If it is encrypted and a password is given, tries to decrypt it to validate and show stats
      */
     getBackupInfo: async (file: File, password?: string): Promise<{
         success: boolean
@@ -324,7 +324,7 @@ export const zipBackupService = {
             isEncrypted = validation.metadata?.encrypted || false
             const zip = await JSZip.loadAsync(file)
 
-            // Caso 1: Backup cifrado sin contraseña (o contraseña vacía)
+            // Case 1: encrypted backup without a password (or an empty one)
             if (isEncrypted && !password) {
                 return {
                     success: true,
@@ -341,21 +341,21 @@ export const zipBackupService = {
                 }
             }
 
-            // Leer base de datos
+            // Read the database
             const databaseRaw = await zip.files['database/data.json'].async('string')
             let databaseContent = databaseRaw
 
-            // Caso 2: Backup cifrado con contraseña - Intentar descifrar
+            // Case 2: encrypted backup with a password - try to decrypt
             if (isEncrypted && password) {
                 try {
                     databaseContent = await secureEncryptionService.decrypt(databaseRaw, password)
                 } catch (error) {
-                    // Si falla el descifrado, es contraseña incorrecta
+                    // If decryption fails, the password is wrong
                     return { success: false, error: t('zipBackup.wrongPassword') }
                 }
             }
 
-            // Parsear datos (ya sea descifrados o texto plano)
+            // Parse the data (decrypted or plain text)
             const data: BackupData = JSON.parse(databaseContent)
 
             const stats = {
@@ -375,7 +375,7 @@ export const zipBackupService = {
             }
         } catch (error) {
             console.error('Error in getBackupInfo:', error)
-            // Si el error es de JSON parse en un archivo cifrado, casi seguro es contraseña incorrecta
+            // A JSON parse error on an encrypted file almost certainly means a wrong password
             if (isEncrypted && password) {
                 return { success: false, error: t('zipBackup.wrongPassword') }
             }

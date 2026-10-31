@@ -12,7 +12,7 @@ export interface CartTab {
     paymentMethod: PaymentMethod
 }
 
-export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'credit' | 'other'
+export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'credit' | 'cheque' | 'other'
 
 interface CartState {
     tabs: CartTab[]

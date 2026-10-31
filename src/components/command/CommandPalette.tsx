@@ -89,7 +89,7 @@ export function CommandPalette() {
                                     {t('cmd.noResults')}
                                 </Command.Empty>
 
-                                {/* Navegación */}
+                                {/* Navigation */}
                                 <Command.Group heading={t('cmd.navigation')} className="px-2 pt-2 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
                                     {allowed('/') && (
                                         <Command.Item
@@ -147,7 +147,7 @@ export function CommandPalette() {
                                     )}
                                 </Command.Group>
 
-                                {/* Acciones Rápidas */}
+                                {/* Quick actions */}
                                 <Command.Group heading={t('cmd.actions')} className="px-2 pt-3 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 mt-2">
                                     {allowed('/inventory') && (
                                         <Command.Item

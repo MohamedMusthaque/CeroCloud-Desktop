@@ -62,7 +62,7 @@ export function registerIpcHandlers() {
         try {
             console.log('📦 Recibida solicitud de restauración IPC')
 
-            // Validación de Versión Estricta
+            // Strict version check
             if (data.version !== '1.0') {
                 console.error('❌ Versión de backup incompatible:', data.version)
                 return {
@@ -139,21 +139,21 @@ export function registerIpcHandlers() {
     // Image Handlers
     ipcMain.handle('products:saveImage', async (_event, sourcePath: string) => {
         try {
-            // Directorio de imágenes en UserData
+            // Images folder inside userData
             const userDataPath = app.getPath('userData')
             const imagesDir = path.join(userDataPath, 'images', 'products')
 
-            // Crear directorio si no existe
+            // Create the folder if it doesn't exist
             if (!fs.existsSync(imagesDir)) {
                 fs.mkdirSync(imagesDir, { recursive: true })
             }
 
-            // Generar nombre único
+            // Generate a unique name
             const ext = path.extname(sourcePath)
             const filename = `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}${ext}`
             const destPath = path.join(imagesDir, filename)
 
-            // Copiar archivo
+            // Copy the file
             await fs.promises.copyFile(sourcePath, destPath)
 
             return { success: true, filename }
@@ -168,7 +168,7 @@ export function registerIpcHandlers() {
             const imagePath = path.join(app.getPath('userData'), 'images', 'products', filename)
 
             if (fs.existsSync(imagePath)) {
-                // Leer como buffer para backup
+                // Read as a buffer for the backup
                 const buffer = await fs.promises.readFile(imagePath)
                 return { success: true, buffer }
             }

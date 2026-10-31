@@ -1,6 +1,6 @@
 /**
- * Servicio de Auto-Actualización
- * Maneja la verificación, descarga e instalación de actualizaciones
+ * Auto-update service
+ * Handles checking for, downloading and installing updates
  */
 
 import { t } from '@/i18n'
@@ -27,7 +27,7 @@ class UpdaterService {
     private listeners: Array<(status: UpdateStatus) => void> = []
 
     constructor() {
-        // Registrar listener global
+        // Register the global listener
         if (window.electronAPI?.updater) {
             window.electronAPI.updater.onStatusUpdate((status: unknown) => {
                 this.notifyListeners(status as UpdateStatus)
@@ -36,7 +36,7 @@ class UpdaterService {
     }
 
     /**
-     * Verificar si hay actualizaciones disponibles
+     * Check whether updates are available
      */
     async checkForUpdates(): Promise<{ success: boolean; data?: UpdateInfo; error?: string }> {
         if (!window.electronAPI?.updater) {
@@ -53,7 +53,7 @@ class UpdaterService {
     }
 
     /**
-     * Descargar actualización disponible
+     * Download the available update
      */
     async downloadUpdate(): Promise<{ success: boolean; error?: string }> {
         if (!window.electronAPI?.updater) {
@@ -70,7 +70,7 @@ class UpdaterService {
     }
 
     /**
-     * Instalar actualización y reiniciar la aplicación
+     * Install the update and restart the app
      */
     async quitAndInstall(): Promise<void> {
         if (!window.electronAPI?.updater) {
@@ -81,7 +81,7 @@ class UpdaterService {
     }
 
     /**
-     * Obtener versión actual de la aplicación
+     * Get the app's current version
      */
     async getCurrentVersion(): Promise<string> {
         if (!window.electronAPI?.updater) {
@@ -98,9 +98,9 @@ class UpdaterService {
     }
 
     /**
-     * Configurar verificación automática
-     * @param enabled - Activar/desactivar verificación automática
-     * @param intervalHours - Intervalo en horas (default: 6)
+     * Configure automatic checks
+     * @param enabled - Turn automatic checks on/off
+     * @param intervalHours - Interval in hours (default: 6)
      */
     async setAutoCheck(enabled: boolean, intervalHours: number = 6): Promise<void> {
         if (!window.electronAPI?.updater) {
@@ -111,21 +111,21 @@ class UpdaterService {
     }
 
     /**
-     * Suscribirse a eventos de actualización
-     * @param listener - Callback que recibe el estado de actualización
-     * @returns Función para desuscribirse
+     * Subscribe to update events
+     * @param listener - Callback that receives the update status
+     * @returns Function to unsubscribe
      */
     subscribe(listener: (status: UpdateStatus) => void): () => void {
         this.listeners.push(listener)
 
-        // Retornar función de cleanup
+        // Return the cleanup function
         return () => {
             this.listeners = this.listeners.filter(l => l !== listener)
         }
     }
 
     /**
-     * Notificar a todos los listeners
+     * Notify every listener
      */
     private notifyListeners(status: UpdateStatus) {
         this.listeners.forEach(listener => {
@@ -138,7 +138,7 @@ class UpdaterService {
     }
 
     /**
-     * Limpiar listeners al destruir el servicio
+     * Clear listeners when the service is destroyed
      */
     destroy() {
         this.listeners = []
@@ -148,5 +148,5 @@ class UpdaterService {
     }
 }
 
-// Exportar instancia singleton
+// Export the singleton instance
 export const updaterService = new UpdaterService()

@@ -283,7 +283,7 @@ interface SupplierCardProps {
 
 function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: SupplierCardProps) {
     const { t } = useTranslation()
-    // Diseño tipo "Business Card" moderno y compacto
+    // Modern, compact "business card" layout
     return (
         <motion.div
             layout
@@ -295,7 +295,7 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
             )}
         >
             <div className="flex items-start gap-4 w-full">
-                {/* Avatar Vibrante */}
+                {/* Colorful avatar */}
                 <div className={cn(
                     "shrink-0 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20",
                     "bg-gradient-to-br from-indigo-500 to-purple-600",
@@ -304,13 +304,13 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
                     {supplier.name ? supplier.name.charAt(0).toUpperCase() : <User className="w-6 h-6" />}
                 </div>
 
-                {/* Información Principal */}
+                {/* Main information */}
                 <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex justify-between items-start">
                         <h3 className="font-bold text-gray-900 dark:text-white text-lg truncate pr-2 leading-tight">
                             {supplier.name}
                         </h3>
-                        {/* Menú de acciones rápido (solo en grid para no saturar) */}
+                        {/* Quick actions menu (grid only, to avoid clutter) */}
                         {viewMode === 'grid' && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1">
                                 <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors">
@@ -330,7 +330,7 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
                         </p>
                     )}
 
-                    {/* Datos de contacto compactos */}
+                    {/* Compact contact details */}
                     <div className="flex flex-wrap gap-y-1 gap-x-3 text-xs text-gray-500 pt-1">
                         {supplier.phone && (
                             <a href={`tel:${supplier.phone}`} className="flex items-center gap-1 hover:text-indigo-500 transition-colors">
@@ -348,7 +348,7 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
                 </div>
             </div>
 
-            {/* Parte inferior: Stats y Botón Productos */}
+            {/* Bottom: stats and products button */}
             {viewMode === 'grid' && (
                 <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
                     <button
@@ -359,14 +359,14 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
                         <span>{t('sup.viewProductsCount', { count: supplier.products_count || 0 })}</span>
                     </button>
 
-                    {/* Botones de acción móvil o extra si se necesitan, pero ya están arriba */}
+                    {/* Mobile or extra action buttons if needed, but they are already above */}
                     <div className="text-xs text-gray-400 font-medium">
                         {supplier.address ? t('sup.withAddress') : t('sup.withoutAddress')}
                     </div>
                 </div>
             )}
 
-            {/* Acciones para modo lista */}
+            {/* Actions for list mode */}
             {viewMode === 'list' && (
                 <div className="flex items-center gap-2 ml-4 border-l border-gray-100 dark:border-gray-700 pl-4">
                     <button

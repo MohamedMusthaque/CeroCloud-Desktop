@@ -34,7 +34,9 @@ const defaultSettings: CompanySettings = {
         cash: true,
         card: true,
         transfer: true,
-        other: false
+        other: false,
+        credit: false,
+        cheque: false
     },
 
     invoice: {
@@ -78,7 +80,9 @@ export const companyService = {
             const stored = localStorage.getItem(STORAGE_KEY)
             if (stored) {
                 // Merge stored settings with defaults to ensure new fields (like currencySymbol) exist
-                return { ...defaultSettings, ...JSON.parse(stored) }
+                const parsed = JSON.parse(stored)
+                // Payment methods added later (credit, cheque) start from their default instead of missing
+                return { ...defaultSettings, ...parsed, paymentMethods: { ...defaultSettings.paymentMethods, ...parsed.paymentMethods } }
             }
             return defaultSettings
         } catch (error) {

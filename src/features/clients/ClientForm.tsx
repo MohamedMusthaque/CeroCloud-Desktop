@@ -124,7 +124,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                         {/* Body */}
                         <form onSubmit={handleSubmit} className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Nombre */}
+                                {/* Name */}
                                 <div className="col-span-2 md:col-span-1">
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
                                         {t('cliForm.fullName')}
@@ -138,7 +138,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                     />
                                 </div>
 
-                                {/* NIT/RUC */}
+                                {/* Tax ID (NIT/RUC) */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
                                         {t('cliForm.taxId')}
@@ -152,7 +152,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                     />
                                 </div>
 
-                                {/* Teléfono */}
+                                {/* Phone */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
                                         {t('cliForm.phone')}
@@ -180,7 +180,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                     />
                                 </div>
 
-                                {/* Dirección */}
+                                {/* Address */}
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
                                         {t('cliForm.address')}
@@ -194,7 +194,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                     />
                                 </div>
 
-                                {/* Límite de crédito */}
+                                {/* Credit limit */}
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
                                         {t('cliForm.creditLimit')} ({companyService.getSettings().currencySymbol})
@@ -210,7 +210,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                     <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{t('cliForm.creditLimitHint')}</p>
                                 </div>
 
-                                {/* Notas */}
+                                {/* Notes */}
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
                                         {t('cliForm.notes')}

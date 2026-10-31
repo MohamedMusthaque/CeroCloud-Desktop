@@ -65,7 +65,7 @@ export function BackupsTab({ settings, setSettings, onOpenWizard, onOpenRestoreW
                 nextDate.setDate(1)
             }
 
-            // Format: 12 Octubre, 02:00 AM
+            // Format: 12 October, 02:00 AM
             const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }
             setNextBackup(nextDate.toLocaleDateString(locale, options))
         }

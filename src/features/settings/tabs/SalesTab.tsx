@@ -7,6 +7,8 @@ import {
     CreditCard,
     QrCode,
     MoreHorizontal,
+    HandCoins,
+    Landmark,
     Check,
     Calculator,
     AlertCircle,
@@ -34,7 +36,9 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
         { id: 'cash', icon: Banknote, label: t('sales.payment.cash'), color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { id: 'card', icon: CreditCard, label: t('sales.payment.card'), color: 'text-blue-500', bg: 'bg-blue-500/10' },
         { id: 'transfer', icon: QrCode, label: t('sales.payment.transfer'), color: 'text-purple-500', bg: 'bg-purple-500/10' },
-        { id: 'other', icon: MoreHorizontal, label: t('sales.payment.other'), color: 'text-gray-500', bg: 'bg-gray-500/10' }
+        { id: 'other', icon: MoreHorizontal, label: t('sales.payment.other'), color: 'text-gray-500', bg: 'bg-gray-500/10' },
+        { id: 'credit', icon: HandCoins, label: t('sales.payment.credit'), color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { id: 'cheque', icon: Landmark, label: t('sales.payment.cheque'), color: 'text-teal-500', bg: 'bg-teal-500/10' }
     ]
 
     const posFeatures = [
@@ -82,7 +86,7 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
 
     const togglePaymentMethod = (method: string) => {
         const key = method as keyof typeof settings.paymentMethods
-        const currentStatus = settings.paymentMethods?.[key] ?? true
+        const currentStatus = !!settings.paymentMethods?.[key]
         setSettings({
             ...settings,
             paymentMethods: { ...settings.paymentMethods, [key]: !currentStatus }
@@ -110,7 +114,7 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
                             {paymentMethods.map((pm) => {
-                                const isActive = settings.paymentMethods?.[pm.id as keyof typeof settings.paymentMethods] ?? true
+                                const isActive = !!settings.paymentMethods?.[pm.id as keyof typeof settings.paymentMethods]
                                 return (
                                     <button
                                         key={pm.id}
@@ -133,6 +137,9 @@ export function SalesTab({ settings, setSettings }: SalesTabProps) {
                                 )
                             })}
                         </div>
+                        {settings.paymentMethods?.credit && (
+                            <p className="text-xs text-gray-500 dark:text-slate-400 mt-3">{t('sales.paymentCreditHint')}</p>
+                        )}
                     </div>
 
                     {/* POS Experience */}

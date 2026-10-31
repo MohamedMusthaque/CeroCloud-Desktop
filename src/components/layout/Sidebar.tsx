@@ -97,7 +97,7 @@ export function Sidebar() {
                             <h1 className="text-sm font-black text-white tracking-tight truncate leading-tight">
                                 {companyInfo.name}
                             </h1>
-                            {/* Mostrar subtítulo solo si es el nombre por defecto o si queremos siempre mostrar algo */}
+                            {/* Show the subtitle only for the default name (or if we always want to show something) */}
                             {companyInfo.name === 'NexoraCloud' && (
                                 <p className="text-[10px] text-gray-400 -mt-0.5">{t('nav.tagline')}</p>
                             )}

@@ -4,8 +4,8 @@ import fs from 'fs'
 
 const LOG_FILENAME = 'app-errors.log'
 
-// Función auxiliar para obtener la ruta del log de manera segura
-// (app.getPath podría fallar si se llama antes de app.ready, aunque es raro en módulos importados después)
+// Helper to get the log path safely
+// (app.getPath could fail if called before app.ready, though that is rare for modules imported later)
 const getLogPath = () => {
     try {
         return path.join(app.getPath('userData'), LOG_FILENAME)
@@ -22,7 +22,7 @@ export const logger = {
         const logLine = `[${timestamp}] [ERROR] [${context}] ${errorMessage}\n` +
             `--------------------------------------------------------------------------------\n`
 
-        // Siempre mostrar en consola para dev
+        // Always print to the console for development
         console.error(`[${context}]`, error)
 
         try {
@@ -45,7 +45,7 @@ export const logger = {
         }
     },
 
-    // Limpiar logs antiguos si el archivo es muy grande (> 5MB)
+    // Clear old logs when the file gets too large (> 5MB)
     rotate: () => {
         try {
             const logPath = getLogPath()

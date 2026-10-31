@@ -13,7 +13,7 @@ export function UpdateNotifier() {
     const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null)
     const [updateDownloaded, setUpdateDownloaded] = useState(false)
 
-    // Handlers definidos con useCallback para mantener referencias estables
+    // Handlers defined with useCallback to keep stable references
     const handleDownload = useCallback(async () => {
         toast.dismiss('update-available')
         toast.loading(t('updater.downloading'), {
@@ -35,7 +35,7 @@ export function UpdateNotifier() {
             duration: 2000,
         })
 
-        // Esperar 1 segundo para que el usuario vea el mensaje
+        // Wait 1 second so the user sees the message
         setTimeout(async () => {
             await updaterService.quitAndInstall()
         }, 1000)
@@ -115,11 +115,11 @@ export function UpdateNotifier() {
         return () => {
             unsubscribe()
         }
-    }, [handleDownload, handleInstall]) // Dependencias incluidas correctamente
+    }, [handleDownload, handleInstall]) // Dependencies included correctly
 
     return (
         <>
-            {/* Indicador de descarga flotante */}
+            {/* Floating download indicator */}
             <AnimatePresence>
                 {downloading && downloadProgress && (
                     <motion.div
@@ -142,7 +142,7 @@ export function UpdateNotifier() {
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             </div>
 
-                            {/* Barra de progreso */}
+                            {/* Progress bar */}
                             <div className="mb-3">
                                 <div className="flex justify-between text-xs mb-1">
                                     <span>{downloadProgress.percent.toFixed(1)}%</span>
@@ -161,7 +161,7 @@ export function UpdateNotifier() {
                                 </div>
                             </div>
 
-                            {/* Velocidad de descarga */}
+                            {/* Download speed */}
                             <div className="text-xs text-white/70">
                                 <span>
                                     {(downloadProgress.bytesPerSecond / 1024 / 1024).toFixed(2)} MB/s
@@ -172,10 +172,10 @@ export function UpdateNotifier() {
                 )}
             </AnimatePresence>
 
-            {/* Badge de actualización disponible en header (opcional) */}
+            {/* Update-available badge in the header (optional) */}
             {updateAvailable && !downloading && !updateDownloaded && (
                 <div className="hidden">
-                    {/* Placeholder para futuro badge en header */}
+                    {/* Placeholder for a future header badge */}
                 </div>
             )}
         </>

@@ -2,8 +2,8 @@ import { app } from 'electron'
 import path from 'path'
 import fs from 'fs'
 
-// La app se llamaba CeroCloud: mover su carpeta de datos y su base de datos a los nombres nuevos.
-// Debe ejecutarse antes de importar ./database, que abre la base de datos al cargarse.
+// The app used to be called CeroCloud: move its data folder and database to the new names.
+// Must run before importing ./database, which opens the database when it loads.
 function migrateLegacyData() {
     const userData = app.getPath('userData')
     const legacyDir = path.join(

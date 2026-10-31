@@ -112,7 +112,7 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto p-6">
                         <form id="supplier-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                            {/* Nombre del proveedor */}
+                            {/* Supplier name */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     {t('supForm.name')} <span className="text-red-500">*</span>
@@ -129,7 +129,7 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                                 {errors.name && <p className="text-red-500 text-sm mt-1">{t(errors.name.message as TranslationKey)}</p>}
                             </div>
 
-                            {/* Contacto y Email */}
+                            {/* Contact and email */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -159,7 +159,7 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                                 </div>
                             </div>
 
-                            {/* Teléfono */}
+                            {/* Phone */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     {t('supForm.phone')}
@@ -172,7 +172,7 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                                 />
                             </div>
 
-                            {/* Dirección */}
+                            {/* Address */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     {t('supForm.address')}

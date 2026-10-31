@@ -18,6 +18,7 @@ export const common = {
     'payment.transfer': 'Transferencia',
     'payment.other': 'Otro',
     'payment.credit': 'Crédito',
+    'payment.cheque': 'Cheque',
 
     // Auto backup (App)
     'app.autoBackupStarting': 'Iniciando respaldo automático...',

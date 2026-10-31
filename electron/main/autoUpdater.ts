@@ -2,7 +2,7 @@ import { autoUpdater } from 'electron-updater'
 import { BrowserWindow, ipcMain, app } from 'electron'
 import log from 'electron-log'
 
-// Configurar logging para debugging
+// Configure logging for debugging
 autoUpdater.logger = log
 log.transports.file.level = 'info'
 
@@ -17,11 +17,11 @@ export class AutoUpdateService {
     }
 
     private setupAutoUpdater() {
-        // Configuración del auto-updater
-        autoUpdater.autoDownload = false // Descarga manual, primero notificar
-        autoUpdater.autoInstallOnAppQuit = true // Instalar al cerrar
+        // Auto-updater configuration
+        autoUpdater.autoDownload = false // Manual download: notify first
+        autoUpdater.autoInstallOnAppQuit = true // Install on quit
 
-        // Configurar para GitHub Releases
+        // Configure for GitHub Releases
         autoUpdater.setFeedURL({
             provider: 'github',
             owner: 'CeroCloud',
@@ -74,9 +74,9 @@ export class AutoUpdateService {
     }
 
     private setupIpcHandlers() {
-        // Handler para verificar actualizaciones manualmente
+        // Handler to check for updates manually
         ipcMain.handle('updater:check-for-updates', async () => {
-            // En desarrollo, no intentar verificar
+            // In development, don't try to check
             if (!app.isPackaged) {
                 return {
                     success: false,
@@ -93,7 +93,7 @@ export class AutoUpdateService {
             }
         })
 
-        // Handler para descargar actualización
+        // Handler to download the update
         ipcMain.handle('updater:download-update', async () => {
             if (!app.isPackaged) {
                 return { success: false, error: 'No disponible en desarrollo' }
@@ -108,18 +108,18 @@ export class AutoUpdateService {
             }
         })
 
-        // Handler para instalar actualización y reiniciar
+        // Handler to install the update and restart
         ipcMain.handle('updater:quit-and-install', () => {
             if (!app.isPackaged) return
             autoUpdater.quitAndInstall(false, true)
         })
 
-        // Handler para obtener versión actual
+        // Handler to get the current version
         ipcMain.handle('updater:get-current-version', () => {
             return app.getVersion()
         })
 
-        // Handler para configurar auto-verificación
+        // Handler to configure automatic checks
         ipcMain.handle('updater:set-auto-check', (_event, enabled: boolean, intervalHours: number = 6) => {
             if (!app.isPackaged) {
                 return { success: false, error: 'No disponible en desarrollo' }
@@ -141,8 +141,8 @@ export class AutoUpdateService {
     }
 
     /**
-     * Verificar actualizaciones al iniciar la app
-     * Se ejecuta 5 segundos después del inicio para no interferir con la carga
+     * Check for updates when the app starts
+     * Runs 5 seconds after startup so it does not interfere with loading
      */
     public checkForUpdatesOnStartup() {
         setTimeout(() => {
@@ -154,8 +154,8 @@ export class AutoUpdateService {
     }
 
     /**
-     * Iniciar verificación automática periódica
-     * @param intervalHours - Intervalo en horas (default: 6 horas)
+     * Start periodic automatic checks
+     * @param intervalHours - Interval in hours (default: 6 hours)
      */
     public startAutoCheck(intervalHours: number = 6) {
         if (this.updateCheckInterval) {
@@ -172,12 +172,12 @@ export class AutoUpdateService {
             })
         }, intervalMs)
 
-        // Primera verificación inmediata
+        // First check right away
         this.checkForUpdatesOnStartup()
     }
 
     /**
-     * Detener verificación automática
+     * Stop automatic checks
      */
     public stopAutoCheck() {
         if (this.updateCheckInterval) {
@@ -188,7 +188,7 @@ export class AutoUpdateService {
     }
 
     /**
-     * Destruir el servicio (limpiar recursos)
+     * Destroy the service (release resources)
      */
     public destroy() {
         this.stopAutoCheck()

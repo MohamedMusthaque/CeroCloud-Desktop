@@ -26,6 +26,7 @@ export const printTexts = {
     'print.phone': 'Tel: {phone}',
     'print.counterClient': 'Cliente Mostrador',
     'print.paymentMethod': 'Método de Pago',
+    'print.chequeNumber': 'Cheque n.º {number}',
     'print.description': 'Descripción',
     'print.price': 'Precio',
     'print.code': 'Código: {code}',

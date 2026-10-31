@@ -1,11 +1,11 @@
 /**
- * Servicio de cifrado profesional para NexoraCloud
+ * Encryption service for NexoraCloud
  * 
- * Usa:
- * - PBKDF2 para derivación de clave (KDF) - Web Crypto API nativa
- * - AES-256-GCM para cifrado autenticado
- * - Salt aleatorio único por backup
- * - IV (Nonce) aleatorio único por operación
+ * Uses:
+ * - PBKDF2 for key derivation (KDF) - native Web Crypto API
+ * - AES-256-GCM for authenticated encryption
+ * - A unique random salt per backup
+ * - A unique random IV (nonce) per operation
  */
 
 import { t } from '@/i18n'
@@ -18,7 +18,7 @@ interface EncryptedData {
     authTag: string  // Base64
 }
 
-// Helper para convertir Uint8Array grande a Base64 sin spread operator
+// Helper to convert a large Uint8Array to Base64 without the spread operator
 function arrayToBase64(array: Uint8Array): string {
     let binary = ''
     const chunkSize = 8192
@@ -29,7 +29,7 @@ function arrayToBase64(array: Uint8Array): string {
     return btoa(binary)
 }
 
-// Helper para convertir Base64 a Uint8Array
+// Helper to convert Base64 to a Uint8Array
 function base64ToArray(base64: string): Uint8Array {
     const binary = atob(base64)
     const array = new Uint8Array(binary.length)
@@ -41,18 +41,18 @@ function base64ToArray(base64: string): Uint8Array {
 
 export const secureEncryptionService = {
     /**
-     * Cifra datos con una contraseña usando PBKDF2 + AES-256-GCM
+     * Encrypts data with a password using PBKDF2 + AES-256-GCM
      */
     async encrypt(plaintext: string, password: string): Promise<string> {
         try {
-            // 1. Generar salt aleatorio (16 bytes)
+            // 1. Generate a random salt (16 bytes)
             const salt = crypto.getRandomValues(new Uint8Array(16))
 
-            // 2. Convertir contraseña a formato para importar
+            // 2. Convert the password to an importable format
             const encoder = new TextEncoder()
             const passwordData = encoder.encode(password)
 
-            // 3. Importar contraseña como clave base
+            // 3. Import the password as the base key
             const baseKey = await crypto.subtle.importKey(
                 'raw',
                 passwordData,
@@ -61,12 +61,12 @@ export const secureEncryptionService = {
                 ['deriveBits', 'deriveKey']
             )
 
-            // 4. Derivar clave con PBKDF2 (600,000 iteraciones = muy seguro)
+            // 4. Derive the key with PBKDF2 (600,000 iterations = very secure)
             const cryptoKey = await crypto.subtle.deriveKey(
                 {
                     name: 'PBKDF2',
                     salt: salt as BufferSource,
-                    iterations: 600000,  // OWASP recomienda mínimo 600k para 2024
+                    iterations: 600000,  // OWASP recommends at least 600k as of 2024
                     hash: 'SHA-256'
                 },
                 baseKey,
@@ -75,10 +75,10 @@ export const secureEncryptionService = {
                 ['encrypt']
             )
 
-            // 5. Generar IV aleatorio (12 bytes para GCM)
+            // 5. Generate a random IV (12 bytes for GCM)
             const iv = crypto.getRandomValues(new Uint8Array(12)) as Uint8Array
 
-            // 6. Cifrar con AES-256-GCM
+            // 6. Encrypt with AES-256-GCM
             const data = encoder.encode(plaintext)
 
             const ciphertext = await crypto.subtle.encrypt(
@@ -86,18 +86,18 @@ export const secureEncryptionService = {
                     name: 'AES-GCM',
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     iv: iv as any,
-                    tagLength: 128  // 16 bytes de authTag
+                    tagLength: 128  // 16-byte authTag
                 },
                 cryptoKey,
                 data
             )
 
-            // 7. Separar ciphertext y authTag
+            // 7. Split ciphertext and authTag
             const ciphertextArray = new Uint8Array(ciphertext)
             const actualCiphertext = ciphertextArray.slice(0, -16)
             const authTag = ciphertextArray.slice(-16)
 
-            // 8. Crear objeto con todos los componentes (usando helper para arrays grandes)
+            // 8. Build an object with every component (using the helper for large arrays)
             const encrypted: EncryptedData = {
                 version: 1,
                 salt: arrayToBase64(salt),
@@ -106,7 +106,7 @@ export const secureEncryptionService = {
                 authTag: arrayToBase64(authTag)
             }
 
-            // 9. Retornar como JSON
+            // 9. Return as JSON
             return JSON.stringify(encrypted)
         } catch (error) {
             console.error('Encryption error:', error)
@@ -115,29 +115,29 @@ export const secureEncryptionService = {
     },
 
     /**
-     * Descifra datos usando la contraseña
+     * Decrypts data using the password
      */
     async decrypt(encryptedData: string, password: string): Promise<string> {
         try {
-            // 1. Parsear datos cifrados
+            // 1. Parse the encrypted data
             const encrypted: EncryptedData = JSON.parse(encryptedData)
 
-            // 2. Validar versión
+            // 2. Validate the version
             if (encrypted.version !== 1) {
                 throw new Error(t('encryption.unsupportedVersion'))
             }
 
-            // 3. Decodificar de Base64 (usando helper)
+            // 3. Decode from Base64 (using the helper)
             const salt = base64ToArray(encrypted.salt)
             const iv = base64ToArray(encrypted.iv)
             const ciphertext = base64ToArray(encrypted.ciphertext)
             const authTag = base64ToArray(encrypted.authTag)
 
-            // 4. Convertir contraseña
+            // 4. Convert the password
             const encoder = new TextEncoder()
             const passwordData = encoder.encode(password)
 
-            // 5. Importar contraseña como clave base
+            // 5. Import the password as the base key
             const baseKey = await crypto.subtle.importKey(
                 'raw',
                 passwordData,
@@ -146,7 +146,7 @@ export const secureEncryptionService = {
                 ['deriveBits', 'deriveKey']
             )
 
-            // 6. Derivar clave con PBKDF2 (mismos parámetros)
+            // 6. Derive the key with PBKDF2 (same parameters)
             const cryptoKey = await crypto.subtle.deriveKey(
                 {
                     name: 'PBKDF2',
@@ -160,12 +160,12 @@ export const secureEncryptionService = {
                 ['decrypt']
             )
 
-            // 7. Combinar ciphertext + authTag
+            // 7. Combine ciphertext + authTag
             const combined = new Uint8Array(ciphertext.length + authTag.length)
             combined.set(ciphertext)
             combined.set(authTag, ciphertext.length)
 
-            // 8. Descifrar con AES-256-GCM
+            // 8. Decrypt with AES-256-GCM
             const decrypted = await crypto.subtle.decrypt(
                 {
                     name: 'AES-GCM',
@@ -181,7 +181,7 @@ export const secureEncryptionService = {
             return decoder.decode(decrypted)
         } catch (error) {
             console.error('Decryption error:', error)
-            // Error de autenticación = contraseña incorrecta
+            // Authentication error = wrong password
             if (error instanceof DOMException && error.name === 'OperationError') {
                 throw new Error(t('encryption.wrongPassword'))
             }
@@ -190,7 +190,7 @@ export const secureEncryptionService = {
     },
 
     /**
-     * Valida que una cadena tenga el formato de datos cifrados
+     * Checks that a string has the encrypted-data format
      */
     isEncrypted(data: string): boolean {
         try {

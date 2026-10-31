@@ -1,4 +1,4 @@
-# NexoraCloud - Verificación Pre-Commit
+# NexoraCloud - Pre-commit checks
 
 Write-Host "`n==================================" -ForegroundColor Cyan
 Write-Host "  NexoraCloud - Pre-Commit Check" -ForegroundColor Cyan
@@ -6,7 +6,7 @@ Write-Host "==================================`n" -ForegroundColor Cyan
 
 $errors = 0
 
-# Verificar TypeScript
+# Check TypeScript
 Write-Host "[1/4] Verificando tipos TypeScript..." -ForegroundColor Yellow
 try {
     $typecheck = npm run type-check --silent 2>&1
@@ -20,7 +20,7 @@ try {
     Write-Host "  ⚠️  No se pudo ejecutar type-check`n" -ForegroundColor Yellow
 }
 
-# Verificar ESLint
+# Check ESLint
 Write-Host "[2/4] Ejecutando ESLint..." -ForegroundColor Yellow
 try {
     $lint = npm run lint --silent 2>&1
@@ -33,7 +33,7 @@ try {
     Write-Host "  ⚠️  No se pudo ejecutar ESLint`n" -ForegroundColor Yellow
 }
 
-# Verificar archivos grandes
+# Check for large files
 Write-Host "[3/4] Verificando archivos grandes..." -ForegroundColor Yellow
 $largeFiles = Get-ChildItem -Recurse -File | Where-Object { 
     $_.Length -gt 1MB -and 
@@ -52,7 +52,7 @@ if ($largeFiles) {
     Write-Host "  ✅ No hay archivos excesivamente grandes`n" -ForegroundColor Green
 }
 
-# Verificar que no haya archivos .env o secretos
+# Make sure no .env files or secrets are present
 Write-Host "[4/4] Verificando archivos sensibles..." -ForegroundColor Yellow
 $sensitiveFiles = Get-ChildItem -Recurse -File | Where-Object { 
     $_.Name -match '\.env' -or 
@@ -74,7 +74,7 @@ if ($sensitiveFiles) {
     Write-Host "  ✅ No se encontraron archivos sensibles`n" -ForegroundColor Green
 }
 
-# Resumen
+# Summary
 Write-Host "=================================" -ForegroundColor Cyan
 if ($errors -eq 0) {
     Write-Host "  ✅ Todo listo para commit!" -ForegroundColor Green
@@ -84,7 +84,7 @@ if ($errors -eq 0) {
 }
 Write-Host "=================================`n" -ForegroundColor Cyan
 
-# Mostrar archivos modificados
+# Show modified files
 Write-Host "Archivos modificados en git:`n" -ForegroundColor Cyan
 git status --short
 

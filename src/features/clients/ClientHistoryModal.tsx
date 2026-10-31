@@ -34,12 +34,12 @@ export function ClientHistoryModal({ isOpen, onClose, client }: ClientHistoryMod
         }
     }, [isOpen, client])
 
-    // Calcular estadísticas
+    // Compute statistics
     const totalSpent = sales.reduce((acc, sale) => acc + (sale.status === 'completed' ? sale.total : 0), 0)
     const totalPurchases = sales.filter(s => s.status === 'completed').length
     const lastPurchase = sales.length > 0 ? new Date(sales[0].created_at!).toLocaleDateString(locale) : t('common.na')
 
-    // Filtrar ventas
+    // Filter sales
     const filteredSales = sales.filter(s =>
         s.id?.toString().includes(searchTerm) ||
         s.created_at?.includes(searchTerm) ||

@@ -17,7 +17,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
     if (isTicket) {
         return (
             <div ref={ref} className="w-[280px] bg-white p-2 text-gray-900 font-mono text-[11px] leading-tight mx-auto" id="invoice-template">
-                {/* Banner Superior */}
+                {/* Top banner */}
                 {settings.invoice?.headerImage && (
                     <img src={settings.invoice.headerImage} alt="Header" className="w-full mb-2 object-contain" />
                 )}
@@ -89,7 +89,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                     <p className="mt-2 text-[9px] opacity-60">-- NexoraCloud --</p>
                 </div>
 
-                {/* Banner Inferior */}
+                {/* Bottom banner */}
                 {settings.invoice?.footerImage && (
                     <img src={settings.invoice.footerImage} alt="Footer" className="w-full mt-2 object-contain" />
                 )}
@@ -163,6 +163,11 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                     <div className="text-right">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('print.paymentMethod')}</h3>
                         <p className="text-lg font-bold text-gray-900 capitalize">{paymentMethodLabel(sale.payment_method)}</p>
+                        {sale.payment_method === 'cheque' && sale.cheque_number && (
+                            <p className="text-sm text-gray-600">
+                                {t('print.chequeNumber', { number: sale.cheque_number })}{sale.cheque_bank ? ` · ${sale.cheque_bank}` : ''}
+                            </p>
+                        )}
                     </div>
                 </div>
 

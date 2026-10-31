@@ -79,7 +79,8 @@ const paymentMethodKeys: Record<string, TranslationKey> = {
     card: 'payment.card',
     transfer: 'payment.transfer',
     other: 'payment.other',
-    credit: 'payment.credit'
+    credit: 'payment.credit',
+    cheque: 'payment.cheque'
 }
 
 export function paymentMethodLabel(method: string): string {

@@ -80,22 +80,22 @@ app.whenReady().then(() => {
     protocol.handle('nexoracloud-image', (request: Request) => {
         const urlRequest = request.url.replace('nexoracloud-image://', '')
         let filename = decodeURIComponent(urlRequest)
-        // Eliminar slash final que el navegador agrega automáticamente al tratar el archivo como hostname
+        // Remove the trailing slash the browser adds when it treats the file as a hostname
         if (filename.endsWith('/') || filename.endsWith('\\')) {
             filename = filename.slice(0, -1)
         }
         const imagePath = path.join(app.getPath('userData'), 'images', 'products', filename)
 
-        // Usar pathToFileURL para máxima compatibilidad
+        // Use pathToFileURL for maximum compatibility
         return net.fetch(pathToFileURL(imagePath).toString())
     })
 
     createWindow()
 
-    // Inicializar auto-updater (handlers siempre disponibles, pero solo verifica en producción)
+    // Initialize the auto-updater (handlers are always available, but it only checks in production)
     if (mainWindow) {
         autoUpdateService = new AutoUpdateService(mainWindow)
-        // Solo activar verificación automática en producción
+        // Only enable automatic checks in production
         if (app.isPackaged) {
             autoUpdateService.startAutoCheck(6)
         }
