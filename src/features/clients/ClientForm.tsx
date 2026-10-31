@@ -1,12 +1,13 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Save, Loader2 } from 'lucide-react'
+import { Save, Loader2 } from 'lucide-react'
 import { clientService, type Client } from '@/services/clientService'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { companyService } from '@/services/companyService'
 import { useTranslation } from '@/i18n'
+import { ModalHeader } from '@/components/ui/ModalHeader'
 import { NicAttachmentField } from '@/components/attachments/NicAttachmentField'
 
 interface ClientFormProps {
@@ -113,17 +114,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                         className="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="bg-slate-900 dark:bg-slate-950 px-6 py-4 flex items-center justify-between shrink-0">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                {clientToEdit ? t('cliForm.editTitle') : t('cliForm.newTitle')}
-                            </h2>
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+                        <ModalHeader title={clientToEdit ? t('cliForm.editTitle') : t('cliForm.newTitle')} onClose={onClose} />
 
                         {/* Body */}
                         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">

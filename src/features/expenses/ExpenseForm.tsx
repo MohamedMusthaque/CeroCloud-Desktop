@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { format } from 'date-fns'
-import { X, Save, Loader2, Plus } from 'lucide-react'
+import { Save, Loader2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
+import { ModalHeader } from '@/components/ui/ModalHeader'
 import { expenseService } from '@/services/expenseService'
 import { companyService } from '@/services/companyService'
 import type { Expense, ExpenseType } from '@/types/database'
@@ -95,14 +96,7 @@ export function ExpenseForm({ isOpen, expense, types, onClose, onSaved, onTypeCr
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl"
                     >
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                {expense ? t('expForm.editTitle') : t('expForm.newTitle')}
-                            </h2>
-                            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-xl transition-all">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
+                        <ModalHeader title={expense ? t('expForm.editTitle') : t('expForm.newTitle')} onClose={onClose} className="sticky top-0 z-10" />
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

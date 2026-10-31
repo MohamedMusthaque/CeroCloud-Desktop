@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Save, Loader2 } from 'lucide-react'
+import { Save, Loader2 } from 'lucide-react'
 import { supplierService } from '@/services/supplierService'
 import { type Supplier } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation, type TranslationKey } from '@/i18n'
+import { ModalHeader } from '@/components/ui/ModalHeader'
 import { NicAttachmentField } from '@/components/attachments/NicAttachmentField'
 
 const supplierSchema = z.object({
@@ -98,22 +99,7 @@ export function SupplierForm({ supplier, onClose }: SupplierFormProps) {
                     className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                {supplier ? t('supForm.editTitle') : t('supForm.newTitle')}
-                            </h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {supplier ? t('supForm.editSubtitle') : t('supForm.newSubtitle')}
-                            </p>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100  dark:hover:bg-gray-700/50 rounded-xl transition-all"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
+                    <ModalHeader title={supplier ? t('supForm.editTitle') : t('supForm.newTitle')} onClose={onClose} />
 
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto p-6">

@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Image as ImageIcon, Loader2, Save } from 'lucide-react'
+import { Image as ImageIcon, Loader2, Save } from 'lucide-react'
 import { productService } from '@/services/productService'
 import { supplierService } from '@/services/supplierService'
 import { categoryService } from '@/services/categoryService'
@@ -15,6 +15,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { productSchema, type ProductFormValues } from '@/lib/validators'
 import { useTranslation, type TranslationKey } from '@/i18n'
+import { ModalHeader } from '@/components/ui/ModalHeader'
 
 interface ProductFormProps {
     product: Product | null
@@ -143,22 +144,7 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                     className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur z-10 sticky top-0">
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                {product ? t('productForm.editTitle') : t('productForm.newTitle')}
-                            </h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {product ? t('productForm.editSubtitle') : t('productForm.newSubtitle')}
-                            </p>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-xl transition-all"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
+                    <ModalHeader title={product ? t('productForm.editTitle') : t('productForm.newTitle')} onClose={onClose} className="sticky top-0 z-10" />
 
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">

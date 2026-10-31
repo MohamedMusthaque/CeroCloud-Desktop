@@ -9,8 +9,6 @@ export const productForm = {
     'productForm.systemError': 'Error de sistema',
     'productForm.editTitle': 'Editar Producto',
     'productForm.newTitle': 'Nuevo Producto',
-    'productForm.editSubtitle': 'Modifica los detalles del producto',
-    'productForm.newSubtitle': 'Agrega un nuevo ítem al inventario',
     'productForm.change': 'Cambiar',
     'productForm.remove': 'Eliminar',
     'productForm.name': 'Nombre del Producto',

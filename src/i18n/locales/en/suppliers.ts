@@ -34,8 +34,6 @@ export const suppliers: Record<keyof typeof es, string> = {
     'supForm.saveError': 'Error saving the supplier',
     'supForm.editTitle': 'Edit Supplier',
     'supForm.newTitle': 'New Supplier',
-    'supForm.editSubtitle': 'Update the supplier details',
-    'supForm.newSubtitle': 'Add a new supplier',
     'supForm.name': 'Supplier Name',
     'supForm.namePlaceholder': 'e.g. XYZ Distributors Inc.',
     'supForm.contact': 'Contact Name',

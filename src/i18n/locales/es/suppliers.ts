@@ -32,8 +32,6 @@ export const suppliers = {
     'supForm.saveError': 'Error al guardar el proveedor',
     'supForm.editTitle': 'Editar Proveedor',
     'supForm.newTitle': 'Nuevo Proveedor',
-    'supForm.editSubtitle': 'Modifica los datos del proveedor',
-    'supForm.newSubtitle': 'Agrega un nuevo proveedor',
     'supForm.name': 'Nombre del Proveedor',
     'supForm.namePlaceholder': 'Ej. Distribuidora XYZ S.A.',
     'supForm.contact': 'Nombre del Contacto',

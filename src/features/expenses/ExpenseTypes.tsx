@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, Edit2, Trash2, Shapes, X, Save, Loader2 } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Shapes, Save, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { ModalHeader } from '@/components/ui/ModalHeader'
 import { expenseTypeService } from '@/services/expenseService'
 import { formatCurrency } from '@/lib/utils'
 import type { ExpenseType } from '@/types/database'
@@ -217,14 +218,7 @@ export function ExpenseTypeForm({ isOpen, type, onClose, onSaved }: ExpenseTypeF
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
                     >
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                {type ? t('expTypeForm.editTitle') : t('expTypeForm.newTitle')}
-                            </h2>
-                            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-xl transition-all">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
+                        <ModalHeader title={type ? t('expTypeForm.editTitle') : t('expTypeForm.newTitle')} onClose={onClose} />
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>

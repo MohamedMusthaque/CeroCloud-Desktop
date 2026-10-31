@@ -11,8 +11,6 @@ export const productForm: Record<keyof typeof es, string> = {
     'productForm.systemError': 'System error',
     'productForm.editTitle': 'Edit Product',
     'productForm.newTitle': 'New Product',
-    'productForm.editSubtitle': 'Update the product details',
-    'productForm.newSubtitle': 'Add a new item to the inventory',
     'productForm.change': 'Change',
     'productForm.remove': 'Remove',
     'productForm.name': 'Product Name',
