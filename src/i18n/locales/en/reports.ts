@@ -72,6 +72,7 @@ export const reports: Record<keyof typeof es, string> = {
     'rep.allGood': 'All good!',
     'rep.noLowStock': 'No products are low on stock right now.',
     'rep.transactionHistory': 'Transaction History',
+    'rep.transactionPeriod': 'Transaction Period',
     'rep.searchPlaceholder': 'Search by ID, client...',
     'rep.recordsCount': '{count} records',
     'rep.col.dateId': 'Date / ID',

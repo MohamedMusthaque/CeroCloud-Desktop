@@ -708,7 +708,7 @@ export function Reports() {
                             <div className="px-6 py-3 border-b border-gray-100 dark:border-gray-700 flex flex-col lg:flex-row justify-between lg:items-center gap-3">
                                 <span className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                                     <Calendar className="w-4 h-4 text-indigo-500" />
-                                    {t('rep.export.period')}
+                                    {t('rep.transactionPeriod')}
                                 </span>
                                 <ReportPeriodFilter value={historyPeriod} onChange={setHistoryPeriod} />
                             </div>

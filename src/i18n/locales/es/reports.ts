@@ -70,6 +70,7 @@ export const reports = {
     'rep.allGood': '¡Todo en orden!',
     'rep.noLowStock': 'No hay productos con stock bajo en este momento.',
     'rep.transactionHistory': 'Historial de Transacciones',
+    'rep.transactionPeriod': 'Periodo de Transacciones',
     'rep.searchPlaceholder': 'Buscar por ID, cliente...',
     'rep.recordsCount': '{count} registros',
     'rep.col.dateId': 'Fecha / ID',
