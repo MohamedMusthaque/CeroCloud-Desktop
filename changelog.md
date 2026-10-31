@@ -475,7 +475,7 @@ El formato sigue de manera ligera el estándar de *Keep a Changelog* y utiliza *
 - Definición de arquitectura Electron (main / preload / renderer)
 - Documentación completa del sistema:
   - `README.md` profesional con badges y secciones completas
-  - `docs/ENUNCIADO_PROYECTO.md` - Visión y objetivos
+  - `docs/PROJECT_STATEMENT.md` - Visión y objetivos
   - `docs/ARCHITECTURE.md` - Arquitectura con diagramas Mermaid
   - `docs/TECH_STACK.md` - Detalles del stack tecnológico
   - `docs/GETTING_STARTED.md` - Guía de inicio rápido

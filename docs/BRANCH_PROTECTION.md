@@ -1,12 +1,12 @@
-# Configuración de Protección de Ramas en GitHub
+# GitHub Branch Protection Configuration
 
-Este archivo documenta la configuración recomendada para las ramas protegidas en GitHub.
+This file documents the recommended configuration for protected branches on GitHub.
 
-## 🛡️ Protección de Rama: `main`
+## 🛡️ Branch Protection: `main`
 
-**Ruta en GitHub:** Settings → Branches → Branch protection rules → Add rule
+**Path on GitHub:** Settings → Branches → Branch protection rules → Add rule
 
-### Configuración:
+### Configuration:
 
 **Branch name pattern:** `main`
 
@@ -14,11 +14,11 @@ Este archivo documenta la configuración recomendada para las ramas protegidas e
 - ✅ **Require a pull request before merging**
   - ✅ Require approvals: **1**
   - ✅ Dismiss stale pull request approvals when new commits are pushed
-  - ✅ Require review from Code Owners (opcional)
+  - ✅ Require review from Code Owners (optional)
   
 - ✅ **Require status checks to pass before merging**
   - ✅ Require branches to be up to date before merging
-  - **Status checks encontrados:**
+  - **Status checks found:**
     - `build (windows-latest)`
     - `build (ubuntu-latest)`
     - `lint`
@@ -26,15 +26,15 @@ Este archivo documenta la configuración recomendada para las ramas protegidas e
   
 - ✅ **Require conversation resolution before merging**
 
-- ✅ **Require signed commits** (opcional, pero recomendado)
+- ✅ **Require signed commits** (optional, but recommended)
 
-- ✅ **Require linear history** (opcional)
+- ✅ **Require linear history** (optional)
 
 - ✅ **Do not allow bypassing the above settings**
 
 #### Rules applied to everyone including administrators:
 - ✅ **Restrict who can push to matching branches**
-  - Solo permitir pushes desde: `release/*` y `hotfix/*` branches
+  - Only allow pushes from: `release/*` and `hotfix/*` branches
   
 - ✅ **Block force pushes**
 
@@ -42,18 +42,18 @@ Este archivo documenta la configuración recomendada para las ramas protegidas e
 
 ---
 
-## 🛡️ Protección de Rama: `develop`
+## 🛡️ Branch Protection: `develop`
 
 **Branch name pattern:** `develop`
 
 #### Protect matching branches:
 - ✅ **Require a pull request before merging**
-  - Require approvals: **1** (puede ser 0 para equipos pequeños)
+  - Require approvals: **1** (can be 0 for small teams)
   - ✅ Dismiss stale pull request approvals when new commits are pushed
   
 - ✅ **Require status checks to pass before merging**
   - ✅ Require branches to be up to date before merging
-  - **Status checks encontrados:**
+  - **Status checks found:**
     - `build-dev (windows-latest)`
     - `build-dev (ubuntu-latest)`
     - `lint`
@@ -64,15 +64,15 @@ Este archivo documenta la configuración recomendada para las ramas protegidas e
 #### Rules applied to everyone including administrators:
 - ✅ **Block force pushes**
 
-- ⚠️ **Block deletions** (recomendado)
+- ⚠️ **Block deletions** (recommended)
 
 ---
 
-## 🔧 Configuración de CI/CD
+## 🔧 CI/CD Configuration
 
 ### GitHub Actions Settings
 
-**Ruta:** Settings → Actions → General
+**Path:** Settings → Actions → General
 
 #### Workflow permissions:
 - ✅ **Read and write permissions**
@@ -83,25 +83,25 @@ Este archivo documenta la configuración recomendada para las ramas protegidas e
 
 ---
 
-## 🔐 Secrets y Variables
+## 🔐 Secrets and Variables
 
-**Ruta:** Settings → Secrets and variables → Actions
+**Path:** Settings → Secrets and variables → Actions
 
-### Secrets requeridos:
-- `GITHUB_TOKEN` (generado automáticamente)
+### Required secrets:
+- `GITHUB_TOKEN` (generated automatically)
 
-### Variables opcionales:
-- `NODE_VERSION`: `22` (o la versión que uses)
+### Optional variables:
+- `NODE_VERSION`: `22` (or whichever version you use)
 
 ---
 
-## 📋 Rulesets (Alternativa Moderna)
+## 📋 Rulesets (Modern Alternative)
 
-GitHub ahora ofrece "Rulesets" como alternativa a Branch Protection Rules.
+GitHub now offers "Rulesets" as an alternative to Branch Protection Rules.
 
-**Ruta:** Settings → Rules → Rulesets → New ruleset
+**Path:** Settings → Rules → Rulesets → New ruleset
 
-### Ruleset para `main` y `develop`:
+### Ruleset for `main` and `develop`:
 
 **Ruleset name:** `Production Branches`
 
@@ -119,18 +119,18 @@ GitHub ahora ofrece "Rulesets" como alternativa a Branch Protection Rules.
 - ✅ Block force pushes
 
 **Bypass list:**
-- Ninguno (aplicar a todos incluyendo admins)
+- None (apply to everyone, including admins)
 
 ---
 
-## 🚀 Aplicar Configuración
+## 🚀 Applying the Configuration
 
-### Opción 1: Interfaz Web
-Sigue las instrucciones arriba directamente en GitHub.
+### Option 1: Web Interface
+Follow the instructions above directly on GitHub.
 
-### Opción 2: GitHub CLI
+### Option 2: GitHub CLI
 ```bash
-# Proteger rama main
+# Protect the main branch
 gh api repos/CeroCloud/CeroCloud-Desktop/branches/main/protection \
   --method PUT \
   -H "Accept: application/vnd.github+json" \
@@ -140,7 +140,7 @@ gh api repos/CeroCloud/CeroCloud-Desktop/branches/main/protection \
   -f restrictions=null
 ```
 
-### Opción 3: Terraform (IaC)
+### Option 3: Terraform (IaC)
 ```hcl
 resource "github_branch_protection" "main" {
   repository_id = "CeroCloud-Desktop"
@@ -170,22 +170,22 @@ resource "github_branch_protection" "main" {
 
 ---
 
-## ✅ Checklist de Configuración
+## ✅ Configuration Checklist
 
-Antes de comenzar el desarrollo en equipo:
+Before starting team development:
 
-- [ ] Rama `main` protegida con las reglas anteriores
-- [ ] Rama `develop` protegida con las reglas anteriores
-- [ ] CI/CD workflows activos y funcionando
-- [ ] Permisos de GitHub Actions configurados
-- [ ] CODEOWNERS archivo creado (opcional)
-- [ ] Branch ruleset aplicado (si usas rulesets)
-- [ ] Documentación de Gitflow compartida con el equipo
-- [ ] Scripts helper disponibles en `.github/`
+- [ ] `main` branch protected with the rules above
+- [ ] `develop` branch protected with the rules above
+- [ ] CI/CD workflows active and working
+- [ ] GitHub Actions permissions configured
+- [ ] CODEOWNERS file created (optional)
+- [ ] Branch ruleset applied (if you use rulesets)
+- [ ] Gitflow documentation shared with the team
+- [ ] Helper scripts available in `.github/`
 
 ---
 
-## 📚 Referencias
+## 📚 References
 
 - [GitHub Branch Protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
 - [GitHub Rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets)
@@ -193,4 +193,4 @@ Antes de comenzar el desarrollo en equipo:
 
 ---
 
-*Última actualización: 8 de Enero de 2026*
+*Last updated: October 31, 2026*

@@ -1,284 +1,284 @@
-# Stack Tecnológico – NexoraCloud
+# Technology Stack – NexoraCloud
 
-Este documento detalla las tecnologías, herramientas y bibliotecas utilizadas en el proyecto, junto con la justificación de cada elección.
-
----
-
-## 🎯 Visión General
-
-**NexoraCloud** utiliza un stack moderno y robusto diseñado para crear aplicaciones de escritorio multiplataforma con las siguientes características:
-
-- ✅ **100% Local** - Sin dependencia de servidores
-- ✅ **Multiplataforma** - Windows, macOS, Linux
-- ✅ **Gratuito** - Sin costos de infraestructura
-- ✅ **Moderno** - UI/UX contemporáneo
-- ✅ **Seguro** - Datos locales encriptables
+This document details the technologies, tools and libraries used in the project, along with the reasoning behind each choice.
 
 ---
 
-## 🏗️ Arquitectura Core
+## 🎯 Overview
+
+**NexoraCloud** uses a modern, robust stack designed to build cross-platform desktop applications with the following traits:
+
+- ✅ **100% Local** - No dependency on servers
+- ✅ **Cross-platform** - Windows, macOS, Linux
+- ✅ **Free** - No infrastructure costs
+- ✅ **Modern** - Contemporary UI/UX
+- ✅ **Secure** - Local data that can be encrypted
+
+---
+
+## 🏗️ Core Architecture
 
 ### Electron.js
-**Versión:** ^28.0.0 (target)  
-**Rol:** Runtime de aplicación de escritorio  
-**¿Por qué?**
-- Permite crear aplicaciones de escritorio con tecnologías web
-- Amplia comunidad y ecosistema maduro
-- Soporte multiplataforma nativo
-- Acceso completo al sistema operativo y filesystem
-- Actualización automática integrada
+**Version:** ^28.0.0 (target)  
+**Role:** Desktop application runtime  
+**Why?**
+- Builds desktop applications with web technologies
+- Large community and mature ecosystem
+- Native cross-platform support
+- Full access to the operating system and filesystem
+- Built-in automatic updates
 
-**Documentación:** https://www.electronjs.org/
+**Documentation:** https://www.electronjs.org/
 
 ---
 
-## 🚀 Desarrollo y Build
+## 🚀 Development and Build
 
 ### Vite
-**Versión:** ^5.0.0 (target)  
-**Rol:** Bundler y dev server  
-**¿Por qué?**
-- Hot Module Replacement (HMR) extremadamente rápido
-- Build optimizado con Rollup
-- Configuración simple comparado con Webpack
-- Soporte nativo de ESM
-- Ideal para desarrollo de Electron
+**Version:** ^5.0.0 (target)  
+**Role:** Bundler and dev server  
+**Why?**
+- Extremely fast Hot Module Replacement (HMR)
+- Optimized builds with Rollup
+- Simple configuration compared to Webpack
+- Native ESM support
+- Ideal for Electron development
 
-**Documentación:** https://vitejs.dev/
+**Documentation:** https://vitejs.dev/
 
 ### electron-builder
-**Rol:** Empaquetado y distribución  
-**¿Por qué?**
-- Generación de instaladores para Windows, Mac, Linux
-- Configuración simplificada
-- Soporte para auto-actualización
-- Firma de código integrada
+**Role:** Packaging and distribution  
+**Why?**
+- Generates installers for Windows, Mac and Linux
+- Simplified configuration
+- Support for automatic updates
+- Built-in code signing
 
-**Documentación:** https://www.electron.build/
+**Documentation:** https://www.electron.build/
 
 ---
 
 ## ⚛️ Frontend
 
 ### React.js
-**Versión:** ^18.3.0 (target)  
-**Rol:** Biblioteca de interfaz de usuario  
-**¿Por qué?**
-- Component-based architecture escalable
-- Virtual DOM para rendimiento óptimo
-- Hooks modernos para gestión de estado
-- Ecosistema maduro y amplia comunidad
-- Excelente integración con TypeScript
+**Version:** ^18.3.0 (target)  
+**Role:** User interface library  
+**Why?**
+- Scalable component-based architecture
+- Virtual DOM for optimal performance
+- Modern hooks for state management
+- Mature ecosystem and large community
+- Excellent TypeScript integration
 
-**Documentación:** https://react.dev/
+**Documentation:** https://react.dev/
 
 ### TypeScript
-**Versión:** ^5.3.0 (target)  
-**Rol:** Lenguaje de programación tipado  
-**¿Por qué?**
-- Type safety en tiempo de desarrollo
-- Mejor autocompletado en IDEs
-- Refactorización más segura
-- Documentación implícita en el código
-- Reducción de bugs en producción
+**Version:** ^5.3.0 (target)  
+**Role:** Typed programming language  
+**Why?**
+- Type safety at development time
+- Better autocompletion in IDEs
+- Safer refactoring
+- Implicit documentation in the code
+- Fewer bugs in production
 
-**Documentación:** https://www.typescriptlang.org/
+**Documentation:** https://www.typescriptlang.org/
 
 ---
 
-## 🎨 UI y Estilos
+## 🎨 UI and Styles
 
 ### Tailwind CSS
-**Versión:** ^3.4.0 (target)  
-**Rol:** Framework de utilidades CSS  
-**¿Por qué?**
-- Desarrollo rápido con clases utilitarias
-- Diseño responsive out-of-the-box
-- Bundle size optimizado (PurgeCSS integrado)
-- Consistencia visual
-- Altamente personalizable
+**Version:** ^3.4.0 (target)  
+**Role:** Utility CSS framework  
+**Why?**
+- Fast development with utility classes
+- Responsive design out of the box
+- Optimized bundle size (built-in PurgeCSS)
+- Visual consistency
+- Highly customizable
 
-**Documentación:** https://tailwindcss.com/
+**Documentation:** https://tailwindcss.com/
 
 ### Shadcn/UI
-**Rol:** Biblioteca de componentes UI  
-**¿Por qué?**
-- Componentes accesibles (WCAG)
-- Basados en Radix UI primitives
-- Totalmente customizables
-- No es una dependencia, son componentes copiables
-- Diseño moderno y profesional
+**Role:** UI component library  
+**Why?**
+- Accessible components (WCAG)
+- Based on Radix UI primitives
+- Fully customizable
+- Not a dependency: the components are copied into the project
+- Modern, professional design
 
-**Documentación:** https://ui.shadcn.com/
+**Documentation:** https://ui.shadcn.com/
 
 ### Lucide Icons
-**Rol:** Iconografía  
-**¿Por qué?**
-- Iconos modernos y consistentes
-- Tree-shakeable (solo importas lo que usas)
-- Soporte para React
-- Open source y actualizado frecuentemente
+**Role:** Iconography  
+**Why?**
+- Modern, consistent icons
+- Tree-shakeable (you only import what you use)
+- React support
+- Open source and frequently updated
 
-**Documentación:** https://lucide.dev/
+**Documentation:** https://lucide.dev/
 
 ---
 
-## 💾 Base de Datos
+## 💾 Database
 
 ### SQLite
-**Rol:** Motor de base de datos  
-**¿Por qué?**
-- Serverless - archivo único `.db`
-- Zero-configuration
+**Role:** Database engine  
+**Why?**
+- Serverless - a single `.db` file
+- Zero configuration
 - ACID compliant
-- Rápido para operaciones locales
-- Ampliamente probado y estable
+- Fast for local operations
+- Widely tested and stable
 
-**Documentación:** https://www.sqlite.org/
+**Documentation:** https://www.sqlite.org/
 
 ### better-sqlite3
-**Versión:** ^9.0.0 (target)  
-**Rol:** Driver de SQLite para Node.js  
-**¿Por qué?**
-- API sincrónica simple
-- Mejor rendimiento que sqlite3 (async)
-- Ideal para Electron Main Process
-- Prepared statements integrados
+**Version:** ^9.0.0 (target)  
+**Role:** SQLite driver for Node.js  
+**Why?**
+- Simple synchronous API
+- Better performance than sqlite3 (async)
+- Ideal for the Electron Main Process
+- Built-in prepared statements
 - Transaction support
 
-**Documentación:** https://github.com/WiseLibs/better-sqlite3
+**Documentation:** https://github.com/WiseLibs/better-sqlite3
 
 ---
 
-## 🔧 Herramientas de Desarrollo
+## 🔧 Development Tools
 
 ### ESLint
-**Rol:** Linter de código  
-**¿Por qué?**
-- Detecta errores comunes
-- Enforza estándares de código
-- Integración con TypeScript
-- Configuración extensible
+**Role:** Code linter  
+**Why?**
+- Detects common errors
+- Enforces code standards
+- TypeScript integration
+- Extensible configuration
 
 ### Prettier
-**Rol:** Formateador de código  
-**¿Por qué?**
-- Formato consistente automático
-- Ahorra tiempo en code reviews
-- Integración con editores
+**Role:** Code formatter  
+**Why?**
+- Consistent automatic formatting
+- Saves time in code reviews
+- Editor integration
 
 ---
 
-## 📦 Gestión de Paquetes
+## 📦 Package Management
 
 ### npm
-**Versión mínima:** 10.0.0  
-**¿Por qué?**
-- Viene con Node.js
-- Lockfile (`package-lock.json`) garantiza instalaciones consistentes
-- Scripts integrados para desarrollo y build
+**Minimum version:** 10.0.0  
+**Why?**
+- Ships with Node.js
+- The lockfile (`package-lock.json`) guarantees consistent installs
+- Built-in scripts for development and builds
 
-**Alternativa válida:** pnpm (más rápido y eficiente en espacio)
+**Valid alternative:** pnpm (faster and more space-efficient)
 
 ---
 
 ## 🖥️ Runtime
 
 ### Node.js
-**Versión mínima:** 20.0.0 (LTS)  
-**Rol:** Entorno de ejecución  
-**¿Por qué?**
-- Requerido por Electron
+**Minimum version:** 20.0.0 (LTS)  
+**Role:** Runtime environment  
+**Why?**
+- Required by Electron
 - ECMAScript modules support
-- Performance mejorado
+- Improved performance
 - Long-term support (LTS)
 
-**Documentación:** https://nodejs.org/
+**Documentation:** https://nodejs.org/
 
 ---
 
 ---
 
-## 📊 Librerías y Utilidades (Actualizado V1.0.0)
+## 📊 Libraries and Utilities (Updated V1.0.0)
 
-### UI & UX Avanzado
+### Advanced UI & UX
 #### Framer Motion
-**Rol:** Motor de animaciones  
-**¿Por qué?**
-- Animaciones declarativas y gestuales (drag & drop).
-- Efectos de salida (`AnimatePresence`) claves para los wizards.
-- Rendimiento optimizado (GPU acceleration).
+**Role:** Animation engine  
+**Why?**
+- Declarative and gesture-based animations (drag & drop).
+- Exit effects (`AnimatePresence`), key for the wizards.
+- Optimized performance (GPU acceleration).
 
 #### Sonner
-**Rol:** Sistema de notificaciones  
-**¿Por qué?**
-- Diseño moderno y minimalista "out of the box".
-- Apilable y personalizable.
-- API imperativa simple (`toast.success()`, `toast.promise()`).
+**Role:** Notification system  
+**Why?**
+- Modern, minimalist design out of the box.
+- Stackable and customizable.
+- Simple imperative API (`toast.success()`, `toast.promise()`).
 
-### Gestión de Datos y Archivos
+### Data and File Management
 #### JSZip
-**Rol:** Compresión ZIP en cliente  
-**¿Por qué?**
-- Generación de archivos `.cerobak` contenedores.
-- Soporte de cifrado y compresión eficiente.
-- Funciona 100% en navegador/renderer sin procesos extraños.
+**Role:** Client-side ZIP compression  
+**Why?**
+- Generates the `.cerobak` container files.
+- Encryption support and efficient compression.
+- Works 100% in the browser/renderer without extra processes.
 
 #### FileSaver.js
-**Rol:** Guardado de archivos
-**¿Por qué?**
-- Abstracción cross-browser de `Blob` y `<a> download`.
-- Garantiza descargas correctas de archivos grandes.
+**Role:** Saving files
+**Why?**
+- Cross-browser abstraction over `Blob` and `<a> download`.
+- Ensures large files download correctly.
 
-### Visualización
+### Visualization
 #### Recharts
-**Rol:** Gráficas estadísticas  
-**Para:** Dashboard principal (Ventas, Productos).
+**Role:** Statistical charts  
+**For:** The main dashboard (Sales, Products).
 
-### Node.js Crypto (Nativo)
-**Rol:** Cifrado seguro
-**Para:** Protección AES-256 de copias de seguridad.
-
----
+### Node.js Crypto (Native)
+**Role:** Secure encryption
+**For:** AES-256 protection of backups.
 
 ---
 
-## 🔒 Seguridad
+---
 
-### Configuración de Electron
+## 🔒 Security
+
+### Electron Configuration
 
 ```typescript
-// Configuración de seguridad en BrowserWindow
+// Security configuration in BrowserWindow
 {
   webPreferences: {
-    contextIsolation: true,      // ✅ Aísla contextos
-    nodeIntegration: false,      // ✅ Sin Node.js en renderer
-    sandbox: true,               // ✅ Sandbox habilitado
+    contextIsolation: true,      // ✅ Isolates contexts
+    nodeIntegration: false,      // ✅ No Node.js in the renderer
+    sandbox: true,               // ✅ Sandbox enabled
     preload: path.join(__dirname, 'preload.js')
   }
 }
 ```
 
 ### contextBridge API
-- Exposición controlada de funcionalidades
-- Validación de inputs antes de ejecutar
-- Sin acceso directo a Node.js desde UI
+- Controlled exposure of functionality
+- Inputs validated before running
+- No direct Node.js access from the UI
 
 ---
 
-## 📈 Escalabilidad
+## 📈 Scalability
 
-El stack elegido permite:
+The chosen stack allows:
 
-1. **Modularidad** - Agregar features sin reestructurar
-2. **Performance** - SQLite + React optimizado
-3. **Mantenibilidad** - TypeScript + ESLint
-4. **Extensibilidad** - Plugins futuros
-5. **Cross-platform** - Un código, múltiples OS
+1. **Modularity** - Add features without restructuring
+2. **Performance** - Optimized SQLite + React
+3. **Maintainability** - TypeScript + ESLint
+4. **Extensibility** - Future plugins
+5. **Cross-platform** - One codebase, multiple OSes
 
 ---
 
-## 🎓 Recursos de Aprendizaje
+## 🎓 Learning Resources
 
 - **Electron + React:** https://www.electronjs.org/docs/latest/tutorial/tutorial-prerequisites
 - **TypeScript Handbook:** https://www.typescriptlang.org/docs/handbook/intro.html
@@ -287,19 +287,19 @@ El stack elegido permite:
 
 ---
 
-## 📝 Notas Importantes
+## 📝 Important Notes
 
-- **No usar dependencias pesadas** - Mantener la aplicación ligera
-- **Preferir vanilla JS antes de librerías** - Solo agregar si es necesario
-- **Testing futuro** - Vitest o Jest cuando se implemente
-- **Actualizaciones** - Mantener dependencias actualizadas por seguridad
+- **Avoid heavy dependencies** - Keep the application lightweight
+- **Prefer vanilla JS over libraries** - Only add one if it is needed
+- **Future testing** - Vitest or Jest once it is implemented
+- **Updates** - Keep dependencies up to date for security
 
 ---
 
-Este stack ha sido cuidadosamente seleccionado para garantizar:
-- ✅ Desarrollo ágil y moderno
-- ✅ Performance óptimo
-- ✅ Mantenibilidad a largo plazo
-- ✅ Escalabilidad futura
+This stack was carefully chosen to guarantee:
+- ✅ Agile, modern development
+- ✅ Optimal performance
+- ✅ Long-term maintainability
+- ✅ Future scalability
 
-**Última actualización:** Enero 2026
+**Last updated:** January 2026

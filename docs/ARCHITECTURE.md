@@ -1,25 +1,25 @@
-# Arquitectura y Estructura del Proyecto
+# Project Architecture and Structure
 
-**Proyecto:** NexoraCloud  
+**Project:** NexoraCloud  
 **Stack:** Electron + Vite + React + TypeScript + SQLite  
-**Objetivo:** Base sólida, escalable y mantenible para una aplicación de escritorio 100% local.
+**Goal:** A solid, scalable and maintainable foundation for a 100% local desktop application.
 
 ---
 
-## 1. Arquitectura General
+## 1. General Architecture
 
-El proyecto sigue la arquitectura estándar de **Electron** separando responsabilidades en tres capas:
+The project follows the standard **Electron** architecture, splitting responsibilities into three layers:
 
-- **Main Process**: Control del ciclo de vida de la app, ventanas, filesystem y base de datos.
-- **Preload**: Capa segura de comunicación entre Electron y el frontend.
-- **Renderer**: Interfaz de usuario (React).
+- **Main Process**: Controls the app lifecycle, windows, filesystem and database.
+- **Preload**: Secure communication layer between Electron and the frontend.
+- **Renderer**: User interface (React).
 
-Esta separación garantiza **seguridad**, **escalabilidad** y **mantenibilidad**.
+This separation guarantees **security**, **scalability** and **maintainability**.
 
 ```mermaid
 graph TB
-    A[Main Process<br/>Node.js / Electron] -->|IPC Seguro| B[Preload<br/>contextBridge]
-    B -->|API Controlada| C[Renderer<br/>React + Vite]
+    A[Main Process<br/>Node.js / Electron] -->|Secure IPC| B[Preload<br/>contextBridge]
+    B -->|Controlled API| C[Renderer<br/>React + Vite]
     
     style A fill:#2563eb,stroke:#1e40af,stroke-width:2px,color:#fff
     style B fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
@@ -28,7 +28,7 @@ graph TB
 
 ---
 
-## 2. Estructura de Carpetas
+## 2. Folder Structure
 
 ```mermaid
 graph LR
@@ -73,28 +73,28 @@ graph LR
 
 ---
 
-## 3. Responsabilidades por Capa
+## 3. Responsibilities by Layer
 
 ```mermaid
 graph TD
     subgraph Main["Main Process"]
-        M1[Gestión de Ventanas]
-        M2[Inicialización SQLite]
-        M3[Acceso al Filesystem]
-        M4[Lógica Crítica del Sistema]
+        M1[Window Management]
+        M2[SQLite Initialization]
+        M3[Filesystem Access]
+        M4[Critical System Logic]
     end
     
     subgraph Preload["Preload"]
-        P1[Exposición de API Segura]
+        P1[Secure API Exposure]
         P2[contextBridge]
-        P3[Validación de Operaciones]
+        P3[Operation Validation]
     end
     
     subgraph Renderer["Renderer"]
-        R1[Interfaz de Usuario]
-        R2[Gestión de Estados]
-        R3[Navegación]
-        R4[Consumo de APIs]
+        R1[User Interface]
+        R2[State Management]
+        R3[Navigation]
+        R4[API Consumption]
     end
     
     Main -->|IPC| Preload
@@ -106,28 +106,28 @@ graph TD
 ```
 
 ### Main Process (electron/main)
-- Crear y gestionar ventanas.
-- Inicializar SQLite.
-- Acceso al filesystem (imágenes, backups).
-- Lógica crítica del sistema.
+- Create and manage windows.
+- Initialize SQLite.
+- Filesystem access (images, backups).
+- Critical system logic.
 
 ### Preload (electron/preload)
-- Exponer funciones seguras mediante `contextBridge`.
-- Evitar acceso directo a Node.js desde el frontend.
+- Expose safe functions through `contextBridge`.
+- Prevent direct Node.js access from the frontend.
 
-Ejemplo de responsabilidades:
+Example responsibilities:
 - `getProducts()`
 - `createSale()`
 - `backupDatabase()`
 
 ### Renderer (src)
-- Renderizado de la interfaz.
-- Manejo de estados y navegación.
-- Consumo de APIs expuestas por preload.
+- Render the interface.
+- Handle state and navigation.
+- Consume the APIs exposed by preload.
 
 ---
 
-## 4. Comunicación IPC
+## 4. IPC Communication
 
 ```mermaid
 sequenceDiagram
@@ -136,42 +136,42 @@ sequenceDiagram
     participant M as Main Process
     participant DB as SQLite
     
-    R->>P: Solicita acción (ej: getProducts)
-    P->>P: Valida datos
-    P->>M: Envía solicitud por IPC
-    M->>DB: Ejecuta consulta
-    DB-->>M: Retorna datos
-    M-->>P: Responde con resultado
-    P-->>R: Devuelve datos al frontend
+    R->>P: Requests an action (e.g. getProducts)
+    P->>P: Validates data
+    P->>M: Sends the request over IPC
+    M->>DB: Runs the query
+    DB-->>M: Returns data
+    M-->>P: Responds with the result
+    P-->>R: Returns data to the frontend
     
-    Note over R,DB: Comunicación unidireccional y tipada
+    Note over R,DB: One-way, typed communication
 ```
 
-- Uso exclusivo de canales definidos.
-- Validación de datos antes de ejecutar operaciones.
-- Comunicación unidireccional y tipada.
+- Only defined channels are used.
+- Data is validated before operations run.
+- Communication is one-way and typed.
 
 ---
 
-## 5. Sistema de Respaldo y Protección (V1.0.0)
+## 5. Backup and Protection System (V1.0.0)
 
-El sistema de backups no es solo una funcionalidad, es un subsistema crítico con su propia arquitectura de flujo de datos.
+The backup system is not just a feature; it is a critical subsystem with its own data-flow architecture.
 
 ```mermaid
 graph TD
-    User[Usuario] -->|Solicita Backup| Wizard[BackupWizard UI]
-    Wizard -->|Selecciona Datos| Service[ZipBackupService]
+    User[User] -->|Requests Backup| Wizard[BackupWizard UI]
+    Wizard -->|Selects Data| Service[ZipBackupService]
     
     subgraph Core Logic
-        Service -->|1. Recolecta JSONs| Data[Datos en Memoria]
-        Service -->|2. Aplica AES-256 (Opcional)| Crypto[SecureEncryptionService]
-        Crypto -->|3. Genera ZIP| JSZip[JSZip Engine]
+        Service -->|1. Collects JSONs| Data[In-Memory Data]
+        Service -->|2. Applies AES-256 (Optional)| Crypto[SecureEncryptionService]
+        Crypto -->|3. Builds ZIP| JSZip[JSZip Engine]
     end
     
-    JSZip -->|4. Blob .cerobak| FileSaver
-    FileSaver -->|Descarga Local| HDD[Disco Local]
+    JSZip -->|4. .cerobak Blob| FileSaver
+    FileSaver -->|Local Download| HDD[Local Disk]
     
-    HDD -.->|Subida Manual| Cloud[Google Drive / Dropbox]
+    HDD -.->|Manual Upload| Cloud[Google Drive / Dropbox]
     
     style User fill:#1e293b,color:#fff
     style Wizard fill:#059669,color:#fff
@@ -179,26 +179,26 @@ graph TD
     style Crypto fill:#dc2626,color:#fff
 ```
 
-### Componentes Clave
-1.  **BackupWizard/RestoreWizard**: Controladores de UI que gestionan el estado del proceso y las animaciones.
-2.  **ZipBackupService**: Orquestador que coordina la recolección de datos, compresión y generación de archivos.
-3.  **SecureEncryptionService**: Módulo aislado encargado exclusivamente de la criptografía (PBKDF2 + AES-GCM).
+### Key Components
+1.  **BackupWizard/RestoreWizard**: UI controllers that manage the process state and animations.
+2.  **ZipBackupService**: Orchestrator that coordinates data collection, compression and file generation.
+3.  **SecureEncryptionService**: Isolated module dedicated solely to cryptography (PBKDF2 + AES-GCM).
 
 ---
 
-## 6. Base de Datos
+## 6. Database
 
 ```mermaid
 graph LR
-    A[Aplicación] --> B[better-sqlite3]
+    A[Application] --> B[better-sqlite3]
     B --> C[nexoracloud.db]
-    C --> D[Tablas]
-    C --> E[Backups Automáticos]
+    C --> D[Tables]
+    C --> E[Automatic Backups]
     
-    D --> D1[productos]
-    D --> D2[ventas]
-    D --> D3[clientes]
-    D --> D4[usuarios]
+    D --> D1[products]
+    D --> D2[sales]
+    D --> D3[clients]
+    D --> D4[users]
     
     style A fill:#2563eb,stroke:#1e40af,stroke-width:2px,color:#fff
     style B fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
@@ -206,26 +206,26 @@ graph LR
     style E fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
 ```
 
-- SQLite como motor local.
-- Archivo único `.db`.
-- Acceso sincronizado mediante `better-sqlite3`.
-- Backups automáticos configurables por el usuario.
+- SQLite as the local engine.
+- A single `.db` file.
+- Synchronous access through `better-sqlite3`.
+- Automatic backups configurable by the user.
 
 ---
 
-## 6. Seguridad
+## 6. Security
 
 ```mermaid
 graph TD
-    A[Configuración de Seguridad] --> B[contextIsolation: true]
+    A[Security Configuration] --> B[contextIsolation: true]
     A --> C[nodeIntegration: false]
-    A --> D[API Limitada en Preload]
-    A --> E[Acceso Controlado al Filesystem]
+    A --> D[Limited API in Preload]
+    A --> E[Controlled Filesystem Access]
     
-    B --> F[Aislamiento de Contextos]
-    C --> G[Sin Acceso Directo a Node.js]
-    D --> H[Solo Funciones Expuestas]
-    E --> I[Validación de Rutas]
+    B --> F[Context Isolation]
+    C --> G[No Direct Node.js Access]
+    D --> H[Exposed Functions Only]
+    E --> I[Path Validation]
     
     style A fill:#1e293b,stroke:#0f172a,stroke-width:3px,color:#fff
     style B fill:#2563eb,stroke:#1e40af,stroke-width:2px,color:#fff
@@ -236,30 +236,30 @@ graph TD
 
 ---
 
-## 7. Escalabilidad
+## 7. Scalability
 
 ```mermaid
 graph TD
-    A[Arquitectura Base] --> B[Módulos Independientes]
-    A --> C[Sistema de Roles]
-    A --> D[Multi-empresa]
-    A --> E[Plugins y Extensiones]
+    A[Base Architecture] --> B[Independent Modules]
+    A --> C[Role System]
+    A --> D[Multi-company]
+    A --> E[Plugins and Extensions]
     
     B --> B1[Dashboard]
-    B --> B2[Inventario]
-    B --> B3[Ventas]
-    B --> B4[Reportes]
+    B --> B2[Inventory]
+    B --> B3[Sales]
+    B --> B4[Reports]
     
-    C --> C1[Administrador]
-    C --> C2[Vendedor]
-    C --> C3[Almacén]
+    C --> C1[Administrator]
+    C --> C2[Salesperson]
+    C --> C3[Warehouse]
     
-    D --> D1[Múltiples Bases de Datos]
-    D --> D2[Configuración por Empresa]
+    D --> D1[Multiple Databases]
+    D --> D2[Per-Company Configuration]
     
-    E --> E1[Sistema de Impresión]
-    E --> E2[Integraciones Externas]
-    E --> E3[Módulos Personalizados]
+    E --> E1[Printing System]
+    E --> E2[External Integrations]
+    E --> E3[Custom Modules]
     
     style A fill:#1e293b,stroke:#0f172a,stroke-width:3px,color:#fff
     style B fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
@@ -268,12 +268,12 @@ graph TD
     style E fill:#2563eb,stroke:#1e40af,stroke-width:2px,color:#fff
 ```
 
-La arquitectura permite:
-- Agregar módulos sin afectar el core.
-- Incorporar roles de usuario.
-- Soportar múltiples empresas.
-- Integrar impresión o plugins futuros.
+The architecture makes it possible to:
+- Add modules without affecting the core.
+- Introduce user roles.
+- Support multiple companies.
+- Integrate printing or future plugins.
 
 ---
 
-Este documento define la base estructural del proyecto y sirve como referencia para el desarrollo continuo de **NexoraCloud**.
+This document defines the structural foundation of the project and serves as a reference for the ongoing development of **NexoraCloud**.

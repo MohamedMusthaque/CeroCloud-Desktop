@@ -1,216 +1,216 @@
-# Guía de Inicio Rápido
+# Quick Start Guide
 
-Esta guía te ayudará a configurar el entorno de desarrollo y comenzar a trabajar en **NexoraCloud**.
+This guide will help you set up the development environment and start working on **NexoraCloud**.
 
 ---
 
-## 📋 Prerrequisitos
+## 📋 Prerequisites
 
-Antes de comenzar, asegúrate de tener instalado:
+Before you begin, make sure you have installed:
 
-### Requerimientos Obligatorios
+### Required
 
-- **Node.js** v20.0.0 o superior (LTS recomendado)
-- **npm** v10.0.0 o superior (incluido con Node.js)
+- **Node.js** v20.0.0 or later (LTS recommended)
+- **npm** v10.0.0 or later (included with Node.js)
 
-### Verificar Instalación
+### Check the Installation
 
 ```bash
-node --version    # Debe mostrar v20.x.x o superior
-npm --version     # Debe mostrar 10.x.x o superior
+node --version    # Should show v20.x.x or later
+npm --version     # Should show 10.x.x or later
 ```
 
-### Herramientas Opcionales (Recomendadas)
+### Optional Tools (Recommended)
 
-- **Git** - Control de versiones
-- **VS Code** - Editor de código (con extensiones recomendadas)
+- **Git** - Version control
+- **VS Code** - Code editor (with the recommended extensions)
 
 ---
 
-## 🚀 Instalación del Proyecto
+## 🚀 Installing the Project
 
-### 1. Clonar el Repositorio
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/CeroCloud/CeroCloud-Desktop.git
 cd NexoraCloud
 ```
 
-O descarga el ZIP y descomprímelo.
+Or download the ZIP and extract it.
 
-### 2. Instalar Dependencias
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-Este comando instalará todas las dependencias necesarias:
+This command installs every required dependency:
 - Electron
-- React y React DOM
+- React and React DOM
 - Vite
 - TypeScript
 - Tailwind CSS
 - Shadcn/UI components
 - better-sqlite3
-- Y todas las herramientas de desarrollo
+- And all the development tools
 
-**Tiempo estimado:** 2-5 minutos (dependiendo de tu conexión).
+**Estimated time:** 2-5 minutes (depending on your connection).
 
 ---
 
-## 🏗️ Estructura del Proyecto
+## 🏗️ Project Structure
 
-Una vez instalado, verás esta estructura:
+Once installed, you will see this structure:
 
 ```
 NexoraCloud/
-├── electron/                # Código de Electron (Main Process)
-│   ├── main/               # Lógica principal
+├── electron/                # Electron code (Main Process)
+│   ├── main/               # Main logic
 │   ├── preload/            # Preload scripts
-│   └── assets/             # Iconos de la app
+│   └── assets/             # App icons
 ├── src/                    # Frontend (React)
-│   ├── app/                # Root y configuración
-│   ├── components/         # Componentes UI
-│   ├── features/           # Módulos del sistema
-│   ├── hooks/              # Hooks personalizados
-│   ├── services/           # Servicios IPC
-│   ├── styles/             # Estilos globales
-│   └── types/              # Tipos TypeScript
-├── database/               # Base de datos local
-│   └── backups/            # Backups automáticos
-├── public/                 # Assets públicos
-├── docs/                   # Documentación
-└── package.json            # Configuración del proyecto
+│   ├── app/                # Root and configuration
+│   ├── components/         # UI components
+│   ├── features/           # System modules
+│   ├── hooks/              # Custom hooks
+│   ├── services/           # IPC services
+│   ├── styles/             # Global styles
+│   └── types/              # TypeScript types
+├── database/               # Local database
+│   └── backups/            # Automatic backups
+├── public/                 # Public assets
+├── docs/                   # Documentation
+└── package.json            # Project configuration
 ```
 
 ---
 
-## 🎯 Comandos Principales
+## 🎯 Main Commands
 
-### Desarrollo
+### Development
 
-Inicia el servidor de desarrollo:
+Start the development server:
 
 ```bash
 npm run dev
 ```
 
-Esto hará:
-1. Compilar el código TypeScript
-2. Iniciar Vite dev server
-3. Lanzar la aplicación Electron
-4. Habilitar hot reload
+This will:
+1. Compile the TypeScript code
+2. Start the Vite dev server
+3. Launch the Electron application
+4. Enable hot reload
 
-### Build para Producción
+### Production Build
 
-Genera el ejecutable para tu plataforma:
+Generate the executable for your platform:
 
 ```bash
-npm run build           # Build de la aplicación
-npm run build:win      # Ejecutable para Windows
-npm run build:mac      # Ejecutable para macOS
-npm run build:linux    # Ejecutable para Linux
+npm run build           # Build the application
+npm run build:win      # Windows executable
+npm run build:mac      # macOS executable
+npm run build:linux    # Linux executable
 ```
 
-### Otros Comandos Útiles
+### Other Useful Commands
 
 ```bash
-npm run lint           # Verificar código con ESLint
-npm run format         # Formatear código con Prettier
-npm run type-check     # Verificar tipos TypeScript
+npm run lint           # Check the code with ESLint
+npm run format         # Format the code with Prettier
+npm run type-check     # Check TypeScript types
 ```
 
 ---
 
-## 🛠️ Configuración del Entorno
+## 🛠️ Environment Setup
 
-### Variables de Entorno (Opcional)
+### Environment Variables (Optional)
 
-Crea un archivo `.env.local` en la raíz del proyecto:
+Create a `.env.local` file in the project root:
 
 ```env
-# Configuración de desarrollo
+# Development configuration
 VITE_APP_NAME=NexoraCloud
 VITE_DB_PATH=./database/nexoracloud.db
 ```
 
-**Nota:** Los archivos `.env*` están en `.gitignore` por seguridad.
+**Note:** `.env*` files are in `.gitignore` for security.
 
 ---
 
-## 📝 Primer Desarrollo
+## 📝 Your First Development Steps
 
-### 1. Familiarízate con la Arquitectura
+### 1. Get Familiar with the Architecture
 
-Lee estos documentos en orden:
+Read these documents in order:
 
-1. `docs/ENUNCIADO_PROYECTO.md` - Entender el objetivo
-2. `docs/ARCHITECTURE.md` - Comprender la arquitectura
-3. `docs/TECH_STACK.md` - Conocer las tecnologías
+1. `docs/PROJECT_STATEMENT.md` - Understand the goal
+2. `docs/ARCHITECTURE.md` - Understand the architecture
+3. `docs/TECH_STACK.md` - Learn the technologies
 
-### 2. Explora el Código Base
+### 2. Explore the Code Base
 
 ```bash
-# Inicia el servidor de desarrollo
+# Start the development server
 npm run dev
 ```
 
-La aplicación se abrirá automáticamente.
+The application opens automatically.
 
-### 3. Haz tu Primer Cambio
+### 3. Make Your First Change
 
-1. Abre `src/app/App.tsx`
-2. Modifica el texto de bienvenida
-3. Guarda el archivo
-4. Observa el cambio automáticamente en la app ✨
+1. Open `src/app/App.tsx`
+2. Change the welcome text
+3. Save the file
+4. Watch the change appear automatically in the app ✨
 
 ---
 
-## 🐛 Solución de Problemas
+## 🐛 Troubleshooting
 
 ### Error: "Cannot find module 'electron'"
 
-**Solución:** Ejecuta `npm install` nuevamente.
+**Solution:** Run `npm install` again.
 
 ### Error: "node-gyp rebuild failed"
 
-**Solución para Windows:**
+**Solution for Windows:**
 ```bash
 npm install --global windows-build-tools
 npm install
 ```
 
-**Solución para macOS:**
+**Solution for macOS:**
 ```bash
 xcode-select --install
 npm install
 ```
 
-**Solución para Linux:**
+**Solution for Linux:**
 ```bash
 sudo apt-get install build-essential
 npm install
 ```
 
-### La aplicación no se abre
+### The application doesn't open
 
-1. Verifica que no haya otra instancia ejecutándose
-2. Revisa la consola en busca de errores
-3. Intenta `npm run dev -- --debug`
+1. Make sure no other instance is running
+2. Check the console for errors
+3. Try `npm run dev -- --debug`
 
-### Hot reload no funciona
+### Hot reload doesn't work
 
-1. Reinicia el servidor de desarrollo
-2. Verifica que no haya errores de TypeScript
-3. Limpia la cache: `npm run clean` (si existe)
+1. Restart the development server
+2. Check that there are no TypeScript errors
+3. Clear the cache: `npm run clean` (if it exists)
 
 ---
 
-## 🎨 Configuración del Editor (VS Code)
+## 🎨 Editor Setup (VS Code)
 
-### Extensiones Recomendadas
+### Recommended Extensions
 
-Crea `.vscode/extensions.json`:
+Create `.vscode/extensions.json`:
 
 ```json
 {
@@ -224,9 +224,9 @@ Crea `.vscode/extensions.json`:
 }
 ```
 
-### Configuración Recomendada
+### Recommended Settings
 
-Crea `.vscode/settings.json`:
+Create `.vscode/settings.json`:
 
 ```json
 {
@@ -244,9 +244,9 @@ Crea `.vscode/settings.json`:
 
 ---
 
-## 📚 Recursos Útiles
+## 📚 Useful Resources
 
-### Documentación
+### Documentation
 
 - [Electron Docs](https://www.electronjs.org/docs/latest)
 - [React Docs](https://react.dev)
@@ -254,47 +254,47 @@ Crea `.vscode/settings.json`:
 - [Tailwind CSS](https://tailwindcss.com/docs)
 - [Shadcn/UI](https://ui.shadcn.com)
 
-### Comunidad
+### Community
 
-- GitHub Issues - Para reportar bugs
-- GitHub Discussions - Para preguntas generales
-- CONTRIBUTING.md - Guía de contribución
-
----
-
-## ✅ Checklist de Configuración
-
-Antes de comenzar a desarrollar, verifica:
-
-- [ ] Node.js y npm instalados correctamente
-- [ ] Dependencias instaladas (`npm install`)
-- [ ] Aplicación ejecutándose en desarrollo (`npm run dev`)
-- [ ] Editor configurado (extensiones y settings)
-- [ ] Documentación leída (al menos ARCHITECTURE.md)
-- [ ] Git configurado (nombre y email)
+- GitHub Issues - To report bugs
+- GitHub Discussions - For general questions
+- CONTRIBUTING.md - Contribution guide
 
 ---
 
-## 🎯 Próximos Pasos
+## ✅ Setup Checklist
 
-1. **Explora el código:** Familiarízate con la estructura
-2. **Lee el Roadmap:** Conoce qué se está desarrollando
-3. **Revisa Issues:** Encuentra tareas para contribuir
-4. **Haz tu primer cambio:** Experimenta con componentes
-5. **Consulta CONTRIBUTING.md:** Aprende el flujo de trabajo
+Before you start developing, check:
 
----
-
-## 💡 Consejos
-
-- **Mantén las dependencias actualizadas:** Revisa regularmente
-- **Lee los mensajes de error completos:** Suelen indicar la solución
-- **Consulta la documentación oficial:** Es la fuente de verdad
-- **Haz commits pequeños y frecuentes:** Facilita el debugging
-- **Pregunta cuando tengas dudas:** Better to ask than to assume
+- [ ] Node.js and npm installed correctly
+- [ ] Dependencies installed (`npm install`)
+- [ ] Application running in development (`npm run dev`)
+- [ ] Editor configured (extensions and settings)
+- [ ] Documentation read (at least ARCHITECTURE.md)
+- [ ] Git configured (name and email)
 
 ---
 
-¡Feliz desarrollo! 🚀
+## 🎯 Next Steps
 
-**¿Problemas?** Revisa `docs/` o abre un Issue en GitHub.
+1. **Explore the code:** Get familiar with the structure
+2. **Read the Roadmap:** Learn what is being developed
+3. **Check the Issues:** Find tasks to contribute to
+4. **Make your first change:** Experiment with components
+5. **Read CONTRIBUTING.md:** Learn the workflow
+
+---
+
+## 💡 Tips
+
+- **Keep dependencies up to date:** Check regularly
+- **Read error messages in full:** They often point to the solution
+- **Check the official documentation:** It is the source of truth
+- **Make small, frequent commits:** It makes debugging easier
+- **Ask when in doubt:** Better to ask than to assume
+
+---
+
+Happy coding! 🚀
+
+**Problems?** Check `docs/` or open an Issue on GitHub.

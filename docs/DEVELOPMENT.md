@@ -1,100 +1,100 @@
-# Guía de Desarrollo - NexoraCloud
+# Development Guide - NexoraCloud
 
-## 🚀 Ejecutar en Modo Desarrollo
+## 🚀 Running in Development Mode
 
-### Opción 1: Todo en uno (Recomendado)
+### Option 1: All-in-one (Recommended)
 
 ```bash
 npm run dev
 ```
 
-Este comando:
-- Compila los archivos de Electron (main.ts y preload.ts)
-- Inicia el servidor de Vite en http://localhost:5173
-- Abre automáticamente la ventana de Electron
-- Habilita hot reload para cambios en código
+This command:
+- Compiles the Electron files (main.ts and preload.ts)
+- Starts the Vite server at http://localhost:5173
+- Opens the Electron window automatically
+- Enables hot reload for code changes
 
-**Nota:** La ventana de Electron se abrirá automáticamente. Los mensajes de DevTools son normales y pueden ignorarse.
+**Note:** The Electron window opens automatically. DevTools messages are normal and can be ignored.
 
-### Opción 2: Desarrollo separado
+### Option 2: Separate processes
 
-Si necesitas más control:
+If you need more control:
 
 ```bash
-# Terminal 1: Iniciar Vite
+# Terminal 1: Start Vite
 npx vite
 
-# Terminal 2: Iniciar Electron (después de que Vite esté corriendo)
+# Terminal 2: Start Electron (once Vite is running)
 npx electron .
 ```
 
-## 🔧 Scripts Disponibles
+## 🔧 Available Scripts
 
-| Comando | Descripción |
+| Command | Description |
 |---------|-------------|
-| `npm run dev` | Modo desarrollo con hot reload |
-| `npm run build` | Build completo para producción |
-| `npm run build:win` | Generar ejecutable para Windows |
-| `npm run build:mac` | Generar ejecutable para macOS |
-| `npm run build:linux` | Generar ejecutable para Linux |
-| `npm run lint` | Ejecutar ESLint |
-| `npm run type-check` | Verificar tipos TypeScript |
-| `npm run preview` | Preview del build de producción |
+| `npm run dev` | Development mode with hot reload |
+| `npm run build` | Full production build |
+| `npm run build:win` | Build the Windows executable |
+| `npm run build:mac` | Build the macOS executable |
+| `npm run build:linux` | Build the Linux executable |
+| `npm run lint` | Run ESLint |
+| `npm run type-check` | Check TypeScript types |
+| `npm run preview` | Preview the production build |
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 NexoraCloud/
-├── electron/               # Proceso principal de Electron
+├── electron/               # Electron main process
 │   ├── main/              # Main process
-│   │   └── main.ts       # Entry point del main process
+│   │   └── main.ts       # Main process entry point
 │   ├── preload/          # Preload scripts
 │   │   └── preload.ts    # contextBridge API
-│   └── assets/           # Iconos de la aplicación
+│   └── assets/           # Application icons
 ├── src/                   # Frontend (Renderer process)
-│  ├── app/               # Configuración de la app
-│   │   ├── App.tsx       # Componente raíz
-│   │   └── routes.tsx    # Definición de rutas
-│   ├── components/       # Componentes reutilizables
-│   │   └── layout/       # Componentes de layout
-│   ├── features/         # Módulos del sistema
+│  ├── app/               # App configuration
+│   │   ├── App.tsx       # Root component
+│   │   └── routes.tsx    # Route definitions
+│   ├── components/       # Reusable components
+│   │   └── layout/       # Layout components
+│   ├── features/         # System modules
 │   │   ├── dashboard/
 │   │   ├── inventory/
 │   │   ├── sales/
 │   │   └── reports/
-│   ├── lib/              # Utilidades
-│   ├── styles/           # Estilos globales
-│   └── main.tsx          # Entry point de React
-├── database/             # Base de datos local
-│   └── backups/          # Respaldos automáticos
-└── public/               # Assets estáticos
+│   ├── lib/              # Utilities
+│   ├── styles/           # Global styles
+│   └── main.tsx          # React entry point
+├── database/             # Local database
+│   └── backups/          # Automatic backups
+└── public/               # Static assets
 ```
 
-## 🎨 Desarrollo de UI
+## 🎨 UI Development
 
 ### Tailwind CSS
 
-Los estilos están configurados con Tailwind CSS. Variables CSS están en `src/styles/globals.css`:
+Styles are configured with Tailwind CSS. CSS variables live in `src/styles/globals.css`:
 
 ```css
 :root {
   --primary: 221.2 83.2% 53.3%;
-  /* ... más variables */
+  /* ... more variables */
 }
 ```
 
-### Modo Oscuro
+### Dark Mode
 
-El proyecto soporta modo oscuro. Toggle en el Header:
+The project supports dark mode. Toggle it in the Header:
 
 ```tsx
-// Agregar clase 'dark' al html
+// Add the 'dark' class to html
 document.documentElement.classList.toggle('dark')
 ```
 
-### Iconos
+### Icons
 
-Usamos Lucide React para iconos:
+We use Lucide React for icons:
 
 ```tsx
 import { Package, User } from 'lucide-react'
@@ -102,46 +102,46 @@ import { Package, User } from 'lucide-react'
 <Package className="w-5 h-5" />
 ```
 
-## 🔌 Comunicación IPC
+## 🔌 IPC Communication
 
-### Desde el Renderer (Frontend)
+### From the Renderer (Frontend)
 
 ```tsx
-// Acceder a APIs expuestas via preload
+// Access APIs exposed via preload
 const result = await window.electronAPI.db.query('SELECT * FROM products')
 ```
 
-### Añadir nueva API
+### Adding a new API
 
-1. **Agregar handler en main.ts:**
+1. **Add a handler in main.ts:**
 
 ```typescript
-ipcMain.handle('mi-canal', async (event, args) => {
-  // Lógica aquí
-  return resultado
+ipcMain.handle('my-channel', async (event, args) => {
+  // Logic here
+  return result
 })
 ```
 
-2. **Exponer en preload.ts:**
+2. **Expose it in preload.ts:**
 
 ```typescript
 contextBridge.exposeInMainWorld('electronAPI', {
-  miAPI: () => ipcRenderer.invoke('mi-canal')
+  myAPI: () => ipcRenderer.invoke('my-channel')
 })
 ```
 
-3. **Usar en frontend:**
+3. **Use it in the frontend:**
 
 ```typescript
-const data = await window.electronAPI.miAPI()
+const data = await window.electronAPI.myAPI()
 ```
 
-## 🗄️ Base de Datos (Pendiente de implementar)
+## 🗄️ Database (Pending implementation)
 
-SQLite se configurará con better-sqlite3:
+SQLite will be configured with better-sqlite3:
 
 ```typescript
-// En electron/main/database.ts
+// In electron/main/database.ts
 import Database from 'better-sqlite3'
 
 const db = new Database('database/nexoracloud.db')
@@ -151,50 +151,50 @@ const db = new Database('database/nexoracloud.db')
 
 ### Renderer Process (Frontend)
 
-- DevTools se abren automáticamente en desarrollo
-- `console.log()` aparece en DevTools
-- React DevTools disponible
+- DevTools open automatically in development
+- `console.log()` shows up in DevTools
+- React DevTools are available
 
 ### Main Process (Backend)
 
-- Agregar `console.log()` en main.ts
-- El output aparece en la terminal donde ejecutaste `npm run dev`
+- Add `console.log()` in main.ts
+- The output appears in the terminal where you ran `npm run dev`
 
 ### Breakpoints
 
-Usa VS Code con la extensión de Debugger for Chrome/Edge.
+Use VS Code with the Debugger for Chrome/Edge extension.
 
-## ⚠️ Problemas Comunes
+## ⚠️ Common Problems
 
-### La aplicación no se abre
+### The application doesn't open
 
-1. Verificar que no haya otra instancia corriendo
-2. Verificar puerto 5173 disponible: `netstat -ano | findstr :5173`
-3. Borrar `dist-electron/` y `dist/` y volver a ejecutar
+1. Make sure no other instance is running
+2. Check that port 5173 is free: `netstat -ano | findstr :5173`
+3. Delete `dist-electron/` and `dist/` and run it again
 
-### Hot reload no funciona
+### Hot reload doesn't work
 
-1. Guardar el archivo correctamente
-2. Verificar que no haya errores de TypeScript
-3. Reiniciar el servidor de desarrollo
+1. Make sure the file was saved
+2. Check that there are no TypeScript errors
+3. Restart the development server
 
-### Errores de tipos TypeScript
+### TypeScript type errors
 
 ```bash
 npm run type-check
 ```
 
-Esto mostrará todos los errores de tipos sin compilar.
+This shows every type error without compiling.
 
-## 📝 Convenciones de Código
+## 📝 Code Conventions
 
-### Nombres de Archivos
+### File Names
 
-- Componentes: `PascalCase.tsx` (ej: `Dashboard.tsx`)
-- Utilidades: `camelCase.ts` (ej: `utils.ts`)
-- Hooks: `use*.ts` (ej: `useProducts.ts`)
+- Components: `PascalCase.tsx` (e.g. `Dashboard.tsx`)
+- Utilities: `camelCase.ts` (e.g. `utils.ts`)
+- Hooks: `use*.ts` (e.g. `useProducts.ts`)
 
-### Estructura de Componentes
+### Component Structure
 
 ```tsx
 // Imports
@@ -207,26 +207,26 @@ interface Props {
 }
 
 // Component
-export function MiComponente({ title }: Props) {
+export function MyComponent({ title }: Props) {
   return <div>{title}</div>
 }
 ```
 
 ### Commits
 
-Seguir convención de Conventional Commits:
+Follow the Conventional Commits convention:
 
 ```
-feat: nueva funcionalidad
-fix: corrección de bug
-docs: cambios en documentación
-style: formato, punto y coma, etc
-refactor: refactorización
-test: añadir tests
-chore: tasks de mantenimiento
+feat: new feature
+fix: bug fix
+docs: documentation changes
+style: formatting, semicolons, etc
+refactor: refactoring
+test: add tests
+chore: maintenance tasks
 ```
 
-## 🚢 Build para Producción
+## 🚢 Production Build
 
 ### Windows
 
@@ -234,15 +234,15 @@ chore: tasks de mantenimiento
 npm run build:win
 ```
 
-Genera instalador en `release/`
+Generates the installer in `release/`
 
-### Requisitos
+### Requirements
 
 - Windows: Node.js
 - macOS: Xcode Command Line Tools
 - Linux: `build-essential`
 
-## 📚 Recursos
+## 📚 Resources
 
 - [Electron Docs](https://www.electronjs.org/docs/latest)
 - [React Docs](https://react.dev)
@@ -251,4 +251,4 @@ Genera instalador en `release/`
 
 ---
 
-**¿Problemas?** Abre un issue en GitHub o consulta la documentación en `docs/`.
+**Problems?** Open an issue on GitHub or check the documentation in `docs/`.

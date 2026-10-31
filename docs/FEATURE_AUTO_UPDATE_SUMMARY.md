@@ -1,48 +1,48 @@
-# 🎉 Sistema de Auto-Actualización Implementado - NexoraCloud
+# 🎉 Auto-Update System Implemented - NexoraCloud
 
-**Fecha:** 8 de Enero 2026  
-**Prioridad:** #1 del Roadmap  
-**Estado:** ✅ Completado y funcionando
-
----
-
-## 📦 ¿Qué se implementó?
-
-Se agregó un **sistema completo de auto-actualización** a NexoraCloud Desktop que permite:
-
-### ✅ Funcionalidades Principales
-
-1. **Notificaciones Automáticas**
-   - La aplicación verifica actualizaciones automáticamente cada 6 horas
-   - Primera verificación a los 5 segundos de iniciarse
-   - Notificaciones elegantes con toasts (Sonner)
-
-2. **Descarga en Segundo Plano**
-   - El usuario puede seguir trabajando mientras descarga
-   - Barra de progreso flotante animada
-   - Velocidad de descarga en tiempo real
-   - Muestra MB descargados y porcentaje
-
-3. **Instalación Opcional**
-   - El usuario decide cuándo instalar
-   - No fuerza el reinicio inmediato
-   - Instala al cerrar la aplicación
-   - Reabre automáticamente con la nueva versión
+**Date:** October 31, 2026  
+**Priority:** #1 on the Roadmap  
+**Status:** ✅ Completed and working
 
 ---
 
-## 🎨 Experiencia de Usuario
+## 📦 What was implemented?
 
-### Paso 1: Notificación
+A **complete auto-update system** was added to NexoraCloud Desktop, which allows:
+
+### ✅ Main Features
+
+1. **Automatic Notifications**
+   - The application checks for updates automatically every 6 hours
+   - First check 5 seconds after startup
+   - Elegant toast notifications (Sonner)
+
+2. **Background Download**
+   - The user can keep working while it downloads
+   - Animated floating progress bar
+   - Real-time download speed
+   - Shows MB downloaded and percentage
+
+3. **Optional Installation**
+   - The user decides when to install
+   - Does not force an immediate restart
+   - Installs when the application closes
+   - Reopens automatically with the new version
+
+---
+
+## 🎨 User Experience
+
+### Step 1: Notification
 ```
-🎉 ¡Nueva versión 1.2.0 disponible!
-[Descargar]  [✕]
+🎉 New version 1.2.0 available!
+[Download]  [✕]
 ```
 
-### Paso 2: Descarga (Opcional - permite seguir trabajando)
+### Step 2: Download (Optional - lets you keep working)
 ```
 ┌─────────────────────────────────┐
-│ 📥 Descargando actualización    │
+│ 📥 Downloading update           │
 │ v1.2.0                       ⏳ │
 │ ████████░░░░░ 65.3%            │
 │ 32.1MB / 49.2MB                │
@@ -50,30 +50,30 @@ Se agregó un **sistema completo de auto-actualización** a NexoraCloud Desktop 
 └─────────────────────────────────┘
 ```
 
-### Paso 3: Listo para Instalar
+### Step 3: Ready to Install
 ```
-✅ Actualización 1.2.0 descargada
-[Instalar y Reiniciar]  [✕]
+✅ Update 1.2.0 downloaded
+[Install and Restart]  [✕]
 ```
 
 ---
 
-## 📂 Archivos Creados/Modificados
+## 📂 Files Created/Modified
 
 ### Backend (Electron - Main Process)
-- ✅ **`electron/main/autoUpdater.ts`** (NEW) - 181 líneas
-  - Servicio principal de auto-actualización
-  - Configuración de electron-updater
-  - IPC handlers para comunicación con frontend
-  - Sistema de verificación periódica
+- ✅ **`electron/main/autoUpdater.ts`** (NEW) - 181 lines
+  - Main auto-update service
+  - electron-updater configuration
+  - IPC handlers for communication with the frontend
+  - Periodic check system
 
 - ✅ **`electron/main/main.ts`** (MODIFIED)
-  - Integración del AutoUpdateService
-  - Inicialización al arrancar la app
-  - Cleanup al cerrar
+  - AutoUpdateService integration
+  - Initialization at app startup
+  - Cleanup on close
 
 - ✅ **`electron/preload/preload.ts`** (MODIFIED)
-  - APIs expuestas al renderer:
+  - APIs exposed to the renderer:
     - `checkForUpdates()`
     - `downloadUpdate()`
     - `quitAndInstall()`
@@ -82,48 +82,48 @@ Se agregó un **sistema completo de auto-actualización** a NexoraCloud Desktop 
     - `onStatusUpdate(callback)`
 
 ### Frontend (React)
-- ✅ **`src/services/updaterService.ts`** (NEW) - 152 líneas
-  - Wrapper de las APIs de Electron
-  - Sistema de subscripción a eventos
-  - Gestión de estado del updater
+- ✅ **`src/services/updaterService.ts`** (NEW) - 152 lines
+  - Wrapper around the Electron APIs
+  - Event subscription system
+  - Updater state management
 
-- ✅ **`src/components/update/UpdateNotifier.tsx`** (NEW) - 185 líneas
-  - Componente global de notificaciones
-  - Toasts informativos
-  - Barra de progreso flotante animada
-  - Botones de acción
+- ✅ **`src/components/update/UpdateNotifier.tsx`** (NEW) - 185 lines
+  - Global notification component
+  - Informational toasts
+  - Animated floating progress bar
+  - Action buttons
 
 - ✅ **`src/components/layout/MainLayout.tsx`** (MODIFIED)
-  - Integración del `<UpdateNotifier />`
+  - `<UpdateNotifier />` integration
 
 - ✅ **`src/vite-env.d.ts`** (MODIFIED)
-  - Tipos TypeScript para APIs del updater
+  - TypeScript types for the updater APIs
 
-### Documentación
-- ✅ **`docs/AUTO_UPDATE.md`** (NEW) - Guía completa de 600+ líneas:
-  - Arquitectura del sistema
-  - Configuración
-  - Flujo de usuario
-  - Testing y debugging
-  - Deployment y releases
+### Documentation
+- ✅ **`docs/AUTO_UPDATE.md`** (NEW) - Complete guide of 600+ lines:
+  - System architecture
+  - Configuration
+  - User flow
+  - Testing and debugging
+  - Deployment and releases
   - Troubleshooting
 
 ---
 
-## 🔧 Dependencias Instaladas
+## 🔧 Installed Dependencies
 
 ```bash
-npm install electron-updater --save  # Auto-actualización
-npm install electron-log --save      # Sistema de logs mejorado
+npm install electron-updater --save  # Auto-update
+npm install electron-log --save      # Improved logging system
 ```
 
-**Motivo:** 
-- `electron-updater` es el estándar de la industria para actualizaciones en Electron
-- `electron-log` permite debugging avanzado con archivos de log
+**Reason:** 
+- `electron-updater` is the industry standard for Electron updates
+- `electron-log` enables advanced debugging with log files
 
 ---
 
-## ⚙️ Configuración Actual
+## ⚙️ Current Configuration
 
 ### GitHub Releases
 ```typescript
@@ -135,187 +135,187 @@ autoUpdater.setFeedURL({
 })
 ```
 
-### Intervalo de Verificación
+### Check Interval
 ```typescript
 // electron/main/main.ts:82
-autoUpdateService.startAutoCheck(6)  // Cada 6 horas
+autoUpdateService.startAutoCheck(6)  // Every 6 hours
 ```
 
-### Opciones
-- ✅ **Descarga Automática:** Desactivada (el usuario debe aceptar)
-- ✅ **Instalar al Cerrar:** Activada (instala cuando se cierra la app)
-- ✅ **Solo en Producción:** No funciona en modo desarrollo (`npm run dev`)
+### Options
+- ✅ **Automatic Download:** Disabled (the user must accept)
+- ✅ **Install on Quit:** Enabled (installs when the app closes)
+- ✅ **Production Only:** Does not work in development mode (`npm run dev`)
 
 ---
 
-## 🚀 Cómo Funciona (Para Developers)
+## 🚀 How It Works (For Developers)
 
-### 1. Crear un Release en GitHub
+### 1. Create a Release on GitHub
 
 ```bash
-# Paso 1: Actualizar versión
+# Step 1: Update the version
 npm version minor  # 1.0.0 → 1.1.0
 
-# Paso 2: Build de la aplicación
-npm run build:win  # O build:mac / build:linux
+# Step 2: Build the application
+npm run build:win  # Or build:mac / build:linux
 
-# Paso 3: Crear release en GitHub
+# Step 3: Create the release on GitHub
 # - Tag: v1.1.0
-# - Subir el .exe/.dmg/.AppImage generado
-# - electron-builder genera automáticamente el latest.yml
+# - Upload the generated .exe/.dmg/.AppImage
+# - electron-builder generates latest.yml automatically
 ```
 
-### 2. Automático desde la App
+### 2. Automatic from the App
 
 ```
-1. Usuario abre NexoraCloud v1.0.0
-2. Después de 5s → Verifica GitHub Releases
-3. Encuentra v1.1.0 → Muestra notificación
-4. Usuario hace click "Descargar"
-5. Descarga el instalador en segundo plano
-6. Usuario hace click "Instalar y Reiniciar"
-7. App se cierra, instala y reabre con v1.1.0
+1. The user opens NexoraCloud v1.0.0
+2. After 5s → Checks GitHub Releases
+3. Finds v1.1.0 → Shows a notification
+4. The user clicks "Download"
+5. Downloads the installer in the background
+6. The user clicks "Install and Restart"
+7. The app closes, installs and reopens with v1.1.0
 ```
 
 ---
 
-## 🎯 Próximos Pasos
+## 🎯 Next Steps
 
-### Para Producción
+### For Production
 
-1. **Code Signing (Firma de Código)**
-   - Windows: Obtener certificado de Sectigo/DigiCert
-   - macOS: Notarizar con Apple Developer ID
-   - Evita warnings de "Publisher desconocido"
+1. **Code Signing**
+   - Windows: Get a certificate from Sectigo/DigiCert
+   - macOS: Notarize with an Apple Developer ID
+   - Avoids "Unknown publisher" warnings
 
-2. **CI/CD con GitHub Actions**
-   - Automatizar builds multiplataforma
-   - Auto-publicar releases
-   - Testing antes de release
+2. **CI/CD with GitHub Actions**
+   - Automate cross-platform builds
+   - Auto-publish releases
+   - Testing before release
 
-3. **Configurar dominio personalizado** (opcional)
-   - En lugar de GitHub Releases
-   - Mayor control sobre distribución
+3. **Configure a custom domain** (optional)
+   - Instead of GitHub Releases
+   - More control over distribution
 
-### Mejoras Futuras
+### Future Improvements
 
-- [ ] **Delta Updates** - Descargar solo cambios (reduce tamaño)
-- [ ] **Canales de Release** - Stable, Beta, Nightly
-- [ ] **Rollback automático** - Volver a versión anterior si falla
-- [ ] **Analytics** - Trackeo de adopción de versiones
+- [ ] **Delta Updates** - Download only the changes (smaller size)
+- [ ] **Release Channels** - Stable, Beta, Nightly
+- [ ] **Automatic rollback** - Return to the previous version if it fails
+- [ ] **Analytics** - Track version adoption
 
 ---
 
 ## 🧪 Testing
 
-### ⚠️ IMPORTANTE: No funciona en desarrollo
+### ⚠️ IMPORTANT: Does not work in development
 
-El auto-updater **solo funciona en builds empaquetados**:
+The auto-updater **only works in packaged builds**:
 
 ```bash
-# ❌ NO funciona
+# ❌ Does NOT work
 npm run dev
 
-# ✅ Funciona
+# ✅ Works
 npm run build:win
-# Luego ejecutar el .exe instalado
+# Then run the installed .exe
 ```
 
-### Simular Actualización
+### Simulate an Update
 
-1. Crear un release `v1.0.1` en GitHub
-2. Build de la app con versión `1.0.0`
-3. Instalar y ejecutar
-4. La app detectará que hay `1.0.1` disponible
+1. Create a `v1.0.1` release on GitHub
+2. Build the app with version `1.0.0`
+3. Install and run it
+4. The app will detect that `1.0.1` is available
 
-### Ver Logs
+### View the Logs
 
 **Windows:**
 ```powershell
 Get-Content "$env:APPDATA\nexoracloud\logs\main.log" -Tail 50 -Wait
 ```
 
-**Buscar lines como:**
+**Look for lines like:**
 ```
-🔍 Verificando actualizaciones...
-✅ Actualización disponible: 1.0.1
-⬇️ Descargando: 45.2% - 22.3MB / 49.2MB
-✅ Actualización descargada: 1.0.1
+Checking for updates...
+Update available: 1.0.1
+Downloading: 45.20% - 22.30MB / 49.20MB
+Update downloaded: 1.0.1
 ```
 
 ---
 
-## ❓ Preguntas Frecuentes
+## ❓ Frequently Asked Questions
 
-**¿Cuánto ocupa el sistema de actualización?**
-- Backend: 181 líneas (autoUpdater.ts)
-- Frontend: 337 líneas (updaterService + UpdateNotifier)
-- Dependencias: +2 paquetes (electron-updater, electron-log)
-- **Impacto:** Mínimo, ~50KB adicionales en bundle
+**How big is the update system?**
+- Backend: 181 lines (autoUpdater.ts)
+- Frontend: 337 lines (updaterService + UpdateNotifier)
+- Dependencies: +2 packages (electron-updater, electron-log)
+- **Impact:** Minimal, ~50KB extra in the bundle
 
-**¿Funciona sin internet?**
-- No, requiere conexión para verificar/descargar
-- Si no hay internet, simplemente no muestra notificaciones
-- La app sigue funcionando normalmente offline
+**Does it work without internet?**
+- No, it needs a connection to check/download
+- Without internet it simply shows no notifications
+- The app keeps working normally offline
 
-**¿Se puede desactivar?**
-- Sí, desde el código:
+**Can it be turned off?**
+- Yes, from the code:
   ```typescript
   updaterService.setAutoCheck(false)
   ```
-- También se puede configurar el intervalo:
+- The interval can also be configured:
   ```typescript
-  updaterService.setAutoCheck(true, 12) // Cada 12 horas
+  updaterService.setAutoCheck(true, 12) // Every 12 hours
   ```
 
-**¿Qué pasa si hay un error en la actualización?**
-- Se muestra un toast de error
-- La app continúa con la versión actual
-- Se loggea el error para debugging
-- El usuario puede reintentar manualmente
+**What happens if an update fails?**
+- An error toast is shown
+- The app continues with the current version
+- The error is logged for debugging
+- The user can retry manually
 
 ---
 
-## 📊 Métricas de Éxito
+## 📊 Success Metrics
 
-### KPIs para Monitorear
+### KPIs to Monitor
 
-1. **Tasa de Adopción**
-   - Meta: >80% de usuarios en última versión en 7 días
+1. **Adoption Rate**
+   - Goal: >80% of users on the latest version within 7 days
 
-2. **Tiempo de Actualización**
-   - Meta: <2 minutos desde notificación hasta instalado
+2. **Update Time**
+   - Goal: <2 minutes from notification to installed
 
-3. **Tasa de Error**
-   - Meta: <5% de intentos fallidos
+3. **Error Rate**
+   - Goal: <5% failed attempts
 
 ---
 
-## 🎓 Referencias
+## 🎓 References
 
-- **Documentación Completa:** `docs/AUTO_UPDATE.md`
+- **Full Documentation:** `docs/AUTO_UPDATE.md`
 - **electron-updater Docs:** https://www.electron.build/auto-update
 - **GitHub Releases API:** https://docs.github.com/en/rest/releases
 - **Code Signing Guide:** https://www.electron.build/code-signing
 
 ---
 
-## ✅ Verificación Final
+## ✅ Final Verification
 
-### Checklist de Implementación
+### Implementation Checklist
 
-- ✅ Backend service creado y configurado
-- ✅ IPC handlers registrados
-- ✅ Frontend service implementado
-- ✅ Componente de notificación integrado
-- ✅ Tipos TypeScript definidos
-- ✅ Dependencias instaladas
-- ✅ TypeScript compila sin errores (0 errors)
-- ✅ Documentación completa creada
-- ✅ Configurado para GitHub Releases
-- ✅ Solo activo en producción (no en dev)
+- ✅ Backend service created and configured
+- ✅ IPC handlers registered
+- ✅ Frontend service implemented
+- ✅ Notification component integrated
+- ✅ TypeScript types defined
+- ✅ Dependencies installed
+- ✅ TypeScript compiles without errors (0 errors)
+- ✅ Complete documentation created
+- ✅ Configured for GitHub Releases
+- ✅ Only active in production (not in dev)
 
-### Estado de Compilación
+### Build Status
 
 ```bash
 $ npm run type-check
@@ -324,17 +324,17 @@ $ npm run type-check
 
 ---
 
-## 🏆 Resultado
+## 🏆 Result
 
-**Sistema de Auto-Actualización completamente funcional e integrado en NexoraCloud Desktop.**
+**A fully working Auto-Update System integrated into NexoraCloud Desktop.**
 
-El usuario ahora recibirá notificaciones automáticas de nuevas versiones y podrá actualizar la aplicación con un solo click, sin perder su trabajo actual.
+Users will now get automatic notifications about new versions and can update the application with a single click, without losing their current work.
 
 ---
 
-**Implementado por:** Antigravity AI Assistant  
-**Fecha:** 8 de Enero 2026  
-**Tiempo de implementación:** ~45 minutos  
-**Archivos modificados/creados:** 10
+**Implemented by:** Antigravity AI Assistant  
+**Date:** October 31, 2026  
+**Implementation time:** ~45 minutes  
+**Files modified/created:** 10
 
-🎉 **¡Feature #1 del Roadmap completada!**
+🎉 **Roadmap Feature #1 completed!**

@@ -1,359 +1,359 @@
-# 🚀 NexoraCloud: Roadmap Estratégico de Evolución
+# 🚀 NexoraCloud: Strategic Evolution Roadmap
 
-**Última actualización:** 8 de Enero de 2026  
-**Versión:** 1.1.0 (Completada UI Backend) → 1.2.0 (Testing & Quality)
-
----
-
-## 📊 Estado Actual del Proyecto
-
-### ✅ Versión 1.0.0 - Primera Versión Estable (COMPLETADA)
-
-**Logros Principales:**
-- ✅ **4 Fases Completadas** (Preparación, Base, Ventas, Reportes, UX)
-- ✅ Sistema completo de gestión de inventario y ventas
-- ✅ Backup/Restore con cifrado AES-256
-- ✅ Dashboard analítico con gráficas profesionales
-- ✅ POS avanzado con checkout premium
-- ✅ Exportación CSV y PDF
-- ✅ Documentación técnica completa (11 documentos)
-- ✅ TypeScript sin errores de compilación
-
-**Métricas:**
-- 📦 69 dependencias productivas + 20 de desarrollo
-- 📝 ~7,000 líneas de código TypeScript
-- 📊 4 tablas SQLite, 36+ queries optimizadas
-- 🎨 12 componentes reutilizables + 7 features modulares
-- 📚 ~30,000 palabras de documentación
+**Last updated:** January 8, 2026  
+**Version:** 1.1.0 (Backend UI Completed) → 1.2.0 (Testing & Quality)
 
 ---
 
-## 🎯 Áreas de Mejora Identificadas
+## 📊 Current Project Status
 
-### 🔴 Prioridad Alta (Corto Plazo - Sprint 1-2)
+### ✅ Version 1.0.0 - First Stable Version (COMPLETED)
 
-#### 1. **Completar Funcionalidades con Backend Listo (COMPLETADO)**
-**Estado:** ✅ Todas las funcionalidades han sido implementadas en la UI.
+**Main Achievements:**
+- ✅ **4 Phases Completed** (Preparation, Foundation, Sales, Reports, UX)
+- ✅ Complete inventory and sales management system
+- ✅ Backup/Restore with AES-256 encryption
+- ✅ Analytics dashboard with professional charts
+- ✅ Advanced POS with a premium checkout
+- ✅ CSV and PDF export
+- ✅ Complete technical documentation (11 documents)
+- ✅ TypeScript without compilation errors
 
-**Tareas Completadas:**
-- [x] **Gestión de Proveedores UI**
-  - Backend: ✅ CRUD completo
-  - Frontend: ✅ Componente `Suppliers.tsx` + `SupplierForm.tsx` implementados
-  - Estado: ✅ COMPLETADO en v1.1.0
+**Metrics:**
+- 📦 69 production dependencies + 20 development dependencies
+- 📝 ~7,000 lines of TypeScript code
+- 📊 4 SQLite tables, 36+ optimized queries
+- 🎨 12 reusable components + 7 modular features
+- 📚 ~30,000 words of documentation
 
-- [x] **Upload de Imágenes para Productos**
-  - Backend: ✅ Campo `image` y almacenamiento local
-  - Frontend: ✅ `ProductForm.tsx` integrado con wizard de carga
-  - Estado: ✅ COMPLETADO en v1.1.0
+---
 
-- [x] **Cancelar Ventas (UI)**
-  - Backend: ✅ Función `cancelSale()`
-  - Frontend: ✅ Botón en historial con lógica de reversión de stock
-  - Estado: ✅ COMPLETADO en v1.1.0
+## 🎯 Identified Areas for Improvement
 
-- [x] **Botones de Exportación PDF**
+### 🔴 High Priority (Short Term - Sprint 1-2)
+
+#### 1. **Complete Features Whose Backend Is Ready (COMPLETED)**
+**Status:** ✅ Every feature has been implemented in the UI.
+
+**Completed Tasks:**
+- [x] **Supplier Management UI**
+  - Backend: ✅ Complete CRUD
+  - Frontend: ✅ `Suppliers.tsx` + `SupplierForm.tsx` components implemented
+  - Status: ✅ COMPLETED in v1.1.0
+
+- [x] **Image Upload for Products**
+  - Backend: ✅ `image` field and local storage
+  - Frontend: ✅ `ProductForm.tsx` integrated with an upload wizard
+  - Status: ✅ COMPLETED in v1.1.0
+
+- [x] **Cancel Sales (UI)**
+  - Backend: ✅ `cancelSale()` function
+  - Frontend: ✅ Button in the history with stock-reversal logic
+  - Status: ✅ COMPLETED in v1.1.0
+
+- [x] **PDF Export Buttons**
   - Backend: ✅ `pdfGenerator.tsx`
-  - Frontend: ✅ Accesibles desde Reportes y sección dedicada
-  - Estado: ✅ COMPLETADO en v1.1.0
+  - Frontend: ✅ Available from Reports and a dedicated section
+  - Status: ✅ COMPLETED in v1.1.0
 
-**Entregable Sprint 1:** Versión 1.1.0 con UI completa para todas las funcionalidades backend lanzada.
+**Sprint 1 Deliverable:** Version 1.1.0 released with a complete UI for every backend feature.
 
 ---
 
-#### 2. **Testing y Quality Assurance**
-**Problema:** El proyecto carece de tests automatizados.
+#### 2. **Testing and Quality Assurance**
+**Problem:** The project lacks automated tests.
 
-**Tareas:**
-- [ ] **Configurar Vitest** (framework de testing para Vite)
-  - Instalar dependencias: `vitest`, `@testing-library/react`
-  - Configurar `vitest.config.ts`
-  - Esfuerzo: 0.5 días
+**Tasks:**
+- [ ] **Configure Vitest** (testing framework for Vite)
+  - Install dependencies: `vitest`, `@testing-library/react`
+  - Configure `vitest.config.ts`
+  - Effort: 0.5 days
 
-- [ ] **Tests Unitarios de Servicios Críticos**
-  - `zipBackupService.ts` - Compresión/descompresión
-  - `secureEncryptionService.ts` - Cifrado/descifrado
-  - `exportService.ts` - Generación CSV
+- [ ] **Unit Tests for Critical Services**
+  - `zipBackupService.ts` - Compression/decompression
+  - `secureEncryptionService.ts` - Encryption/decryption
+  - `exportService.ts` - CSV generation
   - `productService.ts`, `saleService.ts` - IPC calls
-  - Cobertura objetivo: 80% en servicios
-  - Esfuerzo: 3-4 días
+  - Target coverage: 80% of services
+  - Effort: 3-4 days
 
-- [ ] **Tests de Integración IPC**
-  - Flujo completo: Renderer → Preload → Main → Database
-  - Validar operaciones CRUD
-  - Esfuerzo: 2 días
+- [ ] **IPC Integration Tests**
+  - Full flow: Renderer → Preload → Main → Database
+  - Validate CRUD operations
+  - Effort: 2 days
 
-- [ ] **Tests E2E (End-to-End) con Playwright/Spectron**
-  - Flujo: Crear producto → Agregar al carrito → Completar venta
-  - Flujo: Crear backup → Restaurar backup
-  - Esfuerzo: 3-4 días
+- [ ] **E2E (End-to-End) Tests with Playwright/Spectron**
+  - Flow: Create product → Add to cart → Complete sale
+  - Flow: Create backup → Restore backup
+  - Effort: 3-4 days
 
-**Entregable Sprint 2:** Suite de tests con CI/CD integrado (GitHub Actions).
+**Sprint 2 Deliverable:** A test suite with integrated CI/CD (GitHub Actions).
 
 ---
 
-#### 3. **Resolver TODO/FIXME en Código**
-**Problema:** Existe al menos 1 TODO pendiente identificado.
+#### 3. **Resolve TODO/FIXME in the Code**
+**Problem:** At least 1 pending TODO has been identified.
 
-**Ubicación:**
+**Location:**
 ```typescript
 // src/services/backupService.ts:86
 // TODO: Implement actual restore via IPC call
 ```
 
-**Acción:**
-- [ ] Implementar restauración real vía IPC usando `zipBackupService`
-- [ ] Eliminar dependencia del servicio legacy si está duplicado
-- [ ] Esfuerzo: 1 día
+**Action:**
+- [ ] Implement a real restore over IPC using `zipBackupService`
+- [ ] Remove the dependency on the legacy service if it is duplicated
+- [ ] Effort: 1 day
 
-**Búsqueda Completa:**
-- [ ] Ejecutar `grep -r "TODO\|FIXME" src/ electron/` para identificar todos los pendientes
-- [ ] Crear issues en GitHub por cada uno
-- [ ] Priorizar y asignar a sprints
-
----
-
-### 🟡 Prioridad Media (Mediano Plazo - Sprint 3-5)
-
-#### 4. **Optimización de Performance**
-**Tareas:**
-- [ ] **Code Splitting por Rutas**
-  - Implementar lazy loading en React Router
-  - Ejemplo: `const Reports = lazy(() => import('./features/reports/Reports'))`
-  - Reducción esperada: -30% en bundle inicial
-  - Esfuerzo: 1 día
-
-- [ ] **Lazy Loading de Componentes Pesados**
-  - Componentes: `BackupWizard`, `RestoreWizard`, `ImportWizard`
-  - Recharts (gráficas) solo cargar en Dashboard
-  - Esfuerzo: 1 día
-
-- [ ] **Optimizar Bundle Size**
-  - Analizar con `vite-plugin-bundle-visualizer`
-  - Eliminar dependencias no usadas
-  - Tree-shaking manual si es necesario
-  - Meta: Reducir bundle de producción < 2MB
-  - Esfuerzo: 1-2 días
-
-- [ ] **Virtualización de Tablas Largas**
-  - Implementar `react-window` para listas de productos/ventas > 100 items
-  - Esfuerzo: 1 día
+**Full Search:**
+- [ ] Run `grep -r "TODO\|FIXME" src/ electron/` to find every pending item
+- [ ] Create a GitHub issue for each one
+- [ ] Prioritize and assign them to sprints
 
 ---
 
-#### 5. **Mejoras de UX/UI**
-**Tareas:**
-- [ ] **Sistema de Onboarding**
-  - Tutorial interactivo para nuevos usuarios
-  - Tooltips contextuales en funciones clave
-  - Esfuerzo: 2-3 días
+### 🟡 Medium Priority (Medium Term - Sprint 3-5)
 
-- [ ] **Atajos de Teclado Globales**
-  - `Cmd/Ctrl + K` → Command Palette (ya existe componente)
-  - `Cmd/Ctrl + N` → Nuevo producto
-  - `Cmd/Ctrl + S` → Nueva venta (POS)
-  - `F1` → Ayuda/Documentación
-  - Esfuerzo: 1 día
+#### 4. **Performance Optimization**
+**Tasks:**
+- [ ] **Code Splitting by Route**
+  - Implement lazy loading in React Router
+  - Example: `const Reports = lazy(() => import('./features/reports/Reports'))`
+  - Expected reduction: -30% of the initial bundle
+  - Effort: 1 day
 
-- [ ] **Estados Vacíos Mejorados**
-  - Ilustraciones en lugar de solo texto
-  - CTAs claros para primera acción
-  - Esfuerzo: 1 día
+- [ ] **Lazy Loading of Heavy Components**
+  - Components: `BackupWizard`, `RestoreWizard`, `ImportWizard`
+  - Load Recharts (charts) only on the Dashboard
+  - Effort: 1 day
 
-- [ ] **Notificaciones Persistentes**
-  - Sistema de notificaciones en app (ya usa Sonner)
-  - Historial de notificaciones
-  - Esfuerzo: 1 día
+- [ ] **Optimize Bundle Size**
+  - Analyze with `vite-plugin-bundle-visualizer`
+  - Remove unused dependencies
+  - Manual tree-shaking if needed
+  - Goal: Production bundle < 2MB
+  - Effort: 1-2 days
+
+- [ ] **Virtualization of Long Tables**
+  - Implement `react-window` for product/sales lists > 100 items
+  - Effort: 1 day
 
 ---
 
-#### 6. **Internacionalización (i18n)**
-**Tareas:**
-- [ ] **Instalar react-i18next**
-  - Configurar con español (default) e inglés
+#### 5. **UX/UI Improvements**
+**Tasks:**
+- [ ] **Onboarding System**
+  - Interactive tutorial for new users
+  - Contextual tooltips on key features
+  - Effort: 2-3 days
+
+- [ ] **Global Keyboard Shortcuts**
+  - `Cmd/Ctrl + K` → Command Palette (the component already exists)
+  - `Cmd/Ctrl + N` → New product
+  - `Cmd/Ctrl + S` → New sale (POS)
+  - `F1` → Help/Documentation
+  - Effort: 1 day
+
+- [ ] **Improved Empty States**
+  - Illustrations instead of plain text
+  - Clear CTAs for the first action
+  - Effort: 1 day
+
+- [ ] **Persistent Notifications**
+  - In-app notification system (already uses Sonner)
+  - Notification history
+  - Effort: 1 day
+
+---
+
+#### 6. **Internationalization (i18n)**
+**Tasks:**
+- [ ] **Install react-i18next**
+  - Configure with Spanish (default) and English
   
-- [ ] **Crear Archivos de Traducción**
+- [ ] **Create Translation Files**
   - `locales/es/common.json`
   - `locales/en/common.json`
   
-- [ ] **Traducir UI**
+- [ ] **Translate the UI**
   - Features: Dashboard, Inventory, Sales, Reports, Settings
-  - Componentes: Sidebar, Header, Modales
-  - Esfuerzo: 3-4 días
+  - Components: Sidebar, Header, Modals
+  - Effort: 3-4 days
 
-- [ ] **Selector de Idioma**
-  - Agregar en Settings → General
-  - Persistir preferencia en localStorage
-  - Esfuerzo: 0.5 días
+- [ ] **Language Selector**
+  - Add it in Settings → General
+  - Persist the preference in localStorage
+  - Effort: 0.5 days
 
-**Entregable Sprint 4:** NexoraCloud disponible en español e inglés.
-
----
-
-### 🟢 Prioridad Baja (Largo Plazo - Sprint 6+)
-
-#### 7. **Migración de Database Storage**
-**Contexto:** Actualmente usa híbrido de `electron-store` (configuración) + `better-sqlite3` (datos).
-
-**Propuesta:**
-- [ ] Migrar toda la configuración a SQLite (tabla `settings`)
-- [ ] Eliminar dependencia de `electron-store`
-- [ ] Beneficio: Única fuente de verdad, backups más simples
-- [ ] Esfuerzo: 2-3 días
+**Sprint 4 Deliverable:** NexoraCloud available in Spanish and English.
 
 ---
 
-#### 8. **Funcionalidades Futuras (Fase 5)**
-**Planificadas en Roadmap.md:**
+### 🟢 Low Priority (Long Term - Sprint 6+)
 
-- [ ] **Sistema de Roles y Permisos**
-  - Admin, Vendedor, Almacén
-  - CRUD de usuarios
+#### 7. **Database Storage Migration**
+**Context:** It currently uses a hybrid of `electron-store` (configuration) + `better-sqlite3` (data).
+
+**Proposal:**
+- [ ] Migrate all configuration to SQLite (a `settings` table)
+- [ ] Remove the `electron-store` dependency
+- [ ] Benefit: A single source of truth, simpler backups
+- [ ] Effort: 2-3 days
+
+---
+
+#### 8. **Future Features (Phase 5)**
+**Planned in Roadmap.md:**
+
+- [ ] **Roles and Permissions System**
+  - Admin, Salesperson, Warehouse
+  - User CRUD
   - Login/Logout
-  - Esfuerzo: 1-2 semanas
+  - Effort: 1-2 weeks
 
-- [ ] **Multi-empresa**
-  - Múltiples bases de datos SQLite
-  - Selector de empresa en login
-  - Esfuerzo: 1 semana
+- [ ] **Multi-company**
+  - Multiple SQLite databases
+  - Company selector at login
+  - Effort: 1 week
 
-- [ ] **Impresión de Tickets (ESC/POS)**
-  - Integración con impresoras térmicas
-  - Biblioteca: `node-thermal-printer`
-  - Esfuerzo: 1 semana
+- [ ] **Ticket Printing (ESC/POS)**
+  - Integration with thermal printers
+  - Library: `node-thermal-printer`
+  - Effort: 1 week
 
-- [ ] **Sincronización Red Local (Multi-caja)**
-  - WebSockets para sincronización en tiempo real
-  - Arquitectura cliente-servidor local
-  - Esfuerzo: 3-4 semanas
+- [ ] **Local Network Sync (Multiple registers)**
+  - WebSockets for real-time synchronization
+  - Local client-server architecture
+  - Effort: 3-4 weeks
 
-- [ ] **Plugins y Extensiones**
-  - Sistema modular de plugins
-  - API para desarrolladores externos
-  - Esfuerzo: 2-3 semanas
-
----
-
-## 📋 Bugs y Issues Conocidos
-
-### ⚠️ Issues Menores
-
-1. **Vulnerabilidades npm Moderadas**
-   - Estado: 3 vulnerabilidades no críticas reportadas
-   - Acción: Ejecutar `npm audit fix` y verificar compatibilidad
-   - Prioridad: Baja
-
-2. **Deprecation Warnings ESLint@8**
-   - Estado: ESLint 8 está deprecado
-   - Acción: Migrar a ESLint 9 flat config
-   - Prioridad: Baja
-   - Esfuerzo: 1 día
-
-3. **Encodings en Exports CSV**
-   - Verificar que UTF-8 BOM funciona en Excel en todos los idiomas
-   - Prioridad: Media
+- [ ] **Plugins and Extensions**
+  - Modular plugin system
+  - API for external developers
+  - Effort: 2-3 weeks
 
 ---
 
-## 🚀 Plan de Releases
+## 📋 Known Bugs and Issues
 
-### Versión 1.1.0 - "Completitud" (Q1 2026) - ✅ COMPLETADO
-**Fecha lanzamiento:** 8 Enero 2026
+### ⚠️ Minor Issues
+
+1. **Moderate npm Vulnerabilities**
+   - Status: 3 non-critical vulnerabilities reported
+   - Action: Run `npm audit fix` and check compatibility
+   - Priority: Low
+
+2. **ESLint@8 Deprecation Warnings**
+   - Status: ESLint 8 is deprecated
+   - Action: Migrate to the ESLint 9 flat config
+   - Priority: Low
+   - Effort: 1 day
+
+3. **Encodings in CSV Exports**
+   - Check that the UTF-8 BOM works in Excel in every language
+   - Priority: Medium
+
+---
+
+## 🚀 Release Plan
+
+### Version 1.1.0 - "Completeness" (Q1 2026) - ✅ COMPLETED
+**Release date:** January 8, 2026
 
 **Changelog:**
-- ✅ UI de Proveedores completa (Nuevo Módulo)
-- ✅ Upload de imágenes en productos (Integrado en Formulario)
-- ✅ Botón de cancelar ventas (Historial de Transacciones)
-- ✅ Botones de exportación PDF visibles (Ventas/Inventario)
-- ✅ Correcciones menores de UI y Navegación
+- ✅ Complete Supplier UI (New Module)
+- ✅ Image upload for products (Integrated in the Form)
+- ✅ Cancel-sale button (Transaction History)
+- ✅ Visible PDF export buttons (Sales/Inventory)
+- ✅ Minor UI and Navigation fixes
 
 ---
 
-### Versión 1.2.0 - "Calidad y Performance" (Q1 2026)
-**Fecha objetivo:** Marzo 2026
+### Version 1.2.0 - "Quality and Performance" (Q1 2026)
+**Target date:** March 2026
 
 **Changelog:**
-- ✅ Suite de tests (80% cobertura)
-- ✅ CI/CD con GitHub Actions
-- ✅ Code splitting implementado
-- ✅ Lazy loading de componentes pesados
-- ✅ Bundle size optimizado
-- ✅ Virtualización de tablas
+- ✅ Test suite (80% coverage)
+- ✅ CI/CD with GitHub Actions
+- ✅ Code splitting implemented
+- ✅ Lazy loading of heavy components
+- ✅ Optimized bundle size
+- ✅ Table virtualization
 
 ---
 
-### Versión 1.3.0 - "Experiencia Global" (Q2 2026)
-**Fecha objetivo:** Abril 2026
+### Version 1.3.0 - "Global Experience" (Q2 2026)
+**Target date:** April 2026
 
 **Changelog:**
-- ✅ Internacionalización (Español/Inglés)
-- ✅ Onboarding interactivo
-- ✅ Atajos de teclado globales
-- ✅ Estados vacíos mejorados
-- ✅ Sistema de notificaciones persistentes
+- ✅ Internationalization (Spanish/English)
+- ✅ Interactive onboarding
+- ✅ Global keyboard shortcuts
+- ✅ Improved empty states
+- ✅ Persistent notification system
 
 ---
 
-### Versión 2.0.0 - "Expansión Empresarial" (Q3 2026)
-**Fecha objetivo:** Julio 2026
+### Version 2.0.0 - "Business Expansion" (Q3 2026)
+**Target date:** July 2026
 
 **Changelog:**
-- ✅ Sistema de roles y usuarios
-- ✅ Multi-empresa
-- ✅ Impresión de tickets térmicos
-- ✅ Sincronización red local (beta)
-- ✅ Arquitectura de plugins
+- ✅ Roles and users system
+- ✅ Multi-company
+- ✅ Thermal ticket printing
+- ✅ Local network sync (beta)
+- ✅ Plugin architecture
 
 ---
 
-## 📊 Métricas de Éxito
+## 📊 Success Metrics
 
-### KPIs por Versión
+### KPIs per Version
 
 **v1.1.0:**
-- ✅ 100% de funcionalidades backend tienen UI
-- ✅ 0 TODOs en código productivo
-- ✅ 0 bugs críticos reportados
+- ✅ 100% of backend features have a UI
+- ✅ 0 TODOs in production code
+- ✅ 0 critical bugs reported
 
 **v1.2.0:**
-- ✅ Cobertura de tests ≥ 80%
-- ✅ Bundle size inicial < 2MB
-- ✅ Tiempo de carga inicial < 2s
+- ✅ Test coverage ≥ 80%
+- ✅ Initial bundle size < 2MB
+- ✅ Initial load time < 2s
 
 **v1.3.0:**
-- ✅ 2 idiomas soportados
-- ✅ Tasa de adopción onboarding > 80%
+- ✅ 2 supported languages
+- ✅ Onboarding adoption rate > 80%
 - ✅ NPS (Net Promoter Score) > 50
 
 **v2.0.0:**
-- ✅ Soporte para 3+ roles de usuario
-- ✅ 10+ empresas usando multi-empresa
-- ✅ Compatible con 5+ modelos de impresoras ESC/POS
+- ✅ Support for 3+ user roles
+- ✅ 10+ companies using multi-company
+- ✅ Compatible with 5+ ESC/POS printer models
 
 ---
 
-## 🎯 Estrategia de Desarrollo
+## 🎯 Development Strategy
 
-### Metodología: Agile Scrum
+### Methodology: Agile Scrum
 
-**Configuración:**
-- **Sprint Duration:** 2 semanas
-- **Release Cycle:** 1 mes (2 sprints)
-- **Daily Standups:** Opcional (proyecto individual)
-- **Sprint Review:** Demostración de features completadas
-- **Retrospectiva:** Análisis de mejoras
+**Configuration:**
+- **Sprint Duration:** 2 weeks
+- **Release Cycle:** 1 month (2 sprints)
+- **Daily Standups:** Optional (individual project)
+- **Sprint Review:** Demo of completed features
+- **Retrospective:** Analysis of improvements
 
-### Workflow Git
+### Git Workflow
 
 **Branches:**
-- `main` → Producción estable (releases taggeadas)
-- `develop` → Desarrollo activo (integración continua)
-- `feature/nombre-feature` → Nuevas funcionalidades
-- `bugfix/nombre-bug` → Correcciones
-- `hotfix/nombre-hotfix` → Parches urgentes en producción
+- `main` → Stable production (tagged releases)
+- `develop` → Active development (continuous integration)
+- `feature/feature-name` → New features
+- `bugfix/bug-name` → Fixes
+- `hotfix/hotfix-name` → Urgent production patches
 
 **Commits:**
-- Seguir [Conventional Commits](https://www.conventionalcommits.org/)
-- Ejemplos:
+- Follow [Conventional Commits](https://www.conventionalcommits.org/)
+- Examples:
   - `feat(inventory): add supplier management UI`
   - `fix(sales): resolve cancel button not showing`
   - `test(backup): add encryption service unit tests`
@@ -361,82 +361,82 @@
 
 ---
 
-## 🛠️ Herramientas Recomendadas
+## 🛠️ Recommended Tools
 
 ### Testing
 - **Vitest** - Unit/Integration testing
-- **Playwright** - E2E testing para Electron
+- **Playwright** - E2E testing for Electron
 - **Testing Library** - React component testing
 
 ### Performance
-- **vite-plugin-bundle-visualizer** - Análisis de bundle
-- **Lighthouse CI** - Métricas de performance
-- **react-window** - Virtualización
+- **vite-plugin-bundle-visualizer** - Bundle analysis
+- **Lighthouse CI** - Performance metrics
+- **react-window** - Virtualization
 
 ### Quality
-- **Prettier** - Formateo automático
+- **Prettier** - Automatic formatting
 - **Husky** - Git hooks (pre-commit)
-- **lint-staged** - Linting de staged files
-- **Commitlint** - Validación de commits
+- **lint-staged** - Linting of staged files
+- **Commitlint** - Commit validation
 
-### Monitoreo
-- **Sentry** (opcional) - Error tracking en producción
-- **Electron Log** - Sistema de logs mejorado
+### Monitoring
+- **Sentry** (optional) - Error tracking in production
+- **Electron Log** - Improved logging system
 
 ---
 
-## 💡 Recomendaciones Estratégicas
+## 💡 Strategic Recommendations
 
-### 1. **Foco en Completitud antes de Nuevas Features**
-Completar v1.1.0 (UI faltante) antes de avanzar a optimizaciones. Los usuarios aprecian funcionalidades completas sobre nuevas incompletas.
+### 1. **Focus on Completeness before New Features**
+Complete v1.1.0 (missing UI) before moving on to optimizations. Users value complete features over new, unfinished ones.
 
-### 2. **Invertir en Testing Temprano**
-Implementar tests en v1.2.0 antes de expandir a v2.0.0. La deuda técnica en testing se vuelve exponencial.
+### 2. **Invest in Testing Early**
+Implement tests in v1.2.0 before expanding to v2.0.0. Technical debt in testing grows exponentially.
 
-### 3. **Documentación de Usuario**
-Crear **manual de usuario** en paralelo al desarrollo técnico:
-- Videos tutoriales
-- Guía PDF descargable
+### 3. **User Documentation**
+Create a **user manual** alongside technical development:
+- Video tutorials
+- Downloadable PDF guide
 - FAQ
 
 ### 4. **Community Building**
-- Crear Discord/Slack para usuarios
-- GitHub Discussions para feature requests
-- Newsletter mensual con updates
+- Create a Discord/Slack for users
+- GitHub Discussions for feature requests
+- Monthly newsletter with updates
 
 ### 5. **Feedback Loop**
-- Implementar telemetría anónima (con consentimiento)
-- Analytics de uso de funcionalidades
-- Sistema de feedback in-app
+- Implement anonymous telemetry (with consent)
+- Feature usage analytics
+- In-app feedback system
 
 ---
 
-## 🎓 Lecciones Aprendidas (Post-v1.0.0)
+## 🎓 Lessons Learned (Post-v1.0.0)
 
-### ✅ Qué Funcionó Bien
-1. **Documentación exhaustiva desde Fase 0**
-2. **Arquitectura modular bien definida**
-3. **TypeScript strict mode** - Previno muchos bugs
-4. **Servicios desacoplados** - Fácil de testear y mantener
+### ✅ What Worked Well
+1. **Thorough documentation from Phase 0**
+2. **Well-defined modular architecture**
+3. **TypeScript strict mode** - Prevented many bugs
+4. **Decoupled services** - Easy to test and maintain
 
-### ⚠️ Qué Mejorar
-1. **Testing desde el inicio** - Debió ser parte de Fase 1
-2. **UI/Backend sincronizados** - Evitar tener backend sin UI
-3. **Code reviews** - Implementar proceso formal
-4. **Performance desde diseño** - No optimizar al final
+### ⚠️ What to Improve
+1. **Testing from the start** - It should have been part of Phase 1
+2. **UI and backend in sync** - Avoid having backend without UI
+3. **Code reviews** - Introduce a formal process
+4. **Performance by design** - Don't optimize at the end
 
 ---
 
-## 🔗 Referencias y Recursos
+## 🔗 References and Resources
 
-### Documentación Interna
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Arquitectura técnica
-- [TECH_STACK.md](TECH_STACK.md) - Stack justificado
-- [DEVELOPMENT.md](DEVELOPMENT.md) - Guía de desarrollo
-- [Roadmap.md](../Roadmap.md) - Roadmap oficial por fases
-- [changelog.md](../changelog.md) - Historial de cambios
+### Internal Documentation
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Technical architecture
+- [TECH_STACK.md](TECH_STACK.md) - Justified stack
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Development guide
+- [Roadmap.md](../Roadmap.md) - Official roadmap by phases
+- [changelog.md](../changelog.md) - Change history
 
-### Recursos Externos
+### External Resources
 - [Electron Best Practices](https://www.electronjs.org/docs/latest/tutorial/security)
 - [React Performance](https://react.dev/learn/render-and-commit)
 - [SQLite Optimization](https://www.sqlite.org/optoverview.html)
@@ -444,26 +444,26 @@ Crear **manual de usuario** en paralelo al desarrollo técnico:
 
 ---
 
-## 📞 Contacto y Soporte
+## 📞 Contact and Support
 
-**Mantenedor Principal:** DaaNiieeL123  
+**Lead Maintainer:** DaaNiieeL123  
 **Email:** proyectogit22@gmail.com  
 **GitHub:** [CeroCloud/CeroCloud-Desktop](https://github.com/CeroCloud/CeroCloud-Desktop)
 
 ---
 
-## 📝 Changelog de este Documento
+## 📝 Changelog of this Document
 
-**v1.0.0** - 8 de Enero 2026
-- ✅ Creación inicial del roadmap estratégico
-- ✅ Identificación de 8 áreas de mejora principales
-- ✅ Definición de 4 versiones futuras (1.1.0 - 2.0.0)
-- ✅ Establecimiento de metodología Agile
-- ✅ Integración de lecciones aprendidas
+**v1.0.0** - January 8, 2026
+- ✅ Initial creation of the strategic roadmap
+- ✅ Identification of 8 main areas for improvement
+- ✅ Definition of 4 future versions (1.1.0 - 2.0.0)
+- ✅ Establishment of the Agile methodology
+- ✅ Integration of lessons learned
 
 ---
 
-**Sprint 1 (v1.1.0) Finalizado Exitosamente 🚀**
+**Sprint 1 (v1.1.0) Completed Successfully 🚀**
 
-**Siguiente Paso:** Sprint 2 (v1.2.0) - Testing y Quality Assurance.
-Se recomienda comenzar configurando Vitest y creando los primeros tests unitarios para servicios críticos.
+**Next Step:** Sprint 2 (v1.2.0) - Testing and Quality Assurance.
+It is recommended to start by configuring Vitest and creating the first unit tests for the critical services.

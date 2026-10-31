@@ -1,244 +1,244 @@
-# 📦 Guía Rápida: Crear tu Primer Release con Auto-Update
+# 📦 Quick Guide: Create Your First Release with Auto-Update
 
-**Para:** NexoraCloud Desktop  
-**Objetivo:** Publicar v1.1.0 con sistema de auto-actualización funcional
-
----
-
-## 🎯 Pre-requisitos
-
-Antes de comenzar, asegúrate de tener:
-
-- ✅ Node.js v20+ instalado
-- ✅ Git configurado
-- ✅ Acceso al repositorio GitHub (push access)
-- ✅ Proyecto compilando sin errores (`npm run type-check`)
+**For:** NexoraCloud Desktop  
+**Goal:** Publish v1.1.0 with a working auto-update system
 
 ---
 
-## 📋 Paso a Paso
+## 🎯 Prerequisites
 
-### 1️⃣ **Preparar la Nueva Versión**
+Before you begin, make sure you have:
+
+- ✅ Node.js v20+ installed
+- ✅ Git configured
+- ✅ Access to the GitHub repository (push access)
+- ✅ The project compiling without errors (`npm run type-check`)
+
+---
+
+## 📋 Step by Step
+
+### 1️⃣ **Prepare the New Version**
 
 ```bash
-# Navegar al directorio del proyecto
+# Go to the project directory
 cd C:\Users\danie\Desktop\CeroCloud-Desktop
 
-# Actualizar la versión en package.json
+# Update the version in package.json
 npm version minor
-# Esto cambiará de 1.0.0 → 1.1.0
-# Y creará un commit automático
+# This changes 1.0.0 → 1.1.0
+# and creates a commit automatically
 
-# Resultado esperado:
+# Expected result:
 # v1.1.0
 ```
 
-### 2️⃣ **Actualizar el Changelog**
+### 2️⃣ **Update the Changelog**
 
-Edita `changelog.md` y agrega:
+Edit `changelog.md` and add:
 
 ```markdown
-## [1.1.0] – 2026-01-XX 🎉 **SISTEMA DE AUTO-ACTUALIZACIÓN**
+## [1.1.0] – 2026-01-XX 🎉 **AUTO-UPDATE SYSTEM**
 
-### Added - ✅ **Auto-Update integrado**
-- ✅ Verificación automática cada 6 horas
-- ✅ Notificaciones elegantes con Sonner toasts
-- ✅ Descarga en segundo plano con barra de progreso
-- ✅ Instalación opcional (no forzada)
-- ✅ Soporte para GitHub Releases
-- ✅ Logs detallados para debugging
+### Added - ✅ **Built-in Auto-Update**
+- ✅ Automatic check every 6 hours
+- ✅ Elegant notifications with Sonner toasts
+- ✅ Background download with a progress bar
+- ✅ Optional installation (not forced)
+- ✅ GitHub Releases support
+- ✅ Detailed logs for debugging
 
 ### Technical
-- Agregado `electron-updater` y `electron-log`
-- Nuevo servicio `AutoUpdateService` en main process
-- Componente `UpdateNotifier` para UI
-- API completa en preload script
+- Added `electron-updater` and `electron-log`
+- New `AutoUpdateService` in the main process
+- `UpdateNotifier` component for the UI
+- Complete API in the preload script
 ```
 
-Guarda el archivo.
+Save the file.
 
-### 3️⃣ **Commit y Push**
+### 3️⃣ **Commit and Push**
 
 ```bash
-# Agregar changelog
+# Add the changelog
 git add changelog.md
 
 # Commit
 git commit -m "docs: update changelog for v1.1.0"
 
-# Push a main (o develop según tu workflow)
+# Push to main (or develop, depending on your workflow)
 git push origin main
 
-# Push del tag
+# Push the tag
 git push origin v1.1.0
 ```
 
-### 4️⃣ **Build de la Aplicación**
+### 4️⃣ **Build the Application**
 
 ```bash
-# Build para Windows
+# Build for Windows
 npm run build:win
 
-# Esto generará en la carpeta 'release':
+# This generates, in the 'release' folder:
 # - NexoraCloud Setup 1.1.0.exe (~80-120 MB)
-# - latest.yml (metadata para auto-updater)
+# - latest.yml (metadata for the auto-updater)
 ```
 
-**⏱️ Tiempo estimado:** 2-5 minutos dependiendo de tu PC.
+**⏱️ Estimated time:** 2-5 minutes depending on your PC.
 
-**📁 Archivos generados:**
+**📁 Generated files:**
 ```
 release/
-  ├── NexoraCloud Setup 1.1.0.exe   ← Instalador principal
-  └── latest.yml                   ← Metadata de actualización
+  ├── NexoraCloud Setup 1.1.0.exe   ← Main installer
+  └── latest.yml                   ← Update metadata
 ```
 
-### 5️⃣ **Crear Release en GitHub**
+### 5️⃣ **Create the Release on GitHub**
 
-#### Opción A: Interfaz Web (Recomendado)
+#### Option A: Web Interface (Recommended)
 
-1. Ve a: https://github.com/CeroCloud/CeroCloud-Desktop/releases
+1. Go to: https://github.com/CeroCloud/CeroCloud-Desktop/releases
 
-2. Click en **"Draft a new release"**
+2. Click **"Draft a new release"**
 
-3. Completa el formulario:
+3. Fill in the form:
    ```
    Tag version: v1.1.0
-   Release title: v1.1.0 - Auto-Update & Mejoras
+   Release title: v1.1.0 - Auto-Update & Improvements
    
    Description:
-   ## 🎉 Novedades
+   ## 🎉 What's New
    
-   ### Sistema de Auto-Actualización
-   NexoraCloud ahora se actualiza automáticamente:
-   - ✅ Notificaciones de nuevas versiones
-   - ✅ Descarga en segundo plano
-   - ✅ Instalación sin interrumpir tu trabajo
+   ### Auto-Update System
+   NexoraCloud now updates itself automatically:
+   - ✅ Notifications about new versions
+   - ✅ Background download
+   - ✅ Installation without interrupting your work
    
-   ### Mejoras Técnicas
-   - Verificación cada 6 horas
-   - Logs detallados en `%APPDATA%\nexoracloud\logs`
-   - Compatible con GitHub Releases
+   ### Technical Improvements
+   - Checks every 6 hours
+   - Detailed logs in `%APPDATA%\nexoracloud\logs`
+   - Compatible with GitHub Releases
    
-   ## 📥 Descarga
-   Descarga el instalador para Windows más abajo.
+   ## 📥 Download
+   Download the Windows installer below.
    
-   ## 🔄 Actualización desde v1.0.0
-   Si ya tienes NexoraCloud instalado:
-   1. La app te notificará automáticamente
-   2. Click en "Descargar"
-   3. Espera la descarga
-   4. Click en "Instalar y Reiniciar"
+   ## 🔄 Updating from v1.0.0
+   If you already have NexoraCloud installed:
+   1. The app will notify you automatically
+   2. Click "Download"
+   3. Wait for the download
+   4. Click "Install and Restart"
    
-   ## 📝 Changelog Completo
-   Ver [changelog.md](https://github.com/CeroCloud/CeroCloud-Desktop/blob/main/changelog.md)
+   ## 📝 Full Changelog
+   See [changelog.md](https://github.com/CeroCloud/CeroCloud-Desktop/blob/main/changelog.md)
    ```
 
-4. **Subir archivos:**
-   - Arrastra `NexoraCloud Setup 1.1.0.exe` al área de assets
-   - Arrastra `latest.yml` al área de assets
+4. **Upload the files:**
+   - Drag `NexoraCloud Setup 1.1.0.exe` into the assets area
+   - Drag `latest.yml` into the assets area
 
-5. Marcar como "**Latest release**" (checkbox)
+5. Mark it as "**Latest release**" (checkbox)
 
-6. Click en **"Publish release"**
+6. Click **"Publish release"**
 
-#### Opción B: GitHub CLI (Avanzado)
+#### Option B: GitHub CLI (Advanced)
 
 ```bash
-# Instalar gh CLI si no lo tienes
+# Install the gh CLI if you don't have it
 # https://cli.github.com/
 
-# Autenticarse
+# Authenticate
 gh auth login
 
-# Crear release
+# Create the release
 gh release create v1.1.0 \
-  --title "v1.1.0 - Auto-Update & Mejoras" \
-  --notes "Sistema de auto-actualización integrado. Ver changelog para detalles." \
+  --title "v1.1.0 - Auto-Update & Improvements" \
+  --notes "Built-in auto-update system. See the changelog for details." \
   "release/NexoraCloud Setup 1.1.0.exe#NexoraCloud-Setup-1.1.0.exe" \
   "release/latest.yml#latest.yml"
 ```
 
-### 6️⃣ **Verificar el Release**
+### 6️⃣ **Verify the Release**
 
-1. Ve al release publicado:
+1. Go to the published release:
    ```
    https://github.com/CeroCloud/CeroCloud-Desktop/releases/tag/v1.1.0
    ```
 
-2. Verifica que aparezcan:
+2. Check that these appear:
    - ✅ Tag: `v1.1.0`
-   - ✅ Archivo: `NexoraCloud-Setup-1.1.0.exe` (~80-120 MB)
-   - ✅ Archivo: `latest.yml` (~1 KB)
-   - ✅ Descripción del release
+   - ✅ File: `NexoraCloud-Setup-1.1.0.exe` (~80-120 MB)
+   - ✅ File: `latest.yml` (~1 KB)
+   - ✅ Release description
 
 ---
 
-## 🧪 Testing del Auto-Update
+## 🧪 Testing the Auto-Update
 
-### Simular Actualización (Testing Local)
+### Simulate an Update (Local Testing)
 
-Para verificar que funciona:
+To verify that it works:
 
-1. **Instala la versión OLD (simulada):**
+1. **Install the OLD (simulated) version:**
    ```bash
-   # Cambia temporalmente la versión a 1.0.9
-   # En package.json: "version": "1.0.9"
+   # Temporarily change the version to 1.0.9
+   # In package.json: "version": "1.0.9"
    
    npm run build:win
-   # Instala este .exe
+   # Install this .exe
    ```
 
-2. **Ejecuta la app instalada**
-   - Espera 5 segundos
-   - Debería mostrar: "🎉 ¡Nueva versión 1.1.0 disponible!"
+2. **Run the installed app**
+   - Wait 5 seconds
+   - It should show: "🎉 New version 1.1.0 available!"
 
-3. **Descargar e Instalar**
-   - Click en "Descargar"
-   - Espera la descarga (verás la barra de progreso)
-   - Click en "Instalar y Reiniciar"
-   - La app se cierra, actualiza y reabre con v1.1.0
+3. **Download and Install**
+   - Click "Download"
+   - Wait for the download (you will see the progress bar)
+   - Click "Install and Restart"
+   - The app closes, updates and reopens with v1.1.0
 
-### Ver Logs
+### View the Logs
 
 ```powershell
-# En PowerShell
+# In PowerShell
 Get-Content "$env:APPDATA\nexoracloud\logs\main.log" -Tail 30
 
-# Buscar líneas como:
-# 🔍 Verificando actualizaciones...
-# ✅ Actualización disponible: 1.1.0
-# ⬇️ Descargando...
-# ✅ Actualización descargada: 1.1.0
+# Look for lines like:
+# Checking for updates...
+# Update available: 1.1.0
+# Downloading: 45.20% - ...
+# Update downloaded: 1.1.0
 ```
 
 ---
 
-## 🎨 Capturas para el Release (Opcional)
+## 🎨 Screenshots for the Release (Optional)
 
-Para hacer el release más atractivo, puedes agregar capturas de pantalla:
+To make the release more appealing, you can add screenshots:
 
-### Captura 1: Notificación de Actualización
+### Screenshot 1: Update Notification
 ![update-notification](screenshots/update-notification.png)
 
-### Captura 2: Barra de Progreso
+### Screenshot 2: Progress Bar
 ![update-download](screenshots/update-download.png)
 
-Sube las imágenes en la descripción del release usando:
+Upload the images in the release description using:
 ```markdown
-![Descripción](URL_de_la_imagen)
+![Description](Image_URL)
 ```
 
 ---
 
-## ⚠️ Problemas Comunes
+## ⚠️ Common Problems
 
 ### "Latest.yml not found"
-**Causa:** electron-builder no lo generó.
+**Cause:** electron-builder did not generate it.
 
-**Solución:**
+**Solution:**
 ```bash
-# Asegúrate de que package.json tiene:
+# Make sure package.json has:
 "build": {
   "publish": {
     "provider": "github",
@@ -246,68 +246,68 @@ Sube las imágenes en la descripción del release usando:
   }
 }
 
-# Re-build
+# Rebuild
 npm run build:win
 ```
 
 ### "Update check failed"
-**Causa:** El repositorio está privado o no tienes permisos.
+**Cause:** The repository is private or you don't have permissions.
 
-**Solución:**
-- Asegúrate de que el repo es **público** en GitHub
-- O configura un GitHub Token (ver `docs/AUTO_UPDATE.md`)
+**Solution:**
+- Make sure the repo is **public** on GitHub
+- Or configure a GitHub Token (see `docs/AUTO_UPDATE.md`)
 
-### "SmartScreen warning" en Windows
-**Causa:** El .exe no está firmado digitalmente.
+### "SmartScreen warning" on Windows
+**Cause:** The .exe is not digitally signed.
 
-**Solución (temporal):**
-- Los usuarios pueden hacer click en "Más información" → "Ejecutar de todas formas"
+**Solution (temporary):**
+- Users can click "More info" → "Run anyway"
 
-**Solución (permanente):**
-- Obtener un certificado de código (Sectigo, DigiCert)
-- Ver: `docs/AUTO_UPDATE.md` sección "Code Signing"
-
----
-
-## 📊 Checklist Final
-
-Antes de publicar, verifica:
-
-- [ ] Versión actualizada en `package.json` (1.1.0)
-- [ ] Changelog actualizado
-- [ ] Commit y push realizados
-- [ ] Tag `v1.1.0` creado y pusheado
-- [ ] Build completado exitosamente
-- [ ] Archivos `.exe` y `latest.yml` generados
-- [ ] Release creado en GitHub
-- [ ] Assets subidos correctamente
-- [ ] Release marcado como "Latest"
-- [ ] Descripción del release completa
+**Solution (permanent):**
+- Get a code-signing certificate (Sectigo, DigiCert)
+- See: the "Code Signing" section of `docs/AUTO_UPDATE.md`
 
 ---
 
-## 🎉 ¡Listo!
+## 📊 Final Checklist
 
-Ahora todos los usuarios que tengan NexoraCloud instalado recibirán una notificación automática cuando haya v1.1.0 disponible.
+Before publishing, check:
 
-### Próxima vez (más simple):
+- [ ] Version updated in `package.json` (1.1.0)
+- [ ] Changelog updated
+- [ ] Commit and push done
+- [ ] Tag `v1.1.0` created and pushed
+- [ ] Build completed successfully
+- [ ] `.exe` and `latest.yml` files generated
+- [ ] Release created on GitHub
+- [ ] Assets uploaded correctly
+- [ ] Release marked as "Latest"
+- [ ] Release description complete
+
+---
+
+## 🎉 Done!
+
+Now every user with NexoraCloud installed will get an automatic notification when v1.1.0 is available.
+
+### Next time (simpler):
 
 ```bash
 npm version patch  # 1.1.0 → 1.1.1
 git push origin main v1.1.1
 npm run build:win
-# Crear release en GitHub con los archivos
+# Create the release on GitHub with the files
 ```
 
 ---
 
-## 🆘 ¿Necesitas Ayuda?
+## 🆘 Need Help?
 
-- 📖 **Documentación Completa:** `docs/AUTO_UPDATE.md`
-- 📝 **Resumen de Feature:** `docs/FEATURE_AUTO_UPDATE_SUMMARY.md`
+- 📖 **Full Documentation:** `docs/AUTO_UPDATE.md`
+- 📝 **Feature Summary:** `docs/FEATURE_AUTO_UPDATE_SUMMARY.md`
 - 🐛 **Issues:** https://github.com/CeroCloud/CeroCloud-Desktop/issues
 - 📧 **Email:** proyectogit22@gmail.com
 
 ---
 
-**¿Todo funcionó? ¡Felicidades, acabas de implementar auto-updates en tu app Electron! 🚀**
+**Did everything work? Congratulations, you just implemented auto-updates in your Electron app! 🚀**

@@ -1,142 +1,142 @@
 # Gitflow Workflow - NexoraCloud
 
-Este documento describe el flujo de trabajo Git utilizado en el proyecto **NexoraCloud**.
+This document describes the Git workflow used in the **NexoraCloud** project.
 
 ---
 
-## 📋 Estructura de Ramas
+## 📋 Branch Structure
 
-### Ramas Principales (Permanentes)
+### Main Branches (Permanent)
 
-#### `main` - Producción
-- **Propósito:** Código en producción, siempre estable
-- **Releases:** Solo desde esta rama se crean releases oficiales
-- **Protección:** ✅ Branch protection habilitado
-- **Merge desde:** `release/*` o `hotfix/*` únicamente
+#### `main` - Production
+- **Purpose:** Production code, always stable
+- **Releases:** Official releases are created only from this branch
+- **Protection:** ✅ Branch protection enabled
+- **Merged from:** `release/*` or `hotfix/*` only
 - **CI/CD:** 
-  - ✅ CI completo (lint, type-check, build)
-  - ✅ CD automático (crea releases con semantic-release)
+  - ✅ Full CI (lint, type-check, build)
+  - ✅ Automatic CD (creates releases with semantic-release)
 
-#### `develop` - Desarrollo
-- **Propósito:** Rama de integración, código en desarrollo activo
-- **Protección:** ✅ Requiere PR con revisión
-- **Merge desde:** `feature/*`, `hotfix/*`
+#### `develop` - Development
+- **Purpose:** Integration branch, code under active development
+- **Protection:** ✅ Requires a PR with review
+- **Merged from:** `feature/*`, `hotfix/*`
 - **CI/CD:**
-  - ✅ CI completo
-  - ✅ Beta pre-releases opcionales (v1.0.0-beta.1)
+  - ✅ Full CI
+  - ✅ Optional beta pre-releases (v1.0.0-beta.1)
 
 ---
 
-### Ramas Temporales (Se eliminan después del merge)
+### Temporary Branches (Deleted after merging)
 
-#### `feature/*` - Nuevas Características
-- **Convención:** `feature/nombre-descriptivo`
-- **Ejemplos:**
+#### `feature/*` - New Features
+- **Convention:** `feature/descriptive-name`
+- **Examples:**
   - `feature/user-authentication`
   - `feature/export-pdf-invoices`
   - `feature/multi-currency-support`
-- **Origen:** Se crean desde `develop`
-- **Destino:** Se fusionan a `develop` mediante PR
-- **CI/CD:** ✅ CI automático en cada push
+- **Source:** Created from `develop`
+- **Target:** Merged into `develop` through a PR
+- **CI/CD:** ✅ Automatic CI on every push
 
-**Flujo:**
+**Flow:**
 ```bash
-# Crear feature desde develop
+# Create a feature from develop
 git checkout develop
 git pull origin develop
-git checkout -b feature/nombre-caracteristica
+git checkout -b feature/feature-name
 
-# Trabajar en la feature...
+# Work on the feature...
 git add .
-git commit -m "feat: agregar nueva característica"
+git commit -m "feat: add new feature"
 
-# Push y crear PR a develop
-git push origin feature/nombre-caracteristica
-# Crear PR en GitHub: feature/nombre-caracteristica → develop
+# Push and open a PR to develop
+git push origin feature/feature-name
+# Open a PR on GitHub: feature/feature-name → develop
 ```
 
 ---
 
-#### `release/*` - Preparación de Releases
-- **Convención:** `release/v1.x.x`
-- **Ejemplos:**
+#### `release/*` - Release Preparation
+- **Convention:** `release/v1.x.x`
+- **Examples:**
   - `release/v1.1.0`
   - `release/v2.0.0`
-- **Origen:** Se crean desde `develop`
-- **Destino:** Se fusionan a `main` Y `develop`
-- **Propósito:** Ajustes finales antes del lanzamiento
+- **Source:** Created from `develop`
+- **Target:** Merged into `main` AND `develop`
+- **Purpose:** Final adjustments before launch
 
-**Flujo:**
+**Flow:**
 ```bash
-# Crear release branch desde develop
+# Create a release branch from develop
 git checkout develop
 git pull origin develop
 git checkout -b release/v1.1.0
 
-# Actualizar versión en package.json, changelog, etc.
+# Update the version in package.json, the changelog, etc.
 npm version 1.1.0 --no-git-tag-version
 git add package.json package-lock.json
 git commit -m "chore: bump version to 1.1.0"
 
-# Merge a main (crea release automático)
+# Merge into main (creates the release automatically)
 git checkout main
 git pull origin main
 git merge --no-ff release/v1.1.0
 git push origin main
 
-# Merge de vuelta a develop
+# Merge back into develop
 git checkout develop
 git merge --no-ff release/v1.1.0
 git push origin develop
 
-# Eliminar rama temporal
+# Delete the temporary branch
 git branch -d release/v1.1.0
 git push origin --delete release/v1.1.0
 ```
 
 ---
 
-#### `hotfix/*` - Correcciones Urgentes
-- **Convención:** `hotfix/descripcion-bug`
-- **Ejemplos:**
+#### `hotfix/*` - Urgent Fixes
+- **Convention:** `hotfix/bug-description`
+- **Examples:**
   - `hotfix/fix-payment-crash`
   - `hotfix/security-vulnerability`
-- **Origen:** Se crean desde `main`
-- **Destino:** Se fusionan a `main` Y `develop`
-- **Propósito:** Correcciones críticas en producción
+- **Source:** Created from `main`
+- **Target:** Merged into `main` AND `develop`
+- **Purpose:** Critical fixes in production
 
-**Flujo:**
+**Flow:**
 ```bash
-# Crear hotfix desde main
+# Create a hotfix from main
 git checkout main
 git pull origin main
 git checkout -b hotfix/fix-critical-bug
 
-# Corregir el bug
+# Fix the bug
 git add .
-git commit -m "fix: corregir bug crítico en pagos"
+git commit -m "fix: fix critical payment bug"
 
-# Incrementar versión patch
+# Bump the patch version
 npm version patch --no-git-tag-version
 
-# Merge a main
+# Merge into main
 git checkout main
 git merge --no-ff hotfix/fix-critical-bug
 git push origin main
 
-# Merge a develop
+# Merge into develop
 git checkout develop
 git merge --no-ff hotfix/fix-critical-bug
 git push origin develop
 
-# Eliminar rama
+# Delete the branch
 git branch -d hotfix/fix-critical-bug
 git push origin --delete hotfix/fix-critical-bug
 ```
 
 ---
 
-## 🔄 Flujo Completo de Trabajo
+## 🔄 Complete Workflow
 
 ```mermaid
 gitGraph
@@ -181,88 +181,88 @@ gitGraph
 ## 🚀 CI/CD Pipeline
 
 ### Continuous Integration (CI)
-**Ejecuta en:** Todas las ramas (`main`, `develop`, `feature/*`, `hotfix/*`, `release/*`)
+**Runs on:** All branches (`main`, `develop`, `feature/*`, `hotfix/*`, `release/*`)
 
 **Checks:**
 - ✅ Linting (ESLint)
 - ✅ Type Checking (TypeScript)
-- ✅ Build exitoso (Vite)
+- ✅ Successful build (Vite)
 
-**Plataformas:** Windows + Linux
+**Platforms:** Windows + Linux
 
 ---
 
 ### Continuous Deployment (CD)
 
 #### Production Release (main)
-- **Trigger:** Push a `main` o tag `v*.*.*`
-- **Acción:** Crea release oficial en GitHub
-- **Archivos:** Instaladores Windows (.exe), Linux (.AppImage, .deb)
-- **Versión:** Según Semantic Versioning
+- **Trigger:** Push to `main` or a `v*.*.*` tag
+- **Action:** Creates an official release on GitHub
+- **Files:** Windows (.exe) and Linux (.AppImage, .deb) installers
+- **Version:** Per Semantic Versioning
 
 #### Beta Pre-release (develop)
-- **Trigger:** Push a `develop` (opcional)
-- **Acción:** Crea pre-release con etiqueta `-beta`
-- **Versión:** `v1.0.0-beta.1`, `v1.0.0-beta.2`, etc.
+- **Trigger:** Push to `develop` (optional)
+- **Action:** Creates a pre-release with the `-beta` label
+- **Version:** `v1.0.0-beta.1`, `v1.0.0-beta.2`, etc.
 
 ---
 
-## 📝 Convención de Commits (Conventional Commits)
+## 📝 Commit Convention (Conventional Commits)
 
-Seguimos **Conventional Commits** para generar changelogs automáticos:
+We follow **Conventional Commits** to generate changelogs automatically:
 
-### Tipos de Commits
-- `feat:` Nueva característica → MINOR version (1.0.0 → 1.1.0)
-- `fix:` Corrección de bug → PATCH version (1.0.0 → 1.0.1)
-- `docs:` Solo documentación
-- `style:` Formato, punto y coma, etc.
-- `refactor:` Refactorización de código
-- `perf:` Mejoras de rendimiento
-- `test:` Agregar o corregir tests
-- `chore:` Mantenimiento general
-- `ci:` Cambios en CI/CD
-- `build:` Cambios en build system
+### Commit Types
+- `feat:` New feature → MINOR version (1.0.0 → 1.1.0)
+- `fix:` Bug fix → PATCH version (1.0.0 → 1.0.1)
+- `docs:` Documentation only
+- `style:` Formatting, semicolons, etc.
+- `refactor:` Code refactoring
+- `perf:` Performance improvements
+- `test:` Add or fix tests
+- `chore:` General maintenance
+- `ci:` CI/CD changes
+- `build:` Build system changes
 
 ### Breaking Changes
 ```bash
-git commit -m "feat!: cambio que rompe compatibilidad
+git commit -m "feat!: change that breaks compatibility
 
-BREAKING CHANGE: descripción del cambio"
+BREAKING CHANGE: description of the change"
 ```
 → MAJOR version (1.0.0 → 2.0.0)
 
 ---
 
-## 🛡️ Protección de Ramas
+## 🛡️ Branch Protection
 
 ### `main`
-- ✅ Requiere pull request
-- ✅ Requiere revisión de código
-- ✅ Requiere CI passing
-- ✅ No permitir force push
-- ✅ No permitir eliminación
+- ✅ Requires a pull request
+- ✅ Requires code review
+- ✅ Requires passing CI
+- ✅ Force pushes not allowed
+- ✅ Deletion not allowed
 
 ### `develop`
-- ✅ Requiere pull request
-- ✅ Requiere CI passing
-- ✅ No permitir force push
+- ✅ Requires a pull request
+- ✅ Requires passing CI
+- ✅ Force pushes not allowed
 
 ---
 
 ## 📦 Release Checklist
 
-Antes de crear un release desde `release/*` a `main`:
+Before creating a release from `release/*` to `main`:
 
-- [ ] Todos los tests pasan
-- [ ] Versión actualizada en `package.json`
-- [ ] Changelog actualizado con nuevas características
-- [ ] Documentación actualizada
-- [ ] Build exitoso en Windows y Linux
-- [ ] PR revisado y aprobado
+- [ ] All tests pass
+- [ ] Version updated in `package.json`
+- [ ] Changelog updated with the new features
+- [ ] Documentation updated
+- [ ] Successful build on Windows and Linux
+- [ ] PR reviewed and approved
 
 ---
 
-## 🔗 Referencias
+## 🔗 References
 
 - [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
 - [Conventional Commits](https://www.conventionalcommits.org/)
@@ -270,4 +270,4 @@ Antes de crear un release desde `release/*` a `main`:
 
 ---
 
-*Última actualización: 8 de Enero de 2026*
+*Last updated: October 31, 2026*

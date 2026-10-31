@@ -1,140 +1,140 @@
-# 📚 Índice de Documentación - NexoraCloud
+# 📚 Documentation Index - NexoraCloud
 
-Bienvenido a la documentación de **NexoraCloud**. Este índice te ayudará a encontrar rápidamente la información que necesitas.
-
----
-
-## 🚀 Para Empezar
-
-Si eres nuevo en el proyecto, comienza aquí en orden:
-
-1. **[README.md](../README.md)** - Visión general del proyecto
-2. **[ENUNCIADO_PROYECTO.md](ENUNCIADO_PROYECTO.md)** - Descripción detallada y objetivos
-3. **[GETTING_STARTED.md](GETTING_STARTED.md)** - Guía de instalación y configuración
-4. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Entender la arquitectura técnica
+Welcome to the **NexoraCloud** documentation. This index will help you quickly find the information you need.
 
 ---
 
-## 📖 Documentación por Categoría
+## 🚀 Getting Started
 
-### 🎯 Visión y Planificación
+If you are new to the project, start here, in order:
 
-| Documento | Descripción | Audiencia |
-|-----------|-------------|-----------|
-| [ENUNCIADO_PROYECTO.md](ENUNCIADO_PROYECTO.md) | Visión general, objetivos y pilares del proyecto | Todos |
-| [Roadmap.md](../Roadmap.md) | Plan de desarrollo por fases y versiones | Todos |
-| [changelog.md](../changelog.md) | Historial de cambios y versiones | Todos |
-
-### 🏗️ Arquitectura y Tecnología
-
-| Documento | Descripción | Audiencia |
-|-----------|-------------|-----------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Arquitectura técnica, estructura de carpetas y responsabilidades | Desarrolladores |
-| [TECH_STACK.md](TECH_STACK.md) | Stack tecnológico detallado con justificaciones | Desarrolladores |
-
-### 👨‍💻 Desarrollo
-
-| Documento | Descripción | Audiencia |
-|-----------|-------------|-----------|
-| [GETTING_STARTED.md](GETTING_STARTED.md) | Guía de instalación, configuración y primeros pasos | Desarrolladores |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | Guía completa de desarrollo, debugging y convenciones | Desarrolladores |
-| [CONTRIBUTING.md](../CONTRIBUTING.md) | Cómo contribuir, estándares de código y proceso de PR | Contribuidores |
-| [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) | Código de conducta de la comunidad | Todos |
-
-### 📄 Legal y Licencias
-
-| Documento | Descripción | Audiencia |
-|-----------|-------------|-----------|
-| [LICENSE](../LICENSE) | Licencia MIT del proyecto | Todos |
+1. **[README.md](../README.md)** - Project overview
+2. **[PROJECT_STATEMENT.md](PROJECT_STATEMENT.md)** - Detailed description and goals
+3. **[GETTING_STARTED.md](GETTING_STARTED.md)** - Installation and setup guide
+4. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Understand the technical architecture
 
 ---
 
-## 🔍 Búsqueda Rápida
+## 📖 Documentation by Category
 
-### ¿Necesitas información sobre...?
+### 🎯 Vision and Planning
 
-- **¿Qué es NexoraCloud?** → [README.md](../README.md) o [ENUNCIADO_PROYECTO.md](ENUNCIADO_PROYECTO.md)
-- **¿Cómo instalarlo?** → [GETTING_STARTED.md](GETTING_STARTED.md)
-- **¿Qué tecnologías usa?** → [TECH_STACK.md](TECH_STACK.md)
-- **¿Cómo está estructurado?** → [ARCHITECTURE.md](ARCHITECTURE.md)
-- **¿Qué funcionalidades tendrá?** → [Roadmap.md](../Roadmap.md)
-- **¿Cómo contribuir?** → [CONTRIBUTING.md](../CONTRIBUTING.md)
-- **¿Qué cambios hay en cada versión?** → [changelog.md](../changelog.md)
+| Document | Description | Audience |
+|-----------|-------------|-----------|
+| [PROJECT_STATEMENT.md](PROJECT_STATEMENT.md) | Overview, goals and pillars of the project | Everyone |
+| [Roadmap.md](../Roadmap.md) | Development plan by phases and versions | Everyone |
+| [changelog.md](../changelog.md) | History of changes and versions | Everyone |
+
+### 🏗️ Architecture and Technology
+
+| Document | Description | Audience |
+|-----------|-------------|-----------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical architecture, folder structure and responsibilities | Developers |
+| [TECH_STACK.md](TECH_STACK.md) | Detailed technology stack with the reasoning behind each choice | Developers |
+
+### 👨‍💻 Development
+
+| Document | Description | Audience |
+|-----------|-------------|-----------|
+| [GETTING_STARTED.md](GETTING_STARTED.md) | Installation guide, setup and first steps | Developers |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Complete development guide, debugging and conventions | Developers |
+| [CONTRIBUTING.md](../CONTRIBUTING.md) | How to contribute, code standards and PR process | Contributors |
+| [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) | Community code of conduct | Everyone |
+
+### 📄 Legal and Licensing
+
+| Document | Description | Audience |
+|-----------|-------------|-----------|
+| [LICENSE](../LICENSE) | The project's MIT license | Everyone |
 
 ---
 
-## 📊 Diagramas Disponibles
+## 🔍 Quick Search
 
-El proyecto incluye diagramas Mermaid en:
+### Looking for information about...?
+
+- **What is NexoraCloud?** → [README.md](../README.md) or [PROJECT_STATEMENT.md](PROJECT_STATEMENT.md)
+- **How do I install it?** → [GETTING_STARTED.md](GETTING_STARTED.md)
+- **Which technologies does it use?** → [TECH_STACK.md](TECH_STACK.md)
+- **How is it structured?** → [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Which features are planned?** → [Roadmap.md](../Roadmap.md)
+- **How do I contribute?** → [CONTRIBUTING.md](../CONTRIBUTING.md)
+- **What changed in each version?** → [changelog.md](../changelog.md)
+
+---
+
+## 📊 Available Diagrams
+
+The project includes Mermaid diagrams in:
 
 - **[ARCHITECTURE.md](ARCHITECTURE.md)**:
-  - Arquitectura General (Main / Preload / Renderer)
-  - Estructura de Carpetas
-  - Responsabilidades por Capa
-  - Comunicación IPC
-  - Base de Datos
-  - Seguridad
-  - Escalabilidad
+  - General Architecture (Main / Preload / Renderer)
+  - Folder Structure
+  - Responsibilities by Layer
+  - IPC Communication
+  - Database
+  - Security
+  - Scalability
 
 ---
 
-## 🎓 Recursos de Aprendizaje
+## 🎓 Learning Resources
 
-Si eres nuevo en las tecnologías del proyecto, consulta:
+If you are new to the project's technologies, see:
 
-- **[TECH_STACK.md](TECH_STACK.md)** - Incluye enlaces a documentación oficial de cada tecnología
-- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Recursos útiles para desarrolladores
+- **[TECH_STACK.md](TECH_STACK.md)** - Includes links to the official documentation of each technology
+- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Useful resources for developers
 
 ---
 
-## 🔄 Mantenimiento de la Documentación
+## 🔄 Maintaining the Documentation
 
-### Responsabilidades
+### Responsibilities
 
-- **Todos los contribuidores** deben actualizar la documentación cuando:
-  - Agregan nuevas funcionalidades
-  - Cambian la arquitectura
-  - Modifican el flujo de trabajo
-  - Descubren información faltante
+- **All contributors** must update the documentation when they:
+  - Add new features
+  - Change the architecture
+  - Modify the workflow
+  - Find missing information
 
-### Archivos Clave a Actualizar
+### Key Files to Update
 
-| Cambio | Actualizar |
+| Change | Update |
 |--------|------------|
-| Nueva funcionalidad | `changelog.md`, código relevante |
-| Cambio arquitectónico | `ARCHITECTURE.md`, `changelog.md` |
-| Nueva tecnología | `TECH_STACK.md`, `package.json` |
-| Nueva fase completada | `Roadmap.md`, `changelog.md` |
-| Mejora en instalación | `GETTING_STARTED.md` |
+| New feature | `changelog.md`, relevant code |
+| Architectural change | `ARCHITECTURE.md`, `changelog.md` |
+| New technology | `TECH_STACK.md`, `package.json` |
+| Phase completed | `Roadmap.md`, `changelog.md` |
+| Installation improvement | `GETTING_STARTED.md` |
 
 ---
 
-## 📝 Estándares de Documentación
+## 📝 Documentation Standards
 
-- **Formato**: Markdown (`.md`)
-- **Idioma**: Español
-- **Estilo**: Claro, conciso y profesional
-- **Diagramas**: Mermaid cuando sea posible
-- **Enlaces**: Relativos para documentos internos
-- **Emojis**: ✅ Usar para mejorar legibilidad
-
----
-
-## 🆘 ¿Documentación Faltante?
-
-Si no encuentras la información que buscas:
-
-1. Busca en el código fuente
-2. Revisa los **Issues** de GitHub
-3. Abre un **Issue** con la etiqueta `documentation`
-4. Contribuye agregando la documentación faltante
+- **Format**: Markdown (`.md`)
+- **Language**: English
+- **Style**: Clear, concise and professional
+- **Diagrams**: Mermaid whenever possible
+- **Links**: Relative for internal documents
+- **Emojis**: ✅ Use them to improve readability
 
 ---
 
-## 📅 Última Actualización
+## 🆘 Missing Documentation?
 
-Este índice fue actualizado por última vez: **Enero 2026**
+If you can't find the information you are looking for:
+
+1. Search the source code
+2. Check the GitHub **Issues**
+3. Open an **Issue** with the `documentation` label
+4. Contribute by adding the missing documentation
 
 ---
 
-**[↩️ Volver al README principal](./../README.md)**
+## 📅 Last Updated
+
+This index was last updated: **January 2026**
+
+---
+
+**[↩️ Back to the main README](./../README.md)**

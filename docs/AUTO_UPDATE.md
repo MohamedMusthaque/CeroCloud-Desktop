@@ -1,62 +1,62 @@
-# 🔄 Sistema de Auto-Actualización - NexoraCloud
+# 🔄 Auto-Update System - NexoraCloud
 
-**Implementado:** 8 de Enero 2026  
-**Versión:** 1.1.0
+**Implemented:** October 31, 2026  
+**Version:** 1.2.0
 
 ---
 
-## 📋 Índice
+## 📋 Contents
 
-1. [Descripción General](#-descripción-general)
-2. [Arquitectura](#-arquitectura)
-3. [Configuración](#-configuración)
-4. [Flujo de Usuario](#-flujo-de-usuario)
-5. [Desarrollo y Testing](#-desarrollo-y-testing)
+1. [Overview](#-overview)
+2. [Architecture](#-architecture)
+3. [Configuration](#-configuration)
+4. [User Flow](#-user-flow)
+5. [Development and Testing](#-development-and-testing)
 6. [Deployment](#-deployment)
 7. [Troubleshooting](#-troubleshooting)
 
 ---
 
-## 🎯 Descripción General
+## 🎯 Overview
 
-NexoraCloud implementa un **sistema de auto-actualización silencioso y no intrusivo** que:
+NexoraCloud implements a **silent, non-intrusive auto-update system** with:
 
-- ✅ **Verificación automática** cada 6 horas
-- ✅ **Descarga en segundo plano** sin interrumpir al usuario
-- ✅ **Notificaciones elegantes** usando Sonner toasts
-- ✅ **Barra de progreso visual** con animaciones Framer Motion
-- ✅ **Instalación al cerrar** la aplicación (no forzada)
-- ✅ **GitHub Releases** como fuente de actualizaciones
-- ✅ **Multiplataforma** (Windows, macOS, Linux)
+- ✅ **Automatic checks** every 6 hours
+- ✅ **Background download** without interrupting the user
+- ✅ **Elegant notifications** using Sonner toasts
+- ✅ **Visual progress bar** with Framer Motion animations
+- ✅ **Installation on close** of the application (not forced)
+- ✅ **GitHub Releases** as the update source
+- ✅ **Cross-platform** (Windows, macOS, Linux)
 
-### Tecnologías Utilizadas
+### Technologies Used
 
-- **electron-updater** - Sistema de auto-actualización oficial de Electron
-- **GitHub Releases** - Hosting de binarios y changelog
-- **electron-builder** - Generación de instaladores con firma digital
+- **electron-updater** - Electron's official auto-update system
+- **GitHub Releases** - Hosting for binaries and the changelog
+- **electron-builder** - Installer generation with digital signing
 
 ---
 
-## 🏗️ Arquitectura
+## 🏗️ Architecture
 
-### Componentes
+### Components
 
 ```
 ┌─────────────────────────────────────────────┐
 │         MAIN PROCESS (Electron)             │
 │  ┌───────────────────────────────────────┐  │
 │  │  autoUpdater.ts (AutoUpdateService)   │  │
-│  │  - Configuración electron-updater     │  │
+│  │  - electron-updater configuration     │  │
 │  │  - Event listeners                    │  │
 │  │  - IPC handlers                       │  │
-│  │  - Verificación periódica             │  │
+│  │  - Periodic checks                    │  │
 │  └─────────────┬─────────────────────────┘  │
 │                │ IPC                         │
 └────────────────┼─────────────────────────────┘
                  │
 ┌────────────────▼─────────────────────────────┐
 │         PRELOAD SCRIPT                       │
-│  - Exposición de APIs seguras (updater.*)   │
+│  - Exposes safe APIs (updater.*)            │
 │  - contextBridge.exposeInMainWorld()        │
 └────────────────┬─────────────────────────────┘
                  │
@@ -64,60 +64,60 @@ NexoraCloud implementa un **sistema de auto-actualización silencioso y no intru
 │         RENDERER PROCESS (React)             │
 │  ┌───────────────────────────────────────┐  │
 │  │  updaterService.ts                    │  │
-│  │  - Wrapper de APIs                    │  │
-│  │  - Sistema de subscripción            │  │
+│  │  - API wrapper                        │  │
+│  │  - Subscription system                │  │
 │  └─────────────┬─────────────────────────┘  │
 │                │                             │
 │  ┌─────────────▼─────────────────────────┐  │
 │  │  UpdateNotifier.tsx                   │  │
-│  │  - Toasts de notificación             │  │
-│  │  - Barra de progreso flotante         │  │
-│  │  - Botones de acción                  │  │
+│  │  - Notification toasts                │  │
+│  │  - Floating progress bar              │  │
+│  │  - Action buttons                     │  │
 │  └───────────────────────────────────────┘  │
 └─────────────────────────────────────────────┘
 ```
 
-### Flujo de Datos
+### Data Flow
 
 ```mermaid
 sequenceDiagram
-    participant U as Usuario
+    participant U as User
     participant Main as Main Process
     participant GH as GitHub Releases
     participant UI as UpdateNotifier
 
-    Note over Main: Inicia app
-    Main->>Main: Espera 5s
-    Main->>GH: Verificar actualizaciones
-    GH-->>Main: Versión disponible
+    Note over Main: App starts
+    Main->>Main: Waits 5s
+    Main->>GH: Check for updates
+    GH-->>Main: Version available
     Main->>UI: update-available
-    UI->>U: 🎉 Nueva versión disponible!
+    UI->>U: 🎉 New version available!
 
-    U->>UI: Click "Descargar"
+    U->>UI: Click "Download"
     UI->>Main: downloadUpdate()
-    Main->>GH: Descargar binario
+    Main->>GH: Download binary
     
-    loop Progreso
+    loop Progress
         Main->>UI: download-progress (%)
-        UI->>U: Barra de progreso
+        UI->>U: Progress bar
     end
 
-    GH-->>Main: Descarga completa
+    GH-->>Main: Download complete
     Main->>UI: update-downloaded
-    UI->>U: ✅ Listo para instalar
+    UI->>U: ✅ Ready to install
 
-    U->>UI: Click "Instalar y Reiniciar"
+    U->>UI: Click "Install and Restart"
     UI->>Main: quitAndInstall()
-    Main->>Main: Instalar y reiniciar
+    Main->>Main: Install and restart
 ```
 
 ---
 
-## ⚙️ Configuración
+## ⚙️ Configuration
 
-### 1. Configuración de GitHub Releases
+### 1. GitHub Releases Configuration
 
-El auto-updater está configurado en `electron/main/autoUpdater.ts`:
+The auto-updater is configured in `electron/main/autoUpdater.ts`:
 
 ```typescript
 autoUpdater.setFeedURL({
@@ -127,18 +127,18 @@ autoUpdater.setFeedURL({
 })
 ```
 
-### 2. Variables de Entorno
+### 2. Environment Variables
 
-Para producción, el auto-updater necesita un **GitHub Personal Access Token** (opcional para repos públicos):
+In production, the auto-updater needs a **GitHub Personal Access Token** (optional for public repos):
 
 ```bash
-# .env (solo para testing local de releases)
+# .env (only for local release testing)
 GH_TOKEN=ghp_your_token_here
 ```
 
-### 3. Configuración de electron-builder
+### 3. electron-builder Configuration
 
-En `package.json`, la configuración de publishing:
+In `package.json`, the publishing configuration:
 
 ```json
 {
@@ -151,16 +151,16 @@ En `package.json`, la configuración de publishing:
 }
 ```
 
-### 4. Intervalo de Verificación
+### 4. Check Interval
 
-Por defecto, la app verifica cada **6 horas**. Para cambiar:
+By default, the app checks every **6 hours**. To change it:
 
 ```typescript
-// En main.ts (línea ~80)
-autoUpdateService.startAutoCheck(12) // Verificar cada 12 horas
+// In main.ts (line ~80)
+autoUpdateService.startAutoCheck(12) // Check every 12 hours
 ```
 
-O desde el frontend:
+Or from the frontend:
 
 ```typescript
 await updaterService.setAutoCheck(true, 12)
@@ -168,31 +168,31 @@ await updaterService.setAutoCheck(true, 12)
 
 ---
 
-## 👤 Flujo de Usuario
+## 👤 User Flow
 
-### Experiencia del Usuario Final
+### End-User Experience
 
-#### 1️⃣ **Verificación Silenciosa**
-- La app verifica actualizaciones al inicio (después de 5s)
-- Verificaciones automáticas cada 6 horas
-- **No interrumpe** el trabajo del usuario
+#### 1️⃣ **Silent Check**
+- The app checks for updates at startup (after 5s)
+- Automatic checks every 6 hours
+- **Does not interrupt** the user's work
 
-#### 2️⃣ **Notificación de Actualización Disponible**
+#### 2️⃣ **Update Available Notification**
 ```
-🎉 ¡Nueva versión 1.2.0 disponible!
+🎉 New version 1.2.0 available!
 
-[Descargar]  [✕]
+[Download]  [✕]
 ```
-- Toast no intrusivo en esquina superior derecha
-- Usuario puede ignorarlo y continuar trabajando
-- No expira automáticamente (duration: Infinity)
+- Non-intrusive toast in the top-right corner
+- The user can ignore it and keep working
+- Does not expire automatically (duration: Infinity)
 
-#### 3️⃣ **Descarga en Segundo Plano**
-Usuario hace click en "Descargar" → Aparece barra flotante:
+#### 3️⃣ **Background Download**
+The user clicks "Download" → A floating bar appears:
 
 ```
 ┌─────────────────────────────────┐
-│ 📥 Descargando actualización    │
+│ 📥 Downloading update           │
 │ v1.2.0                       ⏳ │
 │                                 │
 │ ██████████░░░░░░░░ 65.3%       │
@@ -201,62 +201,62 @@ Usuario hace click en "Descargar" → Aparece barra flotante:
 └─────────────────────────────────┘
 ```
 
-- Barra de progreso animada
-- Velocidad de descarga en tiempo real
-- Usuario puede seguir usando la app normalmente
+- Animated progress bar
+- Real-time download speed
+- The user can keep using the app normally
 
-#### 4️⃣ **Instalación**
-Cuando la descarga termina:
+#### 4️⃣ **Installation**
+When the download finishes:
 
 ```
-✅ Actualización 1.2.0 descargada
+✅ Update 1.2.0 downloaded
 
-[Instalar y Reiniciar]  [✕]
+[Install and Restart]  [✕]
 ```
 
-- Usuario decide **cuándo** instalar
-- Al hacer click → Cierra la app e instala
-- **Reabrirá automáticamente** con la nueva versión
+- The user decides **when** to install
+- Clicking it → Closes the app and installs
+- It **reopens automatically** with the new version
 
 ---
 
-## 🛠️ Desarrollo y Testing
+## 🛠️ Development and Testing
 
-### Testing Local
+### Local Testing
 
-#### 1. **Simular nueva versión**
+#### 1. **Simulate a new version**
 
 ```bash
-# 1. Incrementar versión en package.json
+# 1. Bump the version in package.json
 "version": "1.0.1"
 
-# 2. Build de la app
+# 2. Build the app
 npm run build:win
 
-# 3. Crear release en GitHub con tag v1.0.1
-# 4. Subir el .exe generado como asset del release
+# 3. Create a release on GitHub with the tag v1.0.1
+# 4. Upload the generated .exe as a release asset
 ```
 
-#### 2. **Testing en desarrollo**
+#### 2. **Testing in development**
 
-El auto-updater **NO funciona en modo desarrollo** (`npm run dev`). Solo funciona en builds empaquetados.
+The auto-updater does **NOT work in development mode** (`npm run dev`). It only works in packaged builds.
 
 ```typescript
-// En main.ts, solo se activa en producción:
+// In main.ts, it is only enabled in production:
 if (app.isPackaged && mainWindow) {
     autoUpdateService = new AutoUpdateService(mainWindow)
     autoUpdateService.startAutoCheck(6)
 }
 ```
 
-#### 3. **Logs de debugging**
+#### 3. **Debugging logs**
 
-Los logs se guardan en:
+Logs are saved in:
 - **Windows**: `%USERPROFILE%\AppData\Roaming\nexoracloud\logs\main.log`
 - **macOS**: `~/Library/Logs/nexoracloud/main.log`
 - **Linux**: `~/.config/nexoracloud/logs/main.log`
 
-Ver logs en tiempo real:
+View the logs in real time:
 
 ```bash
 # Windows
@@ -270,60 +270,60 @@ tail -f ~/Library/Logs/nexoracloud/main.log
 
 ## 🚀 Deployment
 
-### Proceso de Release
+### Release Process
 
-#### 1. **Preparar nueva versión**
+#### 1. **Prepare a new version**
 
 ```bash
-# 1. Actualizar version en package.json
+# 1. Update the version in package.json
 npm version minor  # 1.0.0 → 1.1.0
-# o
+# or
 npm version patch  # 1.0.0 → 1.0.1
 
-# 2. Actualizar CHANGELOG.md
-# 3. Commit y push
+# 2. Update CHANGELOG.md
+# 3. Commit and push
 git add .
 git commit -m "chore: release v1.1.0"
 git push origin main
 ```
 
-#### 2. **Crear GitHub Release**
+#### 2. **Create the GitHub Release**
 
 ```bash
-# Opción A: Manual en GitHub UI
-# 1. Ir a https://github.com/CeroCloud/CeroCloud-Desktop/releases
+# Option A: Manually in the GitHub UI
+# 1. Go to https://github.com/CeroCloud/CeroCloud-Desktop/releases
 # 2. Click "Draft a new release"
-# 3. Crear tag (ej: v1.1.0)
-# 4. Escribir release notes
-# 5. Subir binarios (.exe, .dmg, .AppImage)
+# 3. Create a tag (e.g. v1.1.0)
+# 4. Write the release notes
+# 5. Upload the binaries (.exe, .dmg, .AppImage)
 
-# Opción B: Automatizado con gh CLI
+# Option B: Automated with the gh CLI
 gh release create v1.1.0 \
-  --title "v1.1.0 - Completitud" \
+  --title "v1.1.0 - Completeness" \
   --notes-file changelog.md \
   release/NexoraCloud\ Setup\ 1.1.0.exe
 ```
 
-#### 3. **Build multiplataforma**
+#### 3. **Cross-platform build**
 
 ```bash
 # Windows
 npm run build:win
 
-# macOS (requiere macOS)
+# macOS (requires macOS)
 npm run build:mac
 
 # Linux
 npm run build:linux
 ```
 
-### Assets Requeridos en Release
+### Required Release Assets
 
-Para que el auto-updater funcione, el release **DEBE** incluir:
+For the auto-updater to work, the release **MUST** include:
 
 **Windows:**
-- `NexoraCloud-Setup-1.1.0.exe` (instalador NSIS)
-- `latest.yml` (metadata, generado automáticamente por electron-builder)
+- `NexoraCloud-Setup-1.1.0.exe` (NSIS installer)
+- `latest.yml` (metadata, generated automatically by electron-builder)
 
 **macOS:**
 - `NexoraCloud-1.1.0.dmg`
@@ -333,9 +333,9 @@ Para que el auto-updater funcione, el release **DEBE** incluir:
 - `NexoraCloud-1.1.0.AppImage`
 - `latest-linux.yml`
 
-### CI/CD Automático (GitHub Actions)
+### Automatic CI/CD (GitHub Actions)
 
-Crear `.github/workflows/release.yml`:
+Create `.github/workflows/release.yml`:
 
 ```yaml
 name: Build and Release
@@ -368,69 +368,69 @@ jobs:
 
 ## 🔧 Troubleshooting
 
-### Problemas Comunes
+### Common Problems
 
-#### 1. **"No hay actualizaciones" aunque hay release nuevo**
+#### 1. **"No updates" even though there is a new release**
 
-**Causas:**
-- La versión en `package.json` no se incrementó
-- El tag del release no sigue formato semver (`v1.0.0`)
-- Los assets `.yml` no se subieron al release
+**Causes:**
+- The version in `package.json` was not bumped
+- The release tag does not follow the semver format (`v1.0.0`)
+- The `.yml` assets were not uploaded to the release
 
-**Solución:**
+**Solution:**
 ```bash
-# Verificar versión
+# Check the version
 npm version
 
-# Verificar tag
+# Check the tag
 git describe --tags
 
-# Re-generar release
+# Regenerate the release
 npm run build
 ```
 
 #### 2. **Error "Cannot find latest.yml"**
 
-**Causa:** electron-builder no generó los archivos de metadata.
+**Cause:** electron-builder did not generate the metadata files.
 
-**Solución:**
+**Solution:**
 ```bash
-# Asegurar que build.publish está configurado en package.json
+# Make sure build.publish is configured in package.json
 npm run build -- --publish never
-# Esto genera los .yml sin publicar
+# This generates the .yml files without publishing
 ```
 
-#### 3. **"Update check failed" en logs**
+#### 3. **"Update check failed" in the logs**
 
-**Causa:** Problema de red o configuración de GitHub.
+**Cause:** A network or GitHub configuration problem.
 
-**Solución:**
+**Solution:**
 ```bash
-# Verificar conectividad
+# Check connectivity
 curl -I https://api.github.com/repos/CeroCloud/CeroCloud-Desktop/releases/latest
 
-# Verificar configuración en autoUpdater.ts
+# Check the configuration in autoUpdater.ts
 # owner: 'CeroCloud'
 # repo: 'CeroCloud-Desktop'
 ```
 
-#### 4. **Actualización descarga pero no instala**
+#### 4. **The update downloads but does not install**
 
-**Causa:** Permisos insuficientes (Windows UAC, macOS Gatekeeper).
+**Cause:** Insufficient permissions (Windows UAC, macOS Gatekeeper).
 
-**Solución:**
-- **Windows:** Firmar el .exe con certificado de código
-- **macOS:** Notarizar la app con Apple Developer ID
+**Solution:**
+- **Windows:** Sign the .exe with a code-signing certificate
+- **macOS:** Notarize the app with an Apple Developer ID
 
 ---
 
-## 📊 Métricas y Monitoreo
+## 📊 Metrics and Monitoring
 
-### Eventos que se pueden trackear
+### Events that can be tracked
 
 ```typescript
 updaterService.subscribe((status) => {
-    // Enviar a analytics
+    // Send to analytics
     analytics.track('UpdaterEvent', {
         event: status.event,
         version: status.data?.version,
@@ -439,24 +439,24 @@ updaterService.subscribe((status) => {
 })
 ```
 
-### KPIs Sugeridos
+### Suggested KPIs
 
-- **Tasa de adopción**: % usuarios que instalan actualizaciones
-- **Tiempo promedio de descarga**: MB/s por región
-- **Tasa de error**: % intentos fallidos
-- **Tiempo hasta instalación**: Días entre release y actualización
+- **Adoption rate**: % of users who install updates
+- **Average download time**: MB/s per region
+- **Error rate**: % of failed attempts
+- **Time to install**: Days between release and update
 
 ---
 
-## 🔒 Seguridad
+## 🔒 Security
 
-### Firma de Código (Code Signing)
+### Code Signing
 
 **Windows:**
 ```bash
-# Requerido para evitar SmartScreen warnings
-# Obtener certificado de Sectigo/DigiCert
-# Configurar en electron-builder:
+# Required to avoid SmartScreen warnings
+# Get a certificate from Sectigo/DigiCert
+# Configure it in electron-builder:
 "win": {
   "certificateFile": "path/to/cert.pfx",
   "certificatePassword": "<env:CERT_PASSWORD>"
@@ -465,45 +465,45 @@ updaterService.subscribe((status) => {
 
 **macOS:**
 ```bash
-# Notarización con Apple
-# Requerido desde macOS 10.15+
-export APPLE_ID="tu@email.com"
+# Notarization with Apple
+# Required since macOS 10.15+
+export APPLE_ID="you@email.com"
 export APPLE_ID_PASSWORD="app-specific-password"
 npm run build:mac
 ```
 
-### Verificación de Integridad
+### Integrity Verification
 
-electron-updater verifica automáticamente:
-- ✅ **Checksums SHA512** de binarios
-- ✅ **Firma digital** de releases
-- ✅ **HTTPS obligatorio** para descargas
+electron-updater automatically verifies:
+- ✅ **SHA512 checksums** of the binaries
+- ✅ **Digital signature** of releases
+- ✅ **Mandatory HTTPS** for downloads
 
 ---
 
-## 📚 Referencias
+## 📚 References
 
-### Documentación Oficial
+### Official Documentation
 - [electron-updater](https://www.electron.build/auto-update)
 - [electron-builder Publishing](https://www.electron.build/configuration/publish)
 - [GitHub Releases API](https://docs.github.com/en/rest/releases)
 
-### Recursos Adicionales
+### Additional Resources
 - [Code Signing Guide](https://www.electron.build/code-signing)
 - [Notarization macOS](https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/)
 
 ---
 
-## 🎯 Próximas Mejoras
+## 🎯 Upcoming Improvements
 
-- [ ] **Delta Updates**: Descargar solo cambios (reduce tamaño)
-- [ ] **Rollback automático**: Volver a versión anterior si falla
-- [ ] **Canales de release**: Stable, Beta, Nightly
-- [ ] **Notificaciones nativas**: Usar Electron Notification API
-- [ ] **Analytics integrados**: Trackeo de métricas de actualización
+- [ ] **Delta Updates**: Download only the changes (smaller size)
+- [ ] **Automatic rollback**: Return to the previous version if it fails
+- [ ] **Release channels**: Stable, Beta, Nightly
+- [ ] **Native notifications**: Use the Electron Notification API
+- [ ] **Built-in analytics**: Track update metrics
 
 ---
 
-**Última actualización:** 8 de Enero 2026  
-**Mantenedor:** DaaNiieeL123  
-**Versión del documento:** 1.0.0
+**Last updated:** October 31, 2026  
+**Maintainer:** MohamedMusthaque  
+**Document version:** 1.2.0

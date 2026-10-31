@@ -1,194 +1,194 @@
-# 📍 Dónde Encontrar las Actualizaciones - NexoraCloud
+# 📍 Where to Find Updates - NexoraCloud
 
-## 🎯 Respuesta Rápida
+## 🎯 Quick Answer
 
-El usuario puede ver y gestionar actualizaciones en **DOS lugares**:
+Users can see and manage updates in **TWO places**:
 
 ---
 
-## 1️⃣ **Automáticamente (Sin hacer nada)**
+## 1️⃣ **Automatically (No action needed)**
 
-Las notificaciones de actualización aparecen **automáticamente** cada 6 horas:
+Update notifications appear **automatically** every 6 hours:
 
 ```
 ┌─────────────────────────────────────┐
-│  🎉 ¡Nueva versión 1.2.0 disponible! │
+│  🎉 New version 1.2.0 available!     │
 │                                       │
-│  [Descargar]  [✕]                    │
+│  [Download]  [✕]                     │
 └─────────────────────────────────────┘
 ```
 
-**Ubicación:** Toast en la esquina superior derecha
+**Location:** Toast in the top-right corner
 
-**No requiere acción** - La app verifica por ti.
-
----
-
-## 2️⃣ **Manualmente (Cuando el usuario quiera)**
-
-### 📍 **Ubicación: Settings → Actualizaciones**
-
-**Pasos:**
-1. Abrir NexoraCloud
-2. Ir al menú lateral
-3. Click en "⚙️ **Configuración**" (último item del menú)
-4. Click en la tab "**Actualizaciones** 🔄"
+**No action required** - The app checks for you.
 
 ---
 
-### ✨ ¿Qué puede hacer ahí el usuario?
+## 2️⃣ **Manually (Whenever the user wants)**
 
-#### **Ver Versión Actual**
+### 📍 **Location: Settings → Updates**
+
+**Steps:**
+1. Open NexoraCloud
+2. Go to the side menu
+3. Click "⚙️ **Settings**" (last item in the menu)
+4. Click the "**Updates** 🔄" tab
+
+---
+
+### ✨ What can the user do there?
+
+#### **See the Current Version**
 ```
 ┌──────────────────────────────────────┐
-│  VERSIÓN ACTUAL                       │
+│  CURRENT VERSION                      │
 │  v1.0.0                            📦 │
 │                                       │
-│  Estás usando la última versión      │
+│  You are using the latest version    │
 └──────────────────────────────────────┘
 ```
 
-#### **Verificar Manualmente**
+#### **Check Manually**
 ```
 ┌──────────────────────────────────────┐
-│  🔄 Verificar Ahora                   │
+│  🔄 Check Now                         │
 │                                       │
-│  Comprueba manualmente si hay nuevas  │
-│  versiones disponibles.               │
+│  Manually check whether new versions  │
+│  are available.                       │
 │                                       │
-│  [🔄 Buscar Actualizaciones]         │
+│  [🔄 Check for Updates]              │
 └──────────────────────────────────────┘
 ```
 
-#### **Activar/Desactivar Auto-Verificación**
+#### **Turn Automatic Checks On/Off**
 ```
 ┌──────────────────────────────────────┐
-│  🛡️ Auto-actualizaciones        [ON]  │
+│  🛡️ Auto-updates                [ON]  │
 │                                       │
-│  NexoraCloud verifica nuevas versiones │
-│  cada 6 horas automáticamente.        │
+│  NexoraCloud checks for new versions  │
+│  automatically every 6 hours.         │
 └──────────────────────────────────────┘
 ```
 
-#### **Descargar Nueva Versión** (cuando está disponible)
+#### **Download a New Version** (when available)
 ```
 ┌──────────────────────────────────────┐
-│  🎉 Nueva versión 1.2.0 disponible   │
+│  🎉 New version 1.2.0 available      │
 │  v1.2.0 • 08/01/2026                  │
 │                                       │
-│  [Descargar] ←── Click aquí          │
+│  [Download] ←── Click here           │
 └──────────────────────────────────────┘
 ```
 
 ---
 
-## 🖼️ Captura de Pantalla (Visual)
+## 🖼️ Screenshot (Visual)
 
 ```
 Sidebar:
 ┌──────────────────┐
 │  📊 Dashboard    │
-│  📦 Inventario   │
-│  💰 Ventas       │
-│  📈 Reportes     │
-│  ⚙️  Configuración│ ← Click aquí
+│  📦 Inventory    │
+│  💰 Sales        │
+│  📈 Reports      │
+│  ⚙️  Settings     │ ← Click here
 └──────────────────┘
 
-Luego en Settings:
+Then in Settings:
 ┌──────────────────────────────────────────────┐
-│  General  |  Ventas  |  Backups              │
-│  🔄 Actualizaciones  |  Apariencia           │ ← Click aquí
+│  General  |  Sales  |  Backups               │
+│  🔄 Updates  |  Appearance                    │ ← Click here
 └──────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📱 Flujo Completo del Usuario
+## 📱 Complete User Flow
 
-### **Opción A: Esperar (Recomendado)**
-1. Usuario usa la app normalmente
-2. Cada 6 horas, la app verifica automáticamente
-3. Si hay actualización → Toast aparece
-4. Usuario hace click en "Descargar"
-5. Barra de progreso muestra descarga
-6. Cuando termina → "Instalar y Reiniciar"
-7. ¡Listo! App actualizada
+### **Option A: Wait (Recommended)**
+1. The user uses the app normally
+2. Every 6 hours, the app checks automatically
+3. If there is an update → A toast appears
+4. The user clicks "Download"
+5. A progress bar shows the download
+6. When it finishes → "Install and Restart"
+7. Done! The app is updated
 
-### **Opción B: Verificar Manualmente**
-1. Ir a `Settings → Actualizaciones`
-2. Click en "🔄 Buscar Actualizaciones"
-3. Esperar 2-3 segundos
-4. Ver resultado:
-   - ✅ "Ya estás en la última versión" (no hay actualizaciones)
-   - 🎉 "Nueva versión disponible" (hay actualización)
-5. Si hay actualización → Click "Descargar"
-6. Seguir el flujo normal
-
----
-
-## 🎨 Características de la UI de Actualizaciones
-
-### ✨ **Lo que SÍ incluye:**
-
-- ✅ Versión actual grande y visible (tarjeta con gradiente)
-- ✅ Botón manual "Buscar Actualizaciones"
-- ✅ Toggle para activar/desactivar auto-verificación
-- ✅ Indicador de estado de descarga
-- ✅ Información de nueva versión (número y fecha)
-- ✅ Link a GitHub Releases para ver changelog
-- ✅ Avisos informativos (seguridad, descarga silenciosa, etc.)
-- ✅ Warning si está en modo desarrollo
-
-### ✅ **Diseño Premium:**
-- Tarjeta gradiente indigo-purple para versión actual
-- Iconos animados
-- Estados de loading
-- Toasts de confirmación
-- Responsive (funciona en cualquier tamaño de pantalla)
+### **Option B: Check Manually**
+1. Go to `Settings → Updates`
+2. Click "🔄 Check for Updates"
+3. Wait 2-3 seconds
+4. See the result:
+   - ✅ "You are already on the latest version" (no updates)
+   - 🎉 "New version available" (an update exists)
+5. If there is an update → Click "Download"
+6. Follow the normal flow
 
 ---
 
-## 🚀 Estado Actual
+## 🎨 Features of the Updates UI
 
-- ✅ **Implementado:** Tab "Actualizaciones" en Settings
-- ✅ **Funcional:** Botón de verificación manual
-- ✅ **Visible:** Versión actual mostrada
-- ✅ **Interactivo:** Toggle de auto-updates
-- ✅ **Integrado:** Con el sistema de toasts global
+### ✨ **What it DOES include:**
+
+- ✅ Large, visible current version (gradient card)
+- ✅ Manual "Check for Updates" button
+- ✅ Toggle to turn automatic checks on/off
+- ✅ Download status indicator
+- ✅ New version information (number and date)
+- ✅ Link to GitHub Releases to see the changelog
+- ✅ Informational notices (security, silent download, etc.)
+- ✅ Warning when running in development mode
+
+### ✅ **Premium Design:**
+- Indigo-purple gradient card for the current version
+- Animated icons
+- Loading states
+- Confirmation toasts
+- Responsive (works at any screen size)
 
 ---
 
-## ⚠️ Nota Importante (Modo Desarrollo)
+## 🚀 Current Status
 
-En modo desarrollo (`npm run dev`), la tab muestra:
+- ✅ **Implemented:** "Updates" tab in Settings
+- ✅ **Working:** Manual check button
+- ✅ **Visible:** Current version displayed
+- ✅ **Interactive:** Auto-update toggle
+- ✅ **Integrated:** With the global toast system
+
+---
+
+## ⚠️ Important Note (Development Mode)
+
+In development mode (`npm run dev`), the tab shows:
 
 ```
 ┌────────────────────────────────────────────┐
-│  ⚠️ Modo Desarrollo                         │
+│  ⚠️ Development Mode                        │
 │                                             │
-│  El auto-updater solo funciona en versiones│
-│  empaquetadas (builds). En modo desarrollo, │
-│  esta funcionalidad está deshabilitada.     │
+│  The auto-updater only works in packaged    │
+│  versions (builds). In development mode,    │
+│  this feature is disabled.                  │
 └────────────────────────────────────────────┘
 ```
 
-**Solo funciona en producción** → Cuando haces `npm run build:win`
+**Only works in production** → When you run `npm run build:win`
 
 ---
 
-## 📊 Resumen Ultra-Rápido
+## 📊 Ultra-Quick Summary
 
-| ¿Dónde? | ¿Cómo? | ¿Cuándo? |
+| Where? | How? | When? |
 |---------|--------|----------|
-| **Toasts automáticos** | Sin hacer nada | Cada 6 horas |
-| **Settings → Actualizaciones** | Click manual | Cuando quiera el usuario |
+| **Automatic toasts** | No action needed | Every 6 hours |
+| **Settings → Updates** | Manual click | Whenever the user wants |
 
 ---
 
-**Para el Usuario Final:**
-> "Ve a **Configuración** en el menú lateral, luego click en la pestaña **Actualizaciones**. Ahí podrás ver tu versión actual y buscar nuevas versiones manualmente."
+**For the End User:**
+> "Go to **Settings** in the side menu, then click the **Updates** tab. There you can see your current version and check for new versions manually."
 
 ---
 
-**Implementado:** 8 de Enero 2026  
+**Implemented:** January 8, 2026  
 **Commit:** Feature/auto-update-ui-settings
