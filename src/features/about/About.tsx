@@ -3,9 +3,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Code, Heart, Github, Globe, Facebook, Twitter, Shield, FileText, Mail, X as XIcon, Zap, Sparkles } from 'lucide-react'
+import { Code, Heart, Github, Shield, X as XIcon, Zap, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import pkg from '../../../package.json'
 import { useTranslation } from '@/i18n'
@@ -13,11 +12,10 @@ import { useTranslation } from '@/i18n'
 export function About() {
     const { t } = useTranslation()
     const version = pkg.version
-    const [activeModal, setActiveModal] = useState<'license' | 'support' | 'privacy' | null>(null)
+    const [activeModal, setActiveModal] = useState<'privacy' | null>(null)
 
     const developers = [
-        { name: 'DANIEL ORTIZ', role: 'Lead Developer', url: 'https://github.com/DaaNiieeL123', color: 'from-blue-500 to-indigo-600' },
-        { name: 'JOSUE VAQUIAX', role: 'Co-Developer', url: 'https://github.com/Jsue46', color: 'from-violet-500 to-purple-600' }
+        { name: 'MOHAMED MUSTHAQUE', role: 'Lead Developer', url: 'https://github.com/MohamedMusthaque', color: 'from-blue-500 to-indigo-600' }
     ]
 
     const containerVariants = {
@@ -82,99 +80,6 @@ export function About() {
     return (
         <div className="min-h-screen text-gray-900 dark:text-white pb-20">
             {/* Modals Logic */}
-            {activeModal === 'license' && (
-                <Modal
-                    title={t('about.licenseTitle')}
-                    onClose={() => setActiveModal(null)}
-                    content={
-                        <>
-                            <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 rounded-2xl flex items-center gap-4">
-                                <FileText className="w-8 h-8 text-orange-500" />
-                                <div>
-                                    <h4 className="font-bold text-orange-700 dark:text-orange-400">{t('about.legalContract')}</h4>
-                                    <p className="text-sm text-orange-600/80 dark:text-orange-400/80">{t('about.acceptTerms')}</p>
-                                </div>
-                            </div>
-                            <div className="bg-gray-100 dark:bg-white/5 p-6 rounded-2xl border border-gray-300 dark:border-white/10">
-                                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-xl">
-                                    <h4 className="font-bold text-blue-700 dark:text-blue-400 mb-2">{t('about.licenseName')}</h4>
-                                    <p className="text-xs text-blue-600/80 dark:text-blue-400/80">
-                                        {t('about.licenseDescA')} <strong>{t('about.licenseDescStrong')}</strong> {t('about.licenseDescB')}
-                                    </p>
-                                </div>
-                                <ul className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
-                                    <li className="pl-4 border-l-2 border-green-500/50">
-                                        <strong className="block text-gray-900 dark:text-white mb-1">{t('about.allowedTitle')}</strong>
-                                        {t('about.allowedDesc')}
-                                    </li>
-                                    <li className="pl-4 border-l-2 border-green-500/50">
-                                        <strong className="block text-gray-900 dark:text-white mb-1">{t('about.modifyTitle')}</strong>
-                                        {t('about.modifyDesc')}
-                                    </li>
-                                    <li className="pl-4 border-l-2 border-red-500/50">
-                                        <strong className="block text-gray-900 dark:text-white mb-1">{t('about.noSaleTitle')}</strong>
-                                        {t('about.noSaleDesc')}
-                                    </li>
-                                    <li className="pl-4 border-l-2 border-red-500/50">
-                                        <strong className="block text-gray-900 dark:text-white mb-1">{t('about.commercialTitle')}</strong>
-                                        {t('about.commercialDesc')}
-                                    </li>
-                                    <li className="pl-4 border-l-2 border-yellow-500/50">
-                                        <strong className="block text-gray-900 dark:text-white mb-1">{t('about.ipTitle')}</strong>
-                                        {t('about.ipDesc')}
-                                    </li>
-                                    <li className="pl-4 border-l-2 border-gray-500/50">
-                                        <strong className="block text-gray-900 dark:text-white mb-1">{t('about.warrantyTitle')}</strong>
-                                        {t('about.warrantyDesc')}
-                                    </li>
-                                </ul>
-                                <div className="mt-6 p-4 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 rounded-xl">
-                                    <p className="text-xs text-orange-700 dark:text-orange-400">
-                                        <strong>{t('about.licenseQuestions')}</strong> {t('about.contact')} <a href="mailto:proyectogit22@gmail.com" className="underline">proyectogit22@gmail.com</a>
-                                    </p>
-                                </div>
-                            </div>
-                        </>
-                    }
-                />
-            )}
-            {activeModal === 'support' && (
-                <Modal
-                    title={t('about.supportTitle')}
-                    onClose={() => setActiveModal(null)}
-                    content={
-                        <div className="space-y-6">
-                            <p className="text-xl font-medium">{t('about.supportIntro')}</p>
-                            <div className="space-y-4">
-                                <a
-                                    href="https://github.com/CeroCloud/CeroCloud-Desktop/issues"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-300 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600 transition-all group cursor-pointer"
-                                >
-                                    <div className="p-3 bg-blue-100 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
-                                        <Github className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-gray-900 dark:text-white">{t('about.reportBug')}</h4>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('about.reportBugDesc')}</p>
-                                    </div>
-                                </a>
-
-                                <div className="flex items-center gap-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-300 dark:border-gray-700 shadow-sm">
-                                    <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
-                                        <Mail className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-gray-900 dark:text-white">{t('about.commercial')}</h4>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('about.commercialContact')}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                />
-            )}
             {activeModal === 'privacy' && (
                 <Modal
                     title={t('about.privacyTitle')}
@@ -262,7 +167,7 @@ export function About() {
                 </motion.div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-                    {/* LEFT COLUMN: ABOUT & LEGAL */}
+                    {/* LEFT COLUMN: ABOUT */}
                     <div className="lg:col-span-7 flex flex-col gap-6">
                         {/* Main Card */}
                         <motion.div
@@ -284,77 +189,54 @@ export function About() {
                             <div className="flex flex-wrap gap-3 mt-auto">
                                 <FeatureTag label={t('about.tagOffline')} icon={Zap} />
                                 <FeatureTag label={t('about.tagPrivacy')} icon={Shield} />
-                                <FeatureTag label={t('about.tagFree')} icon={Code} />
                             </div>
-                        </motion.div>
-
-                        {/* Legal Quick Links */}
-                        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <LegalButton
-                                title={t('about.license')}
-                                icon={FileText}
-                                color="orange"
-                                onClick={() => setActiveModal('license')}
-                            />
-                            <LegalButton
-                                title={t('about.privacy')}
-                                icon={Shield}
-                                color="emerald"
-                                onClick={() => setActiveModal('privacy')}
-                            />
-                            <LegalButton
-                                title={t('about.support')}
-                                icon={Mail}
-                                color="blue"
-                                onClick={() => setActiveModal('support')}
-                            />
                         </motion.div>
                     </div>
 
-                    {/* RIGHT COLUMN: DEVELOPERS & COMMUNITY */}
+                    {/* RIGHT COLUMN: DEVELOPERS & PRIVACY */}
                     <div className="lg:col-span-5 flex flex-col gap-6">
-                        {/* Developers Card */}
+                        {/* Developers Card: fills the column above Privacy */}
                         <motion.div
                             variants={itemVariants}
                             className="flex-1 bg-gradient-to-br from-[#1a1c2e] to-[#0f1016] p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden text-white border border-white/5 flex flex-col"
                         >
                             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
 
-                            <h3 className="text-xl font-bold mb-6 flex items-center gap-2 relative z-10">
-                                <Code className="text-indigo-400" />
+                            <h3 className="text-2xl font-bold mb-6 flex items-center gap-3 relative z-10">
+                                <Code className="w-7 h-7 text-indigo-400" />
                                 {t('about.masterminds')}
                             </h3>
 
-                            <div className="space-y-4 relative z-10 flex-1">
+                            <div className="space-y-4 relative z-10 flex-1 flex flex-col justify-center">
                                 {developers.map((dev) => (
                                     <a
                                         key={dev.name}
                                         href={dev.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all group"
+                                        className="flex items-center gap-5 p-5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all group"
                                     >
-                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${dev.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
-                                            <Github className="w-6 h-6 text-white" />
+                                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${dev.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform shrink-0`}>
+                                            <Github className="w-8 h-8 text-white" />
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-lg leading-none mb-1">{dev.name}</p>
-                                            <p className="text-xs text-white/50 uppercase tracking-wider">{dev.role}</p>
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-2xl leading-tight mb-1">{dev.name}</p>
+                                            <p className="text-sm text-white/50 uppercase tracking-wider">{dev.role}</p>
                                         </div>
                                     </a>
                                 ))}
                             </div>
                         </motion.div>
 
-                        {/* Social Links */}
-                        <motion.div variants={itemVariants} className="p-6 bg-white dark:bg-gray-800/50 backdrop-blur-md rounded-[2.5rem] border border-gray-300 dark:border-white/10 shadow-lg">
-                            <h3 className="text-center font-bold text-gray-500 text-sm uppercase tracking-wider mb-6">{t('about.community')}</h3>
-                            <div className="flex justify-center gap-4">
-                                <SocialButton icon={Github} href="https://github.com/CeroCloud/CeroCloud-Desktop" label="GitHub" />
-                                <SocialButton icon={Facebook} onClick={() => toast.info(t('about.comingSoon'))} label="Facebook" />
-                                <SocialButton icon={Twitter} onClick={() => toast.info(t('about.comingSoon'))} label="Twitter" />
-                                <SocialButton icon={Globe} href="https://cerocloud.github.io/CeroCloud-website/" label="Website" />
-                            </div>
+                        {/* Privacy */}
+                        <motion.div variants={itemVariants}>
+                            <LegalButton
+                                title={t('about.privacy')}
+                                icon={Shield}
+                                color="emerald"
+                                onClick={() => setActiveModal('privacy')}
+                                className="w-full"
+                            />
                         </motion.div>
                     </div>
                 </div>
@@ -381,11 +263,9 @@ const FeatureTag = ({ label, icon: Icon }: { label: string, icon: any }) => (
     </span>
 )
 
-const LegalButton = ({ title, icon: Icon, color, onClick }: any) => {
+const LegalButton = ({ title, icon: Icon, color, onClick, className }: any) => {
     const colors: any = {
-        orange: "hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-600 dark:hover:text-orange-400 hover:border-orange-200 dark:hover:border-orange-800",
-        emerald: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-200 dark:hover:border-emerald-800",
-        blue: "hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-800"
+        emerald: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-200 dark:hover:border-emerald-800"
     }
 
     return (
@@ -393,35 +273,13 @@ const LegalButton = ({ title, icon: Icon, color, onClick }: any) => {
             onClick={onClick}
             className={cn(
                 "p-4 rounded-2xl bg-white dark:bg-gray-800/40 border border-gray-300 dark:border-white/10 flex flex-col items-center justify-center gap-2 transition-all duration-300 group",
-                colors[color]
+                colors[color],
+                className
             )}
         >
             <Icon className="w-6 h-6 text-gray-400 group-hover:scale-110 transition-transform duration-300" />
             <span className="font-bold text-sm text-gray-600 dark:text-gray-300 group-hover:text-inherit">{title}</span>
         </button>
-    )
-}
-
-const SocialButton = ({ icon: Icon, href, label, onClick }: any) => {
-    const className = "p-3 rounded-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all hover:-translate-y-1 cursor-pointer"
-
-    if (onClick) {
-        return (
-            <button onClick={onClick} className={className} aria-label={label}>
-                <Icon className="w-5 h-5" />
-            </button>
-        )
-    }
-
-    return (
-        <a
-            href={href}
-            target="_blank"
-            className={className}
-            aria-label={label}
-        >
-            <Icon className="w-5 h-5" />
-        </a>
     )
 }
 
