@@ -181,10 +181,3 @@ NexoraCloud/
 ---
 
 **[🚀 Continue to Phase 1 →](../Roadmap.md)**
-I (Google Deepmind - Antigravity)  
-**Fecha:** 2026-01-03  
-**Versión del proyecto:** 0.1.0
-
----
-
-**[🚀 Continuar con Fase 1 →](../Roadmap.md#-fase-1--base-del-sistema-v100)**

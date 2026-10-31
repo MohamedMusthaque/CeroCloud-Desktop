@@ -1,96 +1,96 @@
-# Contribuyendo a NexoraCloud
+# Contributing to NexoraCloud
 
-¡Gracias por tu interés en contribuir a **NexoraCloud**! 🎉
+Thank you for your interest in contributing to **NexoraCloud**! 🎉
 
-Este documento proporciona lineamientos para contribuir al proyecto.
-
----
-
-## 📋 Código de Conducta
-
-- Sé respetuoso y profesional.
-- Acepta críticas constructivas.
-- Enfócate en lo que es mejor para la comunidad.
-- Mantén un ambiente colaborativo y amigable.
+This document provides guidelines for contributing to the project.
 
 ---
 
-## 🚀 Cómo Contribuir
+## 📋 Code of Conduct
 
-### 1. Reportar Bugs
+- Be respectful and professional.
+- Accept constructive criticism.
+- Focus on what is best for the community.
+- Keep the environment collaborative and friendly.
 
-Si encuentras un bug:
+---
 
-1. Verifica que no haya sido reportado previamente.
-2. Abre un **Issue** con:
-   - Descripción clara del problema.
-   - Pasos para reproducirlo.
-   - Comportamiento esperado vs. actual.
-   - Versión del sistema operativo y de la aplicación.
-   - Screenshots si es posible.
+## 🚀 How to Contribute
 
-### 2. Sugerir Mejoras
+### 1. Report Bugs
 
-¿Tienes una idea para mejorar el proyecto?
+If you find a bug:
 
-1. Abre un **Issue** etiquetado como `enhancement`.
-2. Describe claramente:
-   - El problema que resuelve.
-   - Cómo mejoraría la experiencia del usuario.
-   - Posibles implementaciones.
+1. Check that it hasn't been reported already.
+2. Open an **Issue** with:
+   - A clear description of the problem.
+   - Steps to reproduce it.
+   - Expected vs. actual behavior.
+   - Your operating system and application versions.
+   - Screenshots if possible.
 
-### 3. Contribuir con Código
+### 2. Suggest Improvements
 
-#### Preparación
+Do you have an idea to improve the project?
 
-1. Haz fork del repositorio.
-2. Clona tu fork:
+1. Open an **Issue** labeled `enhancement`.
+2. Clearly describe:
+   - The problem it solves.
+   - How it would improve the user experience.
+   - Possible implementations.
+
+### 3. Contribute Code
+
+#### Setup
+
+1. Fork the repository.
+2. Clone your fork:
    ```bash
-   git clone https://github.com/TU-USUARIO/CeroCloud-Desktop.git
+   git clone https://github.com/YOUR-USERNAME/CeroCloud-Desktop.git
    ```
-3. Agrega el repositorio original como upstream:
+3. Add the original repository as upstream:
    ```bash
    git remote add upstream https://github.com/CeroCloud/CeroCloud-Desktop.git
    ```
-4. Crea una rama para tu feature desde `develop`:
+4. Create a branch for your feature from `develop`:
    ```bash
    git checkout develop
    git pull upstream develop
-   git checkout -b feature/nombre-descriptivo
+   git checkout -b feature/descriptive-name
    ```
 
-**📖 Consulta la guía completa de Gitflow:** [docs/GITFLOW.md](docs/GITFLOW.md)
+**📖 See the complete Gitflow guide:** [docs/GITFLOW.md](docs/GITFLOW.md)
 
-#### Desarrollo
+#### Development
 
-1. Asegúrate de seguir la **arquitectura definida** en `docs/ARCHITECTURE.md`.
-2. Escribe código limpio y bien documentado.
-3. Sigue las convenciones de TypeScript y React.
-4. Mantén la consistencia con el código existente.
+1. Make sure you follow the **defined architecture** in `docs/ARCHITECTURE.md`.
+2. Write clean, well-documented code.
+3. Follow the TypeScript and React conventions.
+4. Stay consistent with the existing code.
 
-### 4. Commits (¡IMPORTANTE!)
+### 4. Commits (IMPORTANT!)
 
-Este proyecto utiliza **Semantic Release** para automatizar versiones y changelogs.
-Por eso, es **OBLIGATORIO** seguir la convención [Conventional Commits](https://www.conventionalcommits.org/).
+This project uses **Semantic Release** to automate versions and changelogs.
+That is why following the [Conventional Commits](https://www.conventionalcommits.org/) convention is **MANDATORY**.
 
-El formato estricto es:
+The strict format is:
 ```
-tipo(scope): descripción breve en minúsculas
+type(scope): short lowercase description
 
 
-Descripción detallada (opcional)
+Detailed description (optional)
 ```
 
-**Tipos:**
-- `feat`: Nueva funcionalidad
-- `fix`: Corrección de bug
-- `docs`: Cambios en documentación
-- `style`: Formato, punto y coma faltantes, etc.
-- `refactor`: Refactorización de código
-- `test`: Agregar o corregir tests
-- `chore`: Tareas de mantenimiento
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Formatting, missing semicolons, etc.
+- `refactor`: Code refactoring
+- `test`: Add or fix tests
+- `chore`: Maintenance tasks
 
-**Ejemplos:**
+**Examples:**
 ```
 feat(inventory): add product search functionality
 fix(pos): correct cart total calculation
@@ -99,86 +99,86 @@ docs(readme): update installation instructions
 
 #### Pull Request
 
-1. Asegúrate de que tu código funciona correctamente.
-2. Verifica que pase el linting y type-check:
+1. Make sure your code works correctly.
+2. Check that it passes linting and type-check:
    ```bash
    npm run lint
    npm run type-check
    ```
-3. Actualiza la documentación si es necesario.
-4. Haz push a tu fork:
+3. Update the documentation if needed.
+4. Push to your fork:
    ```bash
-   git push origin feature/nombre-descriptivo
+   git push origin feature/descriptive-name
    ```
-5. Abre un **Pull Request** hacia la rama `develop` (NO a `main`).
+5. Open a **Pull Request** against the `develop` branch (NOT `main`).
    - **Features** → `develop`
-   - **Hotfixes** → `main` y `develop`
-   - **Releases** → `main` y luego merge de vuelta a `develop`
+   - **Hotfixes** → `main` and `develop`
+   - **Releases** → `main`, then merge back into `develop`
 
-**⚠️ IMPORTANTE:** Los PRs a `main` solo se aceptan desde ramas `release/*` o `hotfix/*`.
-5. Describe claramente:
-   - Qué cambios realizaste.
-   - Por qué son necesarios.
-   - Cómo probar los cambios.
-
----
-
-## 🎯 Prioridades del Proyecto
-
-Consulta el archivo `Roadmap.md` para conocer las prioridades actuales y las fases de desarrollo.
+**⚠️ IMPORTANT:** PRs to `main` are only accepted from `release/*` or `hotfix/*` branches.
+5. Clearly describe:
+   - What changes you made.
+   - Why they are needed.
+   - How to test the changes.
 
 ---
 
-## 📝 Estándares de Código
+## 🎯 Project Priorities
+
+See the `Roadmap.md` file for the current priorities and development phases.
+
+---
+
+## 📝 Code Standards
 
 ### TypeScript
-- Usa tipos estrictos.
-- Evita `any` siempre que sea posible.
-- Define interfaces claras para estructuras de datos.
+- Use strict types.
+- Avoid `any` whenever possible.
+- Define clear interfaces for data structures.
 
 ### React
-- Componentes funcionales con hooks.
-- Props tipadas con TypeScript.
-- Componentes reutilizables en `src/components/`.
+- Functional components with hooks.
+- Props typed with TypeScript.
+- Reusable components in `src/components/`.
 
-### Estilos
-- Usa Tailwind CSS para estilos.
-- Mantén consistencia con el diseño existente.
-- Usa Shadcn/UI para componentes estándar.
+### Styles
+- Use Tailwind CSS for styles.
+- Stay consistent with the existing design.
+- Use Shadcn/UI for standard components.
 
-### Base de Datos
-- Todas las operaciones SQLite deben estar en el Main Process.
-- Usa prepared statements para prevenir SQL injection.
-- Documenta el esquema de las tablas.
+### Database
+- All SQLite operations must live in the Main Process.
+- Use prepared statements to prevent SQL injection.
+- Document the table schema.
 
 ---
 
 ## 🧪 Testing
 
-Actualmente el proyecto está en fase inicial. Se agregarán guidelines de testing en futuras versiones.
+The project is currently in an early phase. Testing guidelines will be added in future versions.
 
 ---
 
-## 📚 Documentación
+## 📚 Documentation
 
-Si agregas nuevas funcionalidades:
+If you add new features:
 
-1. Actualiza `README.md` si es relevante.
-2. Documenta cambios en `changelog.md`.
-3. Actualiza `docs/ARCHITECTURE.md` si afecta la arquitectura.
-
----
-
-## ❓ ¿Necesitas Ayuda?
-
-- Revisa la documentación en la carpeta `docs/`.
-- Abre un **Issue** con la etiqueta `question`.
-- Contacta a los mantenedores del proyecto.
+1. Update `README.md` if relevant.
+2. Document the changes in `changelog.md`.
+3. Update `docs/ARCHITECTURE.md` if it affects the architecture.
 
 ---
 
-## 🙏 Reconocimientos
+## ❓ Need Help?
 
-Todos los contribuidores serán reconocidos en el proyecto.
+- Check the documentation in the `docs/` folder.
+- Open an **Issue** with the `question` label.
+- Contact the project maintainers.
 
-¡Gracias por hacer de **NexoraCloud** un mejor proyecto! 🚀
+---
+
+## 🙏 Acknowledgements
+
+All contributors will be acknowledged in the project.
+
+Thank you for making **NexoraCloud** a better project! 🚀

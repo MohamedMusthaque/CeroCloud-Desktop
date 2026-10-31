@@ -1,135 +1,135 @@
 # Roadmap – NexoraCloud
 
-Este documento describe la evolución planificada del proyecto **NexoraCloud**, organizada por fases y versiones.
+This document describes the planned evolution of the **NexoraCloud** project, organized by phases and versions.
 
-El roadmap es flexible y puede ajustarse según las necesidades del desarrollo.
-
----
-
-## 🟢 Fase 0 – Preparación ✅ **COMPLETADA**
-**Objetivo:** Definir bases sólidas del proyecto.
-
-- ✅ Definición del alcance y objetivos.
-- ✅ Elección del stack tecnológico.
-- ✅ Diseño de la arquitectura (Electron: main / preload / renderer).
-- ✅ Estructura de carpetas del proyecto.
-- ✅ Documentación inicial completa.
-- ✅ Archivos de configuración base (.gitignore, LICENSE).
-- ✅ Guías de contribución y estándares de código.
-
-**Estado:** ✅ **Completado** (Enero 2026)
+The roadmap is flexible and can be adjusted to the needs of development.
 
 ---
 
-## 🔵 Fase 1 – Base del Sistema ✅ **COMPLETADA**
-**Objetivo:** Tener una aplicación funcional mínima.
+## 🟢 Phase 0 – Preparation ✅ **COMPLETED**
+**Goal:** Lay solid foundations for the project.
 
-- ✅ Configuración de Electron + Vite + React.
-- ✅ Integración de TypeScript.
-- ✅ Configuración de Tailwind CSS y Shadcn/UI.
-- ✅ Layout principal (Sidebar, Header).
-- ✅ Navegación básica.
-- ✅ Sistema de persistencia (electron-store).
-- ✅ CRUD de productos completo y funcional.
-- ✅ Gestión básica de inventario.
-- ✅ Dashboard con estadísticas reales.
+- ✅ Scope and goals defined.
+- ✅ Technology stack chosen.
+- ✅ Architecture designed (Electron: main / preload / renderer).
+- ✅ Project folder structure.
+- ✅ Complete initial documentation.
+- ✅ Base configuration files (.gitignore, LICENSE).
+- ✅ Contribution guides and code standards.
 
-**Estado:** ✅ **Completado** (Enero 2026)
+**Status:** ✅ **Completed** (January 2026)
+
+---
+
+## 🔵 Phase 1 – System Foundation ✅ **COMPLETED**
+**Goal:** Have a minimal working application.
+
+- ✅ Electron + Vite + React setup.
+- ✅ TypeScript integration.
+- ✅ Tailwind CSS and Shadcn/UI setup.
+- ✅ Main layout (Sidebar, Header).
+- ✅ Basic navigation.
+- ✅ Persistence system (electron-store).
+- ✅ Complete, working product CRUD.
+- ✅ Basic inventory management.
+- ✅ Dashboard with real statistics.
+
+**Status:** ✅ **Completed** (January 2026)
 
 ---
 
 
-## 🟡 Fase 2 – Ventas y POS ✅ **COMPLETADA**
-**Objetivo:** Permitir el registro de ventas.
+## 🟡 Phase 2 – Sales and POS ✅ **COMPLETED**
+**Goal:** Allow sales to be recorded.
 
-- ✅ Carrito de ventas.
-- ✅ Registro de transacciones.
-- ✅ Métodos de pago configurables.
-- ✅ Control automático de stock.
-- ✅ Búsqueda de productos en POS.
-- ✅ Cálculo de totales e IVA.
-- ⏳ Historial de ventas (Fase 3).
+- ✅ Sales cart.
+- ✅ Transaction recording.
+- ✅ Configurable payment methods.
+- ✅ Automatic stock control.
+- ✅ Product search in the POS.
+- ✅ Totals and VAT calculation.
+- ⏳ Sales history (Phase 3).
 
-**Estado:** ✅ **Completado** (Enero 2026)
-
----
-
-## 🟠 Fase 3 – Reportes y Backups ✅ **COMPLETADA**
-**Objetivo:** Exportación de información y seguridad de datos.
-
-- ✅ Historial completo de ventas
-- ✅ Reportes de inventario con stock bajo
-- ✅ Estadísticas en tiempo real
-- ✅ Exportación de inventario en CSV
-- ✅ Exportación de ventas en CSV (resumen y detallado)
-- ✅ Exportación de stock bajo en CSV
-- ✅ Sistema de copias de seguridad (Backup JSON)
-- ✅ Restauración desde backup
-- ⏳ Exportación en PDF (Fase 4)
-
-**Estado:** ✅ **Completado** (Enero 2026)
+**Status:** ✅ **Completed** (January 2026)
 
 ---
 
-## 🟣 Fase 4 – UX Avanzado y Analítica ✅ **COMPLETADA**
-**Objetivo:** Mejorar la experiencia de usuario y visibilidad del negocio.
+## 🟠 Phase 3 – Reports and Backups ✅ **COMPLETED**
+**Goal:** Export information and keep data safe.
 
-- ✅ Dashboard con gráficas profesionales (Recharts)
-- ✅ KPIs de ventas en tiempo real
-- ✅ Modo claro / modo oscuro perfeccionado
-- ✅ Paleta de colores premium (Indigo/Teal/Cyan)
-- ✅ Sidebar rediseñado con gradientes
-- ✅ Header con glassmorphism
-- ✅ Logo hexagonal premium
-- ✅ Animaciones y transiciones suaves
-- ✅ Optimización de rendimiento
+- ✅ Complete sales history
+- ✅ Inventory reports with low stock
+- ✅ Real-time statistics
+- ✅ Inventory export to CSV
+- ✅ Sales export to CSV (summary and detailed)
+- ✅ Low-stock export to CSV
+- ✅ Backup system (JSON backup)
+- ✅ Restore from backup
+- ⏳ PDF export (Phase 4)
 
-**Estado:** ✅ **Completado** (Enero 2026)
-
----
-
-## 💅 Versión 1.1.0 – Polish & Payments ✅ **COMPLETADA**
-**Objetivo:** Refinar la experiencia de venta y visuales globales.
-
-- ✅ **Checkout Flow Mejorado**: Modal de pago dedicado, cálculo de vuelto automatizado, shortcuts (Ctrl+Enter).
-- ✅ **Estética Global**: Scrollbars personalizados, inputs premium, sombras y bordes suavizados.
-- ✅ **Marca Dinámica**: Logo y nombre de empresa reactivos en Dashboard y Sidebar.
-- ✅ **Panel de Configuración**: Rediseño de pestaña "Acerca de" con enlaces sociales.
-
-**Estado:** ✅ **Completado** (Enero 2026)
+**Status:** ✅ **Completed** (January 2026)
 
 ---
 
-## 🎉 Versión 1.0.0 – Primera Versión Estable ✅ **COMPLETADA**
+## 🟣 Phase 4 – Advanced UX and Analytics ✅ **COMPLETED**
+**Goal:** Improve the user experience and business visibility.
 
-**[📥 Descargar Release](https://github.com/CeroCloud/CeroCloud-Desktop/releases/tag/v1.0.0)**
+- ✅ Dashboard with professional charts (Recharts)
+- ✅ Real-time sales KPIs
+- ✅ Polished light mode / dark mode
+- ✅ Premium color palette (Indigo/Teal/Cyan)
+- ✅ Sidebar redesigned with gradients
+- ✅ Header with glassmorphism
+- ✅ Premium hexagonal logo
+- ✅ Smooth animations and transitions
+- ✅ Performance optimization
 
-**Objetivo:** Sistema completo con todas las funcionalidades core implementadas.
-
-- ✅ **Backup Premium**: Rediseño visual completo con Glassmorphism, integración de nubes (Drive/Dropbox) y flujo manual controlado.
-- ✅ **Restore Avanzado**: Drag & drop moderno, visualización de metadatos antes de restaurar y validaciones de seguridad.
-- ✅ **Cifrado Robusto**: Implementación transparente de AES-256 para proteger la información sensible.
-
-**Estado:** ✅ **Lanzado** (5 de Enero de 2026)
-
----
-
-## 🔴 Fase 5 – Futuro (v1.1.0+)
-**Objetivo:** Escalabilidad y funcionalidades avanzadas.
-
-- Roles de usuario.
-- Multiempresa.
-- Impresión de tickets.
-- Plugins o módulos opcionales.
-- Mejoras avanzadas de seguridad.
+**Status:** ✅ **Completed** (January 2026)
 
 ---
 
-## 📌 Notas
-- Las versiones siguen **Semantic Versioning**.
-- El roadmap puede modificarse según prioridades reales.
-- No todas las fases tienen fechas fijas para mantener flexibilidad.
+## 💅 Version 1.1.0 – Polish & Payments ✅ **COMPLETED**
+**Goal:** Refine the sales experience and the global visuals.
+
+- ✅ **Improved Checkout Flow**: Dedicated payment modal, automatic change calculation, shortcuts (Ctrl+Enter).
+- ✅ **Global Aesthetics**: Custom scrollbars, premium inputs, softened shadows and borders.
+- ✅ **Dynamic Branding**: Company logo and name update live in the Dashboard and Sidebar.
+- ✅ **Settings Panel**: Redesigned "About" tab with social links.
+
+**Status:** ✅ **Completed** (January 2026)
 
 ---
 
-Este roadmap sirve como guía estratégica para el desarrollo de **NexoraCloud**.
+## 🎉 Version 1.0.0 – First Stable Version ✅ **COMPLETED**
+
+**[📥 Download Release](https://github.com/CeroCloud/CeroCloud-Desktop/releases/tag/v1.0.0)**
+
+**Goal:** A complete system with every core feature implemented.
+
+- ✅ **Premium Backup**: Complete visual redesign with Glassmorphism, cloud integration (Drive/Dropbox) and a controlled manual flow.
+- ✅ **Advanced Restore**: Modern drag & drop, metadata preview before restoring and security checks.
+- ✅ **Robust Encryption**: Transparent AES-256 implementation to protect sensitive information.
+
+**Status:** ✅ **Released** (January 5, 2026)
+
+---
+
+## 🔴 Phase 5 – Future (v1.1.0+)
+**Goal:** Scalability and advanced features.
+
+- User roles.
+- Multi-company.
+- Ticket printing.
+- Optional plugins or modules.
+- Advanced security improvements.
+
+---
+
+## 📌 Notes
+- Versions follow **Semantic Versioning**.
+- The roadmap may change according to real priorities.
+- Not every phase has fixed dates, to keep things flexible.
+
+---
+
+This roadmap serves as a strategic guide for the development of **NexoraCloud**.

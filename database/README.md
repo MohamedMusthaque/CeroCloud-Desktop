@@ -1,14 +1,14 @@
 # Database Directory
 
-Este directorio contiene la base de datos local SQLite del proyecto.
+This directory contains the project's local SQLite database.
 
-## Archivos
+## Files
 
-- `nexoracloud.db` - Base de datos principal (ignorado en Git)
-- `backups/` - Carpeta para respaldos automáticos
+- `nexoracloud.db` - Main database (ignored by Git)
+- `backups/` - Folder for automatic backups
 
-## Notas
+## Notes
 
-- La base de datos se crea automáticamente al iniciar la aplicación
-- Los backups se generan según la configuración del usuario
-- Este directorio está en .gitignore para evitar subir datos locales
+- The database is created automatically when the application starts
+- Backups are generated according to the user's configuration
+- This directory is in .gitignore to avoid uploading local data

@@ -1,147 +1,147 @@
-# ✅ CI/CD con Gitflow - Implementación Completa
+# ✅ CI/CD with Gitflow - Complete Implementation
 
-## 📁 Archivos Creados/Actualizados
+## 📁 Files Created/Updated
 
-### 🔧 Workflows de GitHub Actions
+### 🔧 GitHub Actions Workflows
 
 1. **`.github/workflows/ci.yml`** ✅
-   - Ejecuta en: `main`, `develop`, `feature/*`, `hotfix/*`, `release/*`
+   - Runs on: `main`, `develop`, `feature/*`, `hotfix/*`, `release/*`
    - Jobs: Lint, Type-check, Build
-   - Plataformas: Windows + Linux
+   - Platforms: Windows + Linux
 
 2. **`.github/workflows/release.yml`** ✅
-   - Ejecuta solo en: `main` (y tags `v*.*.*`)
-   - Job: Build completo + Release automático con semantic-release
-   - Genera: Instaladores Windows (.exe), Linux (.AppImage, .deb)
+   - Runs only on: `main` (and `v*.*.*` tags)
+   - Job: Full build + automatic release with semantic-release
+   - Produces: Windows (.exe) and Linux (.AppImage, .deb) installers
 
-3. **`.github/workflows/develop.yml`** ✅ NUEVO
-   - Ejecuta en: `develop` (pushes y PRs)
-   - Jobs: Build de desarrollo + Beta pre-release opcional
-   - Artifacts: Guardados por 7 días
+3. **`.github/workflows/develop.yml`** ✅ NEW
+   - Runs on: `develop` (pushes and PRs)
+   - Jobs: Development build + optional beta pre-release
+   - Artifacts: Kept for 7 days
 
-### 📝 Configuración
+### 📝 Configuration
 
 4. **`.releaserc.json`** ✅
-   - Branch `main` → Releases estables (v1.0.0)
-   - Branch `develop` → Pre-releases beta (v1.0.0-beta.1)
+   - `main` branch → Stable releases (v1.0.0)
+   - `develop` branch → Beta pre-releases (v1.0.0-beta.1)
 
-### 📚 Documentación
+### 📚 Documentation
 
-5. **`docs/GITFLOW.md`** ✅ NUEVO
-   - Guía completa de Gitflow
-   - Flujo de trabajo con diagramas Mermaid
-   - Convención de commits
-   - Checklist de releases
+5. **`docs/GITFLOW.md`** ✅ NEW
+   - Complete Gitflow guide
+   - Workflow with Mermaid diagrams
+   - Commit convention
+   - Release checklist
 
-6. **`docs/BRANCH_PROTECTION.md`** ✅ NUEVO
-   - Configuración detallada de protección de ramas
-   - Instrucciones para GitHub, CLI y Terraform
-   - Checklist de seguridad
+6. **`docs/BRANCH_PROTECTION.md`** ✅ NEW
+   - Detailed branch protection configuration
+   - Instructions for GitHub, the CLI and Terraform
+   - Security checklist
 
 7. **`CONTRIBUTING.md`** ✅
-   - Actualizado con flujo Gitflow
-   - Instrucciones de fork y PR a `develop`
-   - Referencia a documentación completa
+   - Updated with the Gitflow workflow
+   - Fork and PR-to-`develop` instructions
+   - Reference to the complete documentation
 
 8. **`README.md`** ✅
-   - Sección de desarrollo y contribución agregada
-   - Comandos rápidos para Gitflow
+   - Development and contribution section added
+   - Quick Gitflow commands
 
-### 🛠️ Scripts Helper
+### 🛠️ Helper Scripts
 
-9. **`.github/gitflow-helper.ps1`** ✅ NUEVO (PowerShell/Windows)
-   - `.\gitflow-helper.ps1 feature nombre` → Crear feature
-   - `.\gitflow-helper.ps1 release v1.1.0` → Crear release
-   - `.\gitflow-helper.ps1 hotfix nombre` → Crear hotfix
-   - `.\gitflow-helper.ps1 finish` → Finalizar y mergear
+9. **`.github/gitflow-helper.ps1`** ✅ NEW (PowerShell/Windows)
+   - `.\gitflow-helper.ps1 feature name` → Create a feature
+   - `.\gitflow-helper.ps1 release v1.1.0` → Create a release
+   - `.\gitflow-helper.ps1 hotfix name` → Create a hotfix
+   - `.\gitflow-helper.ps1 finish` → Finish and merge
 
-10. **`.github/gitflow-helper.sh`** ✅ NUEVO (Bash/Linux/Mac)
-    - Mismo funcionamiento que la versión PowerShell
+10. **`.github/gitflow-helper.sh`** ✅ NEW (Bash/Linux/Mac)
+    - Works the same as the PowerShell version
 
 ---
 
-## 🌳 Estructura de Ramas
+## 🌳 Branch Structure
 
 ```
-main (producción)
+main (production)
   ├── v1.0.0 (tag)
-  └── hotfix/fix-critical → merge a main y develop
+  └── hotfix/fix-critical → merge into main and develop
   
-develop (integración)
-  ├── feature/dashboard → merge a develop
-  ├── feature/auth → merge a develop
-  └── release/v1.1.0 → merge a main y develop
+develop (integration)
+  ├── feature/dashboard → merge into develop
+  ├── feature/auth → merge into develop
+  └── release/v1.1.0 → merge into main and develop
 ```
 
 ---
 
-## 🔄 Flujo de Trabajo Completo
+## 🔄 Complete Workflow
 
-### 1️⃣ Desarrollar Nueva Característica
+### 1️⃣ Develop a New Feature
 
 ```bash
-# Opción A: Manual
+# Option A: Manually
 git checkout develop
 git pull origin develop
-git checkout -b feature/mi-caracteristica
+git checkout -b feature/my-feature
 
-# Opción B: Con helper
-.\.github\gitflow-helper.ps1 feature mi-caracteristica
+# Option B: With the helper
+.\.github\gitflow-helper.ps1 feature my-feature
 ```
 
-**Hacer cambios:**
+**Make changes:**
 ```bash
 git add .
-git commit -m "feat: agregar nueva característica"
-git push origin feature/mi-caracteristica
+git commit -m "feat: add new feature"
+git push origin feature/my-feature
 ```
 
-**Crear PR:** `feature/mi-caracteristica` → `develop`
+**Open a PR:** `feature/my-feature` → `develop`
 
-**CI ejecuta:** Lint + Type-check + Build en Windows/Linux
+**CI runs:** Lint + Type-check + Build on Windows/Linux
 
 ---
 
-### 2️⃣ Preparar Release
+### 2️⃣ Prepare a Release
 
 ```bash
-# Crear release branch desde develop
+# Create a release branch from develop
 .\.github\gitflow-helper.ps1 release v1.1.0
 
-# Actualizar changelog.md manualmente
-# Hacer ajustes finales
+# Update changelog.md manually
+# Make final adjustments
 
-# Finalizar release
+# Finish the release
 .\.github\gitflow-helper.ps1 finish
 ```
 
-**Resultado:**
-- Merge a `main` → Trigger automático de Release en GitHub
-- Merge a `develop` → Mantener ramas sincronizadas
-- Tag `v1.1.0` creado automáticamente por semantic-release
+**Result:**
+- Merge into `main` → Automatically triggers the Release on GitHub
+- Merge into `develop` → Keeps the branches in sync
+- Tag `v1.1.0` created automatically by semantic-release
 
 ---
 
-### 3️⃣ Hotfix Urgente
+### 3️⃣ Urgent Hotfix
 
 ```bash
-# Crear hotfix desde main
+# Create a hotfix from main
 .\.github\gitflow-helper.ps1 hotfix fix-payment-bug
 
-# Corregir el bug
-git commit -m "fix: corregir cálculo de pagos"
+# Fix the bug
+git commit -m "fix: fix payment calculation"
 
-# Incrementar versión patch
+# Bump the patch version
 npm version patch --no-git-tag-version
 git commit -am "chore: bump to v1.0.1"
 
-# Finalizar
+# Finish
 .\.github\gitflow-helper.ps1 finish
 ```
 
-**Resultado:**
-- Merge a `main` → Release v1.0.1 automático
-- Merge a `develop` → Hotfix disponible para futuras features
+**Result:**
+- Merge into `main` → Automatic v1.0.1 release
+- Merge into `develop` → Hotfix available for future features
 
 ---
 
@@ -149,7 +149,7 @@ git commit -am "chore: bump to v1.0.1"
 
 ### Continuous Integration (CI)
 
-| Rama | Trigger | Checks | Plataformas |
+| Branch | Trigger | Checks | Platforms |
 |------|---------|--------|-------------|
 | `feature/*` | Push | Lint, Type-check, Build | Windows + Linux |
 | `develop` | Push, PR | Lint, Type-check, Build, Artifacts | Windows + Linux |
@@ -159,16 +159,16 @@ git commit -am "chore: bump to v1.0.1"
 
 ### Continuous Deployment (CD)
 
-| Rama | Trigger | Acción | Versión |
+| Branch | Trigger | Action | Version |
 |------|---------|--------|---------|
-| `main` | Push o Tag | Release completo | v1.0.0 (estable) |
-| `develop` | Push | Pre-release (opcional) | v1.1.0-beta.1 |
+| `main` | Push or Tag | Full release | v1.0.0 (stable) |
+| `develop` | Push | Pre-release (optional) | v1.1.0-beta.1 |
 
 ---
 
-## 🛡️ Protección de Ramas (Recomendado)
+## 🛡️ Branch Protection (Recommended)
 
-### En GitHub: Settings → Branches → Branch protection rules
+### On GitHub: Settings → Branches → Branch protection rules
 
 #### `main`:
 - ✅ Require PR with 1 approval
@@ -182,62 +182,62 @@ git commit -am "chore: bump to v1.0.1"
 - ✅ Require status checks (CI passing)
 - ✅ Block force pushes
 
-**📖 Ver guía completa:** [docs/BRANCH_PROTECTION.md](../docs/BRANCH_PROTECTION.md)
+**📖 See the complete guide:** [docs/BRANCH_PROTECTION.md](../docs/BRANCH_PROTECTION.md)
 
 ---
 
-## 📝 Convención de Commits
+## 📝 Commit Convention
 
-Usa **Conventional Commits** para releases automáticos:
+Use **Conventional Commits** for automatic releases:
 
 ```bash
-feat: nueva característica      → MINOR (1.0.0 → 1.1.0)
-fix: corrección de bug          → PATCH (1.0.0 → 1.0.1)
+feat: new feature               → MINOR (1.0.0 → 1.1.0)
+fix: bug fix                    → PATCH (1.0.0 → 1.0.1)
 feat!: breaking change          → MAJOR (1.0.0 → 2.0.0)
-docs: actualizar documentación  → No afecta versión
+docs: update documentation      → Does not affect the version
 ```
 
 ---
 
-## ✅ Próximos Pasos
+## ✅ Next Steps
 
-1. **Configurar protección de ramas en GitHub**
-   - Ir a Settings → Branches
-   - Aplicar reglas según [BRANCH_PROTECTION.md](../docs/BRANCH_PROTECTION.md)
+1. **Configure branch protection on GitHub**
+   - Go to Settings → Branches
+   - Apply the rules from [BRANCH_PROTECTION.md](../docs/BRANCH_PROTECTION.md)
 
-2. **Crear rama `develop` en el repositorio**
+2. **Create the `develop` branch in the repository**
    ```bash
    git checkout -b develop
    git push origin develop
    ```
 
-3. **Hacer primer commit a `develop`**
+3. **Make the first commit to `develop`**
    ```bash
    git checkout develop
    git commit --allow-empty -m "chore: initialize develop branch"
    git push origin develop
    ```
 
-4. **Configurar rama default en GitHub**
+4. **Set the default branch on GitHub**
    - Settings → General → Default branch → `develop`
 
-5. **Probar el flujo completo**
-   - Crear feature → PR a develop → Merge
-   - Crear release → PR a main → Release automático
+5. **Test the complete flow**
+   - Create a feature → PR to develop → Merge
+   - Create a release → PR to main → Automatic release
 
 ---
 
-## 🎯 Beneficios Implementados
+## 🎯 Benefits Implemented
 
-✅ **Desarrollo organizado** con Gitflow estándar  
-✅ **CI automático** en todas las ramas  
-✅ **Releases automáticos** desde `main`  
-✅ **Beta releases** opcionales desde `develop`  
-✅ **Scripts helper** para facilitar el trabajo  
-✅ **Documentación completa** del flujo  
-✅ **Protección de producción** (main)  
-✅ **Conventional Commits** para changelogs automáticos  
+✅ **Organized development** with standard Gitflow  
+✅ **Automatic CI** on every branch  
+✅ **Automatic releases** from `main`  
+✅ **Optional beta releases** from `develop`  
+✅ **Helper scripts** to make the work easier  
+✅ **Complete documentation** of the workflow  
+✅ **Production protection** (main)  
+✅ **Conventional Commits** for automatic changelogs  
 
 ---
 
-*Implementado el: 8 de Enero de 2026*
+*Implemented on: January 8, 2026*

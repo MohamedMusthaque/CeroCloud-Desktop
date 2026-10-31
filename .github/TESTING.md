@@ -1,165 +1,165 @@
-# 🔧 Scripts de Diagnóstico y Prueba de Release
+# 🔧 Release Diagnostic and Test Scripts
 
-Este directorio contiene scripts de PowerShell para diagnosticar y probar el sistema de releases automáticos.
+This directory contains PowerShell scripts to diagnose and test the automatic release system.
 
-## 📋 Scripts Disponibles
+## 📋 Available Scripts
 
-### 1. `diagnose.ps1` - Diagnóstico Completo
-**Propósito:** Verifica toda la configuración del proyecto y detecta problemas comunes.
+### 1. `diagnose.ps1` - Full Diagnostics
+**Purpose:** Checks the whole project configuration and detects common problems.
 
 ```powershell
 .\diagnose.ps1
 ```
 
-**Qué verifica:**
-- ✅ Configuración de Git
-- ✅ Versión de Node.js y npm
-- ✅ Configuración de package.json
-- ✅ Plugins de semantic-release instalados
-- ✅ Archivo .releaserc.json
-- ✅ Directorios de build
-- ✅ Workflows de GitHub Actions
-- ✅ Análisis de commits desde el último tag
-- ✅ Problemas comunes
+**What it checks:**
+- ✅ Git configuration
+- ✅ Node.js and npm versions
+- ✅ package.json configuration
+- ✅ Installed semantic-release plugins
+- ✅ The .releaserc.json file
+- ✅ Build directories
+- ✅ GitHub Actions workflows
+- ✅ Analysis of commits since the last tag
+- ✅ Common problems
 
-**Usa este script PRIMERO** para obtener una visión general.
+**Run this script FIRST** to get an overview.
 
 ---
 
-### 2. `validate-commits.ps1` - Validación de Commits
-**Propósito:** Verifica que tus commits sigan el formato Conventional Commits requerido por semantic-release.
+### 2. `validate-commits.ps1` - Commit Validation
+**Purpose:** Checks that your commits follow the Conventional Commits format required by semantic-release.
 
 ```powershell
 .\validate-commits.ps1
 ```
 
-**Qué hace:**
-- 📝 Analiza los últimos 10 commits
-- ✅ Identifica commits válidos (feat, fix, docs, etc.)
-- ❌ Identifica commits inválidos
-- 💡 Muestra ejemplos de formato correcto
+**What it does:**
+- 📝 Analyzes the last 10 commits
+- ✅ Identifies valid commits (feat, fix, docs, etc.)
+- ❌ Identifies invalid commits
+- 💡 Shows examples of the correct format
 
-**Formato correcto de commits:**
+**Correct commit format:**
 ```
-feat: agregar nueva funcionalidad       # Genera versión MINOR
-fix: corregir bug                       # Genera versión PATCH
-fix(hotfix): corrección urgente         # PATCH con scope
-chore: actualizar dependencias          # No genera versión
-docs: actualizar documentación          # No genera versión
+feat: add new feature                   # Bumps the MINOR version
+fix: fix bug                            # Bumps the PATCH version
+fix(hotfix): urgent fix                 # PATCH with a scope
+chore: update dependencies              # No version bump
+docs: update documentation              # No version bump
 
-# Para cambios incompatibles (MAJOR version):
-feat!: cambio que rompe compatibilidad
-# O en el cuerpo del commit:
-feat: nueva funcionalidad
+# For incompatible changes (MAJOR version):
+feat!: change that breaks compatibility
+# Or in the commit body:
+feat: new feature
 
-BREAKING CHANGE: descripción del cambio incompatible
+BREAKING CHANGE: description of the incompatible change
 ```
 
 ---
 
-### 3. `test-release.ps1` - Prueba Local de Release
-**Propósito:** Ejecuta semantic-release en modo DRY-RUN (sin publicar nada).
+### 3. `test-release.ps1` - Local Release Test
+**Purpose:** Runs semantic-release in DRY-RUN mode (without publishing anything).
 
 ```powershell
 .\test-release.ps1
 ```
 
-**Qué hace:**
-- 🧪 Simula el proceso de release
-- 🔍 Analiza commits y determina la próxima versión
-- 📝 Muestra qué archivos se crearían/modificarían
-- ❌ NO publica nada (es seguro ejecutarlo)
+**What it does:**
+- 🧪 Simulates the release process
+- 🔍 Analyzes commits and determines the next version
+- 📝 Shows which files would be created/modified
+- ❌ Publishes NOTHING (it is safe to run)
 
-**Usa este script** después de validar commits para ver si el release funcionaría.
+**Run this script** after validating the commits to see whether the release would work.
 
 ---
 
-## 🚀 Flujo de Trabajo Recomendado
+## 🚀 Recommended Workflow
 
-### Para Hotfixes:
+### For Hotfixes:
 
 ```powershell
-# 1. Crea la rama hotfix desde main
+# 1. Create the hotfix branch from main
 git checkout main
 git pull origin main
 git checkout -b hotfix/v1.1.2
 
-# 2. Haz tus correcciones
-# ... edita archivos ...
+# 2. Make your fixes
+# ... edit files ...
 
-# 3. Commit con formato correcto
+# 3. Commit with the correct format
 git add .
-git commit -m "fix: corregir error crítico en auto-update"
+git commit -m "fix: fix critical auto-update error"
 
-# 4. Valida el commit
+# 4. Validate the commit
 .\validate-commits.ps1
 
-# 5. Prueba el release localmente
+# 5. Test the release locally
 .\test-release.ps1
 
-# 6. Si todo está OK, merge a main
+# 6. If everything is OK, merge into main
 git checkout main
 git merge hotfix/v1.1.2 --no-ff
 git push origin main
 
-# 7. GitHub Actions se encargará del resto
+# 7. GitHub Actions takes care of the rest
 ```
 
-### Para Desarrollo Normal:
+### For Normal Development:
 
 ```powershell
-# 1. Trabaja en develop
+# 1. Work on develop
 git checkout develop
 git pull origin develop
 
-# 2. Crea feature branch
-git checkout -b feature/nueva-funcionalidad
+# 2. Create a feature branch
+git checkout -b feature/new-feature
 
-# 3. Haz commits con formato correcto
-git commit -m "feat: agregar exportación de reportes"
+# 3. Commit with the correct format
+git commit -m "feat: add report export"
 
-# 4. Valida antes de push
+# 4. Validate before pushing
 .\validate-commits.ps1
 
-# 5. Merge a develop
+# 5. Merge into develop
 git checkout develop
-git merge feature/nueva-funcionalidad
+git merge feature/new-feature
 git push origin develop
 
-# 6. GitHub Actions creará beta release
+# 6. GitHub Actions creates a beta release
 ```
 
 ---
 
-## ❌ Problemas Comunes y Soluciones
+## ❌ Common Problems and Solutions
 
 ### Error: "Process completed with exit code 1"
 
-**Causas posibles:**
+**Possible causes:**
 
-1. **No hay commits válidos para release**
-   - Solución: Verifica con `.\validate-commits.ps1`
-   - Asegúrate de usar `feat:` o `fix:` en los commits
+1. **No valid commits for a release**
+   - Solution: Check with `.\validate-commits.ps1`
+   - Make sure you use `feat:` or `fix:` in the commits
 
-2. **Plugins de npm faltantes**
-   - Solución: `npm ci` para reinstalar dependencias
+2. **Missing npm plugins**
+   - Solution: `npm ci` to reinstall the dependencies
 
-3. **Build falla en el proceso**
-   - Solución: Prueba `npm run type-check && npx vite build`
+3. **The build fails during the process**
+   - Solution: Try `npm run type-check && npx vite build`
 
-4. **GITHUB_TOKEN sin permisos**
-   - Solución: Verifica en GitHub Actions que el token tenga permisos de escritura
+4. **GITHUB_TOKEN without permissions**
+   - Solution: Check in GitHub Actions that the token has write permissions
 
 ### Error: "No release published"
 
-Esto NO es un error. Significa que:
-- No hay commits de `feat:` o `fix:` desde el último release
-- Todos los commits son `chore:`, `docs:`, etc. (no generan versión)
+This is NOT an error. It means that:
+- There are no `feat:` or `fix:` commits since the last release
+- All the commits are `chore:`, `docs:`, etc. (they don't bump the version)
 
-### Error: Build falla al crear binarios
+### Error: The build fails when creating binaries
 
 ```powershell
-# Verifica que electron-builder funcione localmente:
+# Check that electron-builder works locally:
 npm run type-check
 npx vite build
 npx electron-builder --win
@@ -167,14 +167,14 @@ npx electron-builder --win
 
 ---
 
-## 📊 Interpretando la Salida
+## 📊 Reading the Output
 
 ### validate-commits.ps1
 ```
-✨ [abc123] feat: nueva funcionalidad    # Generará versión MINOR
-🐛 [def456] fix: corrección de bug       # Generará versión PATCH
-🔧 [ghi789] chore: actualizar deps       # NO genera versión
-❌ [jkl012] cambios varios               # INVÁLIDO - no generará release
+✨ [abc123] feat: new feature            # Will bump the MINOR version
+🐛 [def456] fix: bug fix                 # Will bump the PATCH version
+🔧 [ghi789] chore: update deps           # Does NOT bump the version
+❌ [jkl012] various changes              # INVALID - will not generate a release
 ```
 
 ### test-release.ps1
@@ -185,7 +185,7 @@ npx electron-builder --win
 
 ---
 
-## 🔗 Enlaces Útiles
+## 🔗 Useful Links
 
 - [Semantic Release Docs](https://semantic-release.gitbook.io/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
@@ -195,16 +195,16 @@ npx electron-builder --win
 
 ## 💡 Tips
 
-- **Siempre ejecuta `.\diagnose.ps1` primero** cuando tengas problemas
-- **Usa `.\validate-commits.ps1`** antes de cada push importante
-- **Prueba con `.\test-release.ps1`** antes de merge a main/develop
-- Los commits de merge no necesitan seguir Conventional Commits
-- Usa `git commit --amend` para corregir el último commit si olvidaste el formato
+- **Always run `.\diagnose.ps1` first** when you have problems
+- **Use `.\validate-commits.ps1`** before every important push
+- **Test with `.\test-release.ps1`** before merging into main/develop
+- Merge commits don't need to follow Conventional Commits
+- Use `git commit --amend` to fix the last commit if you forgot the format
 
 ---
 
-## 🆘 ¿Necesitas Ayuda?
+## 🆘 Need Help?
 
-1. Ejecuta `.\diagnose.ps1` y comparte la salida
-2. Ejecuta `.\validate-commits.ps1` para verificar commits
-3. Revisa los logs de GitHub Actions para el error específico
+1. Run `.\diagnose.ps1` and share the output
+2. Run `.\validate-commits.ps1` to check the commits
+3. Check the GitHub Actions logs for the specific error

@@ -1,13 +1,13 @@
 # Assets Directory
 
-Este directorio contiene los iconos de la aplicación para cada plataforma.
+This directory contains the application icons for each platform.
 
-## Archivos Necesarios
+## Required Files
 
-- `icon.ico` - Icono para Windows (256x256)
-- `icon.icns` - Icono para macOS
-- `icon.png` - Icono para Linux (512x512)
+- `icon.ico` - Windows icon (256x256)
+- `icon.icns` - macOS icon
+- `icon.png` - Linux icon (512x512)
 
-## Notas
+## Notes
 
-Por ahora, estos iconos son placeholders. Se reemplazarán con el diseño final del proyecto.
+For now, these icons are placeholders. They will be replaced with the project's final design.
