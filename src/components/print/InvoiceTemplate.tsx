@@ -19,7 +19,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
             <div ref={ref} className="w-[280px] bg-white p-2 text-gray-900 font-mono text-[11px] leading-tight mx-auto" id="invoice-template">
                 {/* Top banner */}
                 {settings.invoice?.headerImage && (
-                    <img src={settings.invoice.headerImage} alt="Header" className="w-full mb-2 object-contain" />
+                    <img src={settings.invoice.headerImage} alt="Header" className="block max-w-full max-h-16 mx-auto mb-2 object-contain" />
                 )}
 
                 <div className="text-center mb-3 break-words">
@@ -111,8 +111,8 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
         <div ref={ref} className="w-[800px] min-h-[1100px] bg-white p-0 text-gray-900 relative" id="invoice-template">
             {/* Custom Header Banner */}
             {settings.invoice?.headerImage && (
-                <div className="w-full h-40 overflow-hidden mb-8">
-                    <img src={settings.invoice.headerImage} alt="Header" className="w-full h-full object-cover" />
+                <div className="w-full h-24 overflow-hidden mb-8 px-12 pt-6">
+                    <img src={settings.invoice.headerImage} alt="Header" className="w-full h-full object-contain" />
                 </div>
             )}
 
