@@ -82,6 +82,15 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                             <span>{settings.currencySymbol}{sale.discount.toFixed(2)}</span>
                         </div>
                     )}
+                    <div className="flex justify-between mt-1">
+                        <span>{t('print.paymentMethod')}</span>
+                        <span className="font-bold">{paymentMethodLabel(sale.payment_method)}</span>
+                    </div>
+                    {sale.payment_method === 'cheque' && sale.cheque_number && (
+                        <p className="text-right break-words">
+                            {t('print.chequeNumber', { number: sale.cheque_number })}{sale.cheque_bank ? ` · ${sale.cheque_bank}` : ''}
+                        </p>
+                    )}
                 </div>
 
                 <div className="text-center mt-4 mb-2 break-words px-2">
