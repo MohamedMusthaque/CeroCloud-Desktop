@@ -75,9 +75,9 @@ export function Login() {
                 {/* Brand */}
                 <div className="flex flex-col items-center text-center mb-8">
                     <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center justify-center p-3 shadow-2xl mb-4">
-                        <img src="icon.png" alt="CeroCloud" className="w-full h-full object-contain" />
+                        <img src="icon.png" alt="NexoraCloud" className="w-full h-full object-contain" />
                     </div>
-                    <h1 className="text-3xl font-black text-white tracking-tight">CeroCloud</h1>
+                    <h1 className="text-3xl font-black text-white tracking-tight">NexoraCloud</h1>
                     <p className="text-sm text-indigo-300 tracking-[0.15em] uppercase mt-1">{t('auth.tagline')}</p>
                 </div>
 

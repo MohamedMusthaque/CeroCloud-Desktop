@@ -1,4 +1,4 @@
-# 🚀 CeroCloud: Roadmap Estratégico de Evolución
+# 🚀 NexoraCloud: Roadmap Estratégico de Evolución
 
 **Última actualización:** 8 de Enero de 2026  
 **Versión:** 1.1.0 (Completada UI Backend) → 1.2.0 (Testing & Quality)
@@ -185,7 +185,7 @@
   - Persistir preferencia en localStorage
   - Esfuerzo: 0.5 días
 
-**Entregable Sprint 4:** CeroCloud disponible en español e inglés.
+**Entregable Sprint 4:** NexoraCloud disponible en español e inglés.
 
 ---
 

@@ -1,6 +1,6 @@
-# Gitflow Workflow - CeroCloud
+# Gitflow Workflow - NexoraCloud
 
-Este documento describe el flujo de trabajo Git utilizado en el proyecto **CeroCloud**.
+Este documento describe el flujo de trabajo Git utilizado en el proyecto **NexoraCloud**.
 
 ---
 

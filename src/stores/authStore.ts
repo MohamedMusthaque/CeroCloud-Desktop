@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthState>()(
             }
         }),
         {
-            name: 'cerocloud-session',
+            name: 'nexoracloud-session',
             storage: createJSONStorage(() => sessionStorage),
             partialize: (state) => ({ user: state.user })
         }

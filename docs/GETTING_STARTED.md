@@ -1,6 +1,6 @@
 # Guía de Inicio Rápido
 
-Esta guía te ayudará a configurar el entorno de desarrollo y comenzar a trabajar en **CeroCloud**.
+Esta guía te ayudará a configurar el entorno de desarrollo y comenzar a trabajar en **NexoraCloud**.
 
 ---
 
@@ -33,7 +33,7 @@ npm --version     # Debe mostrar 10.x.x o superior
 
 ```bash
 git clone https://github.com/CeroCloud/CeroCloud-Desktop.git
-cd CeroCloud
+cd NexoraCloud
 ```
 
 O descarga el ZIP y descomprímelo.
@@ -63,7 +63,7 @@ Este comando instalará todas las dependencias necesarias:
 Una vez instalado, verás esta estructura:
 
 ```
-CeroCloud/
+NexoraCloud/
 ├── electron/                # Código de Electron (Main Process)
 │   ├── main/               # Lógica principal
 │   ├── preload/            # Preload scripts
@@ -130,8 +130,8 @@ Crea un archivo `.env.local` en la raíz del proyecto:
 
 ```env
 # Configuración de desarrollo
-VITE_APP_NAME=CeroCloud
-VITE_DB_PATH=./database/cerocloud.db
+VITE_APP_NAME=NexoraCloud
+VITE_DB_PATH=./database/nexoracloud.db
 ```
 
 **Nota:** Los archivos `.env*` están en `.gitignore` por seguridad.

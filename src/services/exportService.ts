@@ -138,7 +138,7 @@ export const exportService = {
 
         doc.setFontSize(11)
         doc.setFont('helvetica', 'bold')
-        doc.text(company.name || 'CeroCloud', 105, 30, { align: 'center' })
+        doc.text(company.name || 'NexoraCloud', 105, 30, { align: 'center' })
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(9)
 

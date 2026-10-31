@@ -87,5 +87,5 @@ export const common: Record<keyof typeof es, string> = {
     'importService.sampleDescription': 'Product description',
     'importService.sampleCategory': 'Category',
     'importService.sheetName': 'Products',
-    'importService.templateFile': 'cerocloud_products_template.xlsx',
+    'importService.templateFile': 'nexoracloud_products_template.xlsx',
 }

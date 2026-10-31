@@ -23,7 +23,7 @@ export const useUIStore = create<UIStore>()(
             setInventoryViewMode: (mode) => set({ inventoryViewMode: mode }),
         }),
         {
-            name: 'cerocloud-ui-store',
+            name: 'nexoracloud-ui-store',
         }
     )
 )

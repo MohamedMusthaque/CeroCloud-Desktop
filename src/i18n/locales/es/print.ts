@@ -32,7 +32,7 @@ export const printTexts = {
     'print.subtotal': 'Subtotal',
     'print.discount': 'Descuento',
     'print.taxes': 'Impuestos ({rate}%)',
-    'print.generatedBy': 'Documento generado electrónicamente por CeroCloud',
+    'print.generatedBy': 'Documento generado electrónicamente por NexoraCloud',
 
     // Report
     'print.col.id': 'ID',
@@ -53,6 +53,6 @@ export const printTexts = {
     'print.totalProducts': 'Total Productos',
     'print.inventoryValue': 'Valor Inventario',
     'print.confidential': 'Documento interno confidencial',
-    'print.generatedByShort': 'Generado por CeroCloud',
+    'print.generatedByShort': 'Generado por NexoraCloud',
     'print.page': 'Página {current} de {total}',
 }

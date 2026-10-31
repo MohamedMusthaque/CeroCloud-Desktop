@@ -1,6 +1,6 @@
 # Arquitectura y Estructura del Proyecto
 
-**Proyecto:** CeroCloud  
+**Proyecto:** NexoraCloud  
 **Stack:** Electron + Vite + React + TypeScript + SQLite  
 **Objetivo:** Base sólida, escalable y mantenible para una aplicación de escritorio 100% local.
 
@@ -32,7 +32,7 @@ graph TB
 
 ```mermaid
 graph LR
-    A[CeroCloud] --> B[electron/]
+    A[NexoraCloud] --> B[electron/]
     A --> C[src/]
     A --> D[public/]
     A --> E[database/]
@@ -62,7 +62,7 @@ graph LR
     C3 --> C3C[sales/]
     C3 --> C3D[reports/]
     
-    E --> E1[cerocloud.db]
+    E --> E1[nexoracloud.db]
     E --> E2[backups/]
     
     style A fill:#1e293b,stroke:#0f172a,stroke-width:3px,color:#fff
@@ -191,7 +191,7 @@ graph TD
 ```mermaid
 graph LR
     A[Aplicación] --> B[better-sqlite3]
-    B --> C[cerocloud.db]
+    B --> C[nexoracloud.db]
     C --> D[Tablas]
     C --> E[Backups Automáticos]
     
@@ -276,4 +276,4 @@ La arquitectura permite:
 
 ---
 
-Este documento define la base estructural del proyecto y sirve como referencia para el desarrollo continuo de **CeroCloud**.
+Este documento define la base estructural del proyecto y sirve como referencia para el desarrollo continuo de **NexoraCloud**.

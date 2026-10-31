@@ -2,7 +2,7 @@
 
 ## 📋 Resumen Ejecutivo
 
-La **Fase 0: Preparación** del proyecto **CeroCloud** ha sido completada exitosamente el **3 de Enero de 2026**.
+La **Fase 0: Preparación** del proyecto **NexoraCloud** ha sido completada exitosamente el **3 de Enero de 2026**.
 
 ---
 
@@ -111,7 +111,7 @@ La **Fase 1: Base del Sistema (v1.0.0)** está lista para comenzar.
 ## 📂 Estructura Preparada
 
 ```
-CeroCloud/
+NexoraCloud/
 ├── .git/                           ✅ Control de versiones
 ├── .gitignore                      ✅ Configurado
 ├── README.md                       ✅ Profesional
@@ -152,7 +152,7 @@ CeroCloud/
 
 ## 🎉 Conclusión
 
-La **Fase 0** ha establecido bases sólidas para el desarrollo de **CeroCloud**:
+La **Fase 0** ha establecido bases sólidas para el desarrollo de **NexoraCloud**:
 
 - ✅ Visión clara del proyecto
 - ✅ Arquitectura bien definida

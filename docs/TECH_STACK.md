@@ -1,4 +1,4 @@
-# Stack Tecnológico – CeroCloud
+# Stack Tecnológico – NexoraCloud
 
 Este documento detalla las tecnologías, herramientas y bibliotecas utilizadas en el proyecto, junto con la justificación de cada elección.
 
@@ -6,7 +6,7 @@ Este documento detalla las tecnologías, herramientas y bibliotecas utilizadas e
 
 ## 🎯 Visión General
 
-**CeroCloud** utiliza un stack moderno y robusto diseñado para crear aplicaciones de escritorio multiplataforma con las siguientes características:
+**NexoraCloud** utiliza un stack moderno y robusto diseñado para crear aplicaciones de escritorio multiplataforma con las siguientes características:
 
 - ✅ **100% Local** - Sin dependencia de servidores
 - ✅ **Multiplataforma** - Windows, macOS, Linux

@@ -85,5 +85,5 @@ export const common = {
     'importService.sampleDescription': 'Descripción del producto',
     'importService.sampleCategory': 'Categoría',
     'importService.sheetName': 'Productos',
-    'importService.templateFile': 'plantilla_productos_cerocloud.xlsx',
+    'importService.templateFile': 'plantilla_productos_nexoracloud.xlsx',
 }

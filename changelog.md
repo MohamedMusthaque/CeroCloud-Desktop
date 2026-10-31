@@ -65,7 +65,7 @@
 
 # Changelog
 
-Todos los cambios relevantes de **CeroCloud** serán documentados en este archivo.
+Todos los cambios relevantes de **NexoraCloud** serán documentados en este archivo.
 
 El formato sigue de manera ligera el estándar de *Keep a Changelog* y utiliza **Semantic Versioning** (`MAJOR.MINOR.PATCH`).
 
@@ -194,7 +194,7 @@ El formato sigue de manera ligera el estándar de *Keep a Changelog* y utiliza *
 - ✅ Estadísticas en tiempo real
 
 #### 🎨 **UX Premium (Fase 4)**
-- ✅ Paleta de colores CeroCloud (Indigo/Teal/Cyan)
+- ✅ Paleta de colores NexoraCloud (Indigo/Teal/Cyan)
 - ✅ Logo hexagonal generado con IA
 - ✅ Sidebar con gradientes y estados activos
 - ✅ Header con glassmorphism (backdrop blur)
@@ -276,7 +276,7 @@ El formato sigue de manera ligera el estándar de *Keep a Changelog* y utiliza *
   - Ticket promedio calculado
   - Gradientes personalizados por métrica
   - Indicadores de tendencia (up/down)
-- ✅ **Paleta de Colores Premium (CeroCloud)**:
+- ✅ **Paleta de Colores Premium (NexoraCloud)**:
   - Primary: Deep Indigo (#4F46E5 → #6366F1)
   - Secondary: Teal (#14B8A6)
   - Accent: Cyan (#06B6D4)

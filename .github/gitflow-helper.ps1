@@ -1,4 +1,4 @@
-# Gitflow Helper Script para CeroCloud
+# Gitflow Helper Script para NexoraCloud
 # Este script ayuda a crear y gestionar ramas siguiendo Gitflow
 
 param(

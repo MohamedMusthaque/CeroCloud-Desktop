@@ -116,12 +116,12 @@ Cuando hagas push a `develop`:
 1. **Beta Pre-release** creará:
    - ✅ `v1.1.1-beta.1` tag
    - ✅ Release en GitHub
-   - ✅ `CeroCloud-1.1.1-beta.1.AppImage` (Linux)
-   - ✅ `cerocloud_1.1.1-beta.1_amd64.deb` (Linux)
+   - ✅ `NexoraCloud-1.1.1-beta.1.AppImage` (Linux)
+   - ✅ `nexoracloud_1.1.1-beta.1_amd64.deb` (Linux)
    - ✅ `latest-linux.yml` (auto-update)
 
 2. **Build Windows** (automático después) agregará:
-   - ✅ `CeroCloud-Setup-1.1.1-beta.1.exe` (Windows)
+   - ✅ `NexoraCloud-Setup-1.1.1-beta.1.exe` (Windows)
    - ✅ `latest.yml` (auto-update)
 
 ---

@@ -1,6 +1,6 @@
 <div align="center">
 
-# CeroCloud
+# NexoraCloud
 
 **Offline-first desktop Point of Sale and Inventory Management**
 
@@ -21,7 +21,7 @@
 
 ## Overview
 
-CeroCloud keeps everything in a local SQLite database on the user's computer. It works fully offline, so a shop can keep selling when the connection drops, and its data never leaves the machine unless the user exports or backs it up.
+NexoraCloud keeps everything in a local SQLite database on the user's computer. It works fully offline, so a shop can keep selling when the connection drops, and its data never leaves the machine unless the user exports or backs it up.
 
 This repository is a fork of [CeroCloud/CeroCloud-Desktop](https://github.com/CeroCloud/CeroCloud-Desktop). On top of the upstream app it adds:
 
@@ -136,11 +136,11 @@ Everything lives in Electron's per-user data folder:
 
 | OS | Location |
 |----|----------|
-| Windows | `%APPDATA%\CeroCloud\` |
-| macOS | `~/Library/Application Support/CeroCloud/` |
-| Linux | `~/.config/CeroCloud/` |
+| Windows | `%APPDATA%\NexoraCloud\` |
+| macOS | `~/Library/Application Support/NexoraCloud/` |
+| Linux | `~/.config/NexoraCloud/` |
 
-Inside it, `cerocloud.db` is the SQLite database and `images/products/` holds product images. In development (`npm run dev`) the folder is named `cerocloud` (lowercase) instead.
+Inside it, `nexoracloud.db` is the SQLite database and `images/products/` holds product images. In development (`npm run dev`) the folder is named `nexoracloud` (lowercase) instead. On first launch, data from a previous `CeroCloud` install is moved into this folder automatically.
 
 ## Usage
 

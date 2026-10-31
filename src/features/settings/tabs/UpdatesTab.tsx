@@ -106,7 +106,7 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
                                     {updateStatus === 'checking' ? t('updates.status.checking') :
                                         updateStatus === 'up-to-date' ? t('updates.status.upToDate') :
                                             updateStatus === 'available' ? t('updates.status.available') :
-                                                'CeroCloud Desktop'}
+                                                'NexoraCloud Desktop'}
                                 </h3>
                                 <div className="flex items-center gap-3">
                                     <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-bold font-mono border border-white/10">v{currentVersion}</span>
@@ -191,7 +191,7 @@ export function UpdatesTab({ settings, setSettings }: UpdatesTabProps) {
 
             <div className="text-center pt-8">
                 <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">
-                    CeroCloud Desktop &copy; {new Date().getFullYear()}
+                    NexoraCloud Desktop &copy; {new Date().getFullYear()}
                 </p>
             </div>
         </div>

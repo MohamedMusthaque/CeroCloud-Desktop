@@ -36,7 +36,7 @@ export const backupService = {
             }
 
             const blob = new Blob([finalContent], { type: 'application/json' })
-            const filename = `backup_cerocloud_${new Date().toISOString().split('T')[0]}_${Date.now()}.${fileExtension}`
+            const filename = `backup_nexoracloud_${new Date().toISOString().split('T')[0]}_${Date.now()}.${fileExtension}`
 
             saveAs(blob, filename)
             return { success: true, filename }

@@ -16,7 +16,7 @@ export const backupWizard: Record<keyof typeof es, string> = {
     'bw.generating': 'Generating Backup...',
     'bw.createTitle': 'Create Backup',
     'bw.generatingDesc': 'Please wait, we are securely packaging all your data.',
-    'bw.createDesc': 'CeroCloud will generate a complete copy of your data including products, sales and suppliers.',
+    'bw.createDesc': 'NexoraCloud will generate a complete copy of your data including products, sales and suppliers.',
     'bw.processing': 'Processing...',
     'bw.startNow': 'Start Backup Now',
     'bw.protectTitle': 'Protect with Password',

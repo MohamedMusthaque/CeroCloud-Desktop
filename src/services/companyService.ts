@@ -1,9 +1,9 @@
 import { CompanySettings } from '@/types/database'
 
-const STORAGE_KEY = 'cerocloud_company_settings'
+const STORAGE_KEY = 'nexoracloud_company_settings'
 
 const defaultSettings: CompanySettings = {
-    name: 'CeroCloud',
+    name: 'NexoraCloud',
     address: '',
     phone: '',
     email: '',

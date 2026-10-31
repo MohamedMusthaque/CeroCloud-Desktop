@@ -1,6 +1,6 @@
-# 📚 Índice de Documentación - CeroCloud
+# 📚 Índice de Documentación - NexoraCloud
 
-Bienvenido a la documentación de **CeroCloud**. Este índice te ayudará a encontrar rápidamente la información que necesitas.
+Bienvenido a la documentación de **NexoraCloud**. Este índice te ayudará a encontrar rápidamente la información que necesitas.
 
 ---
 
@@ -53,7 +53,7 @@ Si eres nuevo en el proyecto, comienza aquí en orden:
 
 ### ¿Necesitas información sobre...?
 
-- **¿Qué es CeroCloud?** → [README.md](../README.md) o [ENUNCIADO_PROYECTO.md](ENUNCIADO_PROYECTO.md)
+- **¿Qué es NexoraCloud?** → [README.md](../README.md) o [ENUNCIADO_PROYECTO.md](ENUNCIADO_PROYECTO.md)
 - **¿Cómo instalarlo?** → [GETTING_STARTED.md](GETTING_STARTED.md)
 - **¿Qué tecnologías usa?** → [TECH_STACK.md](TECH_STACK.md)
 - **¿Cómo está estructurado?** → [ARCHITECTURE.md](ARCHITECTURE.md)

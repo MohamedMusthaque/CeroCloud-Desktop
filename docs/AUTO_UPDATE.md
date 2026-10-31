@@ -1,4 +1,4 @@
-# 🔄 Sistema de Auto-Actualización - CeroCloud
+# 🔄 Sistema de Auto-Actualización - NexoraCloud
 
 **Implementado:** 8 de Enero 2026  
 **Versión:** 1.1.0
@@ -19,7 +19,7 @@
 
 ## 🎯 Descripción General
 
-CeroCloud implementa un **sistema de auto-actualización silencioso y no intrusivo** que:
+NexoraCloud implementa un **sistema de auto-actualización silencioso y no intrusivo** que:
 
 - ✅ **Verificación automática** cada 6 horas
 - ✅ **Descarga en segundo plano** sin interrumpir al usuario
@@ -252,18 +252,18 @@ if (app.isPackaged && mainWindow) {
 #### 3. **Logs de debugging**
 
 Los logs se guardan en:
-- **Windows**: `%USERPROFILE%\AppData\Roaming\cerocloud\logs\main.log`
-- **macOS**: `~/Library/Logs/cerocloud/main.log`
-- **Linux**: `~/.config/cerocloud/logs/main.log`
+- **Windows**: `%USERPROFILE%\AppData\Roaming\nexoracloud\logs\main.log`
+- **macOS**: `~/Library/Logs/nexoracloud/main.log`
+- **Linux**: `~/.config/nexoracloud/logs/main.log`
 
 Ver logs en tiempo real:
 
 ```bash
 # Windows
-Get-Content "$env:APPDATA\cerocloud\logs\main.log" -Tail 50 -Wait
+Get-Content "$env:APPDATA\nexoracloud\logs\main.log" -Tail 50 -Wait
 
 # macOS/Linux
-tail -f ~/Library/Logs/cerocloud/main.log
+tail -f ~/Library/Logs/nexoracloud/main.log
 ```
 
 ---
@@ -301,7 +301,7 @@ git push origin main
 gh release create v1.1.0 \
   --title "v1.1.0 - Completitud" \
   --notes-file changelog.md \
-  release/CeroCloud\ Setup\ 1.1.0.exe
+  release/NexoraCloud\ Setup\ 1.1.0.exe
 ```
 
 #### 3. **Build multiplataforma**
@@ -322,15 +322,15 @@ npm run build:linux
 Para que el auto-updater funcione, el release **DEBE** incluir:
 
 **Windows:**
-- `CeroCloud-Setup-1.1.0.exe` (instalador NSIS)
+- `NexoraCloud-Setup-1.1.0.exe` (instalador NSIS)
 - `latest.yml` (metadata, generado automáticamente por electron-builder)
 
 **macOS:**
-- `CeroCloud-1.1.0.dmg`
+- `NexoraCloud-1.1.0.dmg`
 - `latest-mac.yml`
 
 **Linux:**
-- `CeroCloud-1.1.0.AppImage`
+- `NexoraCloud-1.1.0.AppImage`
 - `latest-linux.yml`
 
 ### CI/CD Automático (GitHub Actions)

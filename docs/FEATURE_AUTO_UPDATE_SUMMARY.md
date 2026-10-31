@@ -1,4 +1,4 @@
-# 🎉 Sistema de Auto-Actualización Implementado - CeroCloud
+# 🎉 Sistema de Auto-Actualización Implementado - NexoraCloud
 
 **Fecha:** 8 de Enero 2026  
 **Prioridad:** #1 del Roadmap  
@@ -8,7 +8,7 @@
 
 ## 📦 ¿Qué se implementó?
 
-Se agregó un **sistema completo de auto-actualización** a CeroCloud Desktop que permite:
+Se agregó un **sistema completo de auto-actualización** a NexoraCloud Desktop que permite:
 
 ### ✅ Funcionalidades Principales
 
@@ -168,7 +168,7 @@ npm run build:win  # O build:mac / build:linux
 ### 2. Automático desde la App
 
 ```
-1. Usuario abre CeroCloud v1.0.0
+1. Usuario abre NexoraCloud v1.0.0
 2. Después de 5s → Verifica GitHub Releases
 3. Encuentra v1.1.0 → Muestra notificación
 4. Usuario hace click "Descargar"
@@ -232,7 +232,7 @@ npm run build:win
 
 **Windows:**
 ```powershell
-Get-Content "$env:APPDATA\cerocloud\logs\main.log" -Tail 50 -Wait
+Get-Content "$env:APPDATA\nexoracloud\logs\main.log" -Tail 50 -Wait
 ```
 
 **Buscar lines como:**
@@ -326,7 +326,7 @@ $ npm run type-check
 
 ## 🏆 Resultado
 
-**Sistema de Auto-Actualización completamente funcional e integrado en CeroCloud Desktop.**
+**Sistema de Auto-Actualización completamente funcional e integrado en NexoraCloud Desktop.**
 
 El usuario ahora recibirá notificaciones automáticas de nuevas versiones y podrá actualizar la aplicación con un solo click, sin perder su trabajo actual.
 

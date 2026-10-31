@@ -7,7 +7,7 @@ import { Product, Category, Sale, Supplier, SaleItem, Client } from '../../src/t
 import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
 // Configuración de la Base de Datos
-const dbPath = path.join(app.getPath('userData'), 'cerocloud.db')
+const dbPath = path.join(app.getPath('userData'), 'nexoracloud.db')
 const db = new Database(dbPath)
 
 // Habilitar WAL (Write-Ahead Logging) para mejor rendimiento y seguridad

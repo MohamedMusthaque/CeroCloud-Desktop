@@ -13,7 +13,7 @@ build/
 release/
 
 # Base de datos local
-database/CeroCloud.db
+database/NexoraCloud.db
 database/backups/*.db
 *.sqlite
 *.sqlite3

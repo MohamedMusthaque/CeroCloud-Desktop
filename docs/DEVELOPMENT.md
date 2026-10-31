@@ -1,4 +1,4 @@
-# Guía de Desarrollo - CeroCloud
+# Guía de Desarrollo - NexoraCloud
 
 ## 🚀 Ejecutar en Modo Desarrollo
 
@@ -44,7 +44,7 @@ npx electron .
 ## 📁 Estructura del Proyecto
 
 ```
-CeroCloud/
+NexoraCloud/
 ├── electron/               # Proceso principal de Electron
 │   ├── main/              # Main process
 │   │   └── main.ts       # Entry point del main process
@@ -144,7 +144,7 @@ SQLite se configurará con better-sqlite3:
 // En electron/main/database.ts
 import Database from 'better-sqlite3'
 
-const db = new Database('database/cerocloud.db')
+const db = new Database('database/nexoracloud.db')
 ```
 
 ## 🐛 Debugging

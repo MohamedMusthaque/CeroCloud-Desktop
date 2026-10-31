@@ -1,6 +1,6 @@
-# Contribuyendo a CeroCloud
+# Contribuyendo a NexoraCloud
 
-¡Gracias por tu interés en contribuir a **CeroCloud**! 🎉
+¡Gracias por tu interés en contribuir a **NexoraCloud**! 🎉
 
 Este documento proporciona lineamientos para contribuir al proyecto.
 
@@ -181,4 +181,4 @@ Si agregas nuevas funcionalidades:
 
 Todos los contribuidores serán reconocidos en el proyecto.
 
-¡Gracias por hacer de **CeroCloud** un mejor proyecto! 🚀
+¡Gracias por hacer de **NexoraCloud** un mejor proyecto! 🚀

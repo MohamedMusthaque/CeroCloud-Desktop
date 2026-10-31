@@ -237,14 +237,14 @@ export function About() {
                             <div className="absolute inset-0 bg-indigo-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-full" />
                             <img
                                 src="icon.png"
-                                alt="CeroCloud Icon"
+                                alt="NexoraCloud Icon"
                                 className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] transform scale-125 group-hover:scale-150 transition-transform duration-500"
                             />
                         </div>
                     </motion.div>
 
                     <h1 className="text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 drop-shadow-sm mb-0 leading-none">
-                        CEROCLOUD
+                        NEXORACLOUD
                     </h1>
                     <p className="text-xl font-medium text-indigo-500 dark:text-indigo-400 tracking-[0.2em] uppercase mt-4 mb-8">
                         {t('about.tagline')}
@@ -277,7 +277,7 @@ export function About() {
                                 {t('about.powerTitle')}
                             </h2>
                             <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-                                <strong className="text-primary">CeroCloud</strong> {t('about.intro1')}
+                                <strong className="text-primary">NexoraCloud</strong> {t('about.intro1')}
                                 <br /><br />
                                 {t('about.intro2a')} <span className="text-gray-900 dark:text-white font-semibold">100% offline</span>{t('about.intro2b')}
                             </p>

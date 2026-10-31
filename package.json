@@ -1,5 +1,5 @@
 {
-    "name": "cerocloud",
+    "name": "nexoracloud",
     "version": "1.2.0",
     "description": "Sistema Integral de Ventas e Inventario de Escritorio - 100% Local y Gratuito",
     "main": "dist-electron/main/main.js",
@@ -88,7 +88,7 @@
         "@typescript-eslint/parser": "^7.0.2",
         "@vitejs/plugin-react": "^4.2.1",
         "autoprefixer": "^10.4.17",
-        "cerocloud": "file:../../../../../../../CeroCloud-Desktop",
+        "nexoracloud": "file:../../../../../../../CeroCloud-Desktop",
         "concurrently": "^8.2.2",
         "electron": "^28.2.3",
         "electron-builder": "^24.13.3",
@@ -106,8 +106,8 @@
         "wait-on": "^7.2.0"
     },
     "build": {
-        "appId": "com.cerocloud.local",
-        "productName": "CeroCloud",
+        "appId": "com.nexoracloud.local",
+        "productName": "NexoraCloud",
         "directories": {
             "output": "release",
             "buildResources": "electron/assets"
@@ -124,8 +124,8 @@
         "fileAssociations": [
             {
                 "ext": "cerobak",
-                "name": "CeroCloud Backup",
-                "description": "CeroCloud Backup File",
+                "name": "NexoraCloud Backup",
+                "description": "NexoraCloud Backup File",
                 "role": "Editor",
                 "icon": "electron/assets/backup-icon.png"
             }

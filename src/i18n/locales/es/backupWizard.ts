@@ -14,7 +14,7 @@ export const backupWizard = {
     'bw.generating': 'Generando Respaldo...',
     'bw.createTitle': 'Crear Copia de Seguridad',
     'bw.generatingDesc': 'Por favor espera, estamos empaquetando todos tus datos de forma segura.',
-    'bw.createDesc': 'CeroCloud generará una copia completa de tus datos incluyendo productos, ventas y proveedores.',
+    'bw.createDesc': 'NexoraCloud generará una copia completa de tus datos incluyendo productos, ventas y proveedores.',
     'bw.processing': 'Procesando...',
     'bw.startNow': 'Iniciar Respaldo Ahora',
     'bw.protectTitle': 'Proteger con Contraseña',

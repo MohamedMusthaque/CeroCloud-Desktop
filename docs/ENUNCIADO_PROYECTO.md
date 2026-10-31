@@ -1,4 +1,4 @@
-# Enunciado del Proyecto: CeroCloud
+# Enunciado del Proyecto: NexoraCloud
 
 **Proyecto:** Sistema Integral de Ventas e Inventario de Escritorio  
 **Estado:** Fase de Definición de Arquitectura  
@@ -7,7 +7,7 @@
 ---
 
 ## 1. Descripción General
-**CeroCloud** es una aplicación de escritorio multiplataforma diseñada para funcionar de forma **100% local y gratuita**. Su objetivo es permitir a pequeños negocios gestionar inventario, ventas y reportes mediante una interfaz moderna, fluida y escalable, eliminando por completo la dependencia de hosting, servidores en la nube o suscripciones mensuales.
+**NexoraCloud** es una aplicación de escritorio multiplataforma diseñada para funcionar de forma **100% local y gratuita**. Su objetivo es permitir a pequeños negocios gestionar inventario, ventas y reportes mediante una interfaz moderna, fluida y escalable, eliminando por completo la dependencia de hosting, servidores en la nube o suscripciones mensuales.
 
 Todos los datos se almacenan directamente en la computadora del usuario, garantizando control total, privacidad y costos cero de infraestructura.
 
@@ -93,4 +93,4 @@ Todos los datos se almacenan directamente en la computadora del usuario, garanti
 - Arquitectura preparada para futuras expansiones.
 
 
-**CeroCloud** busca ofrecer una alternativa moderna, sólida y gratuita a los sistemas comerciales en la nube, priorizando el control total de los datos por parte del usuario.
+**NexoraCloud** busca ofrecer una alternativa moderna, sólida y gratuita a los sistemas comerciales en la nube, priorizando el control total de los datos por parte del usuario.

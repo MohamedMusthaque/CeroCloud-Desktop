@@ -2,6 +2,7 @@ import { app, BrowserWindow, protocol, net } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { pathToFileURL } from 'url'
+import './migrateLegacyData'
 import { initializeDatabase, closeDatabase } from './database'
 import { registerIpcHandlers } from './ipc'
 import { AutoUpdateService } from './autoUpdater'
@@ -49,7 +50,7 @@ function createWindow() {
 // Register privileges BEFORE app is ready
 // Register privileges BEFORE app is ready
 protocol.registerSchemesAsPrivileged([
-    { scheme: 'cerocloud-image', privileges: { secure: true, supportFetchAPI: true, standard: true, bypassCSP: true, stream: true } }
+    { scheme: 'nexoracloud-image', privileges: { secure: true, supportFetchAPI: true, standard: true, bypassCSP: true, stream: true } }
 ])
 
 // Prevent multiple instances: a second instance quits before touching the database or cache
@@ -76,8 +77,8 @@ app.whenReady().then(() => {
 
     // Register custom protocol handler
     // Register custom protocol handler
-    protocol.handle('cerocloud-image', (request: Request) => {
-        const urlRequest = request.url.replace('cerocloud-image://', '')
+    protocol.handle('nexoracloud-image', (request: Request) => {
+        const urlRequest = request.url.replace('nexoracloud-image://', '')
         let filename = decodeURIComponent(urlRequest)
         // Eliminar slash final que el navegador agrega automáticamente al tratar el archivo como hostname
         if (filename.endsWith('/') || filename.endsWith('\\')) {

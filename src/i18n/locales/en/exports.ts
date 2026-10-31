@@ -92,11 +92,11 @@ export const exportTexts: Record<keyof typeof es, string> = {
     'zipBackup.protectedSuffix': '_protected',
     'zipBackup.invalidFile': 'Invalid backup file',
     'zipBackup.passwordRequired': 'This backup is protected. Enter your password.',
-    'zipBackup.newerVersion': 'This backup requires a newer version of CeroCloud',
+    'zipBackup.newerVersion': 'This backup requires a newer version of NexoraCloud',
     'zipBackup.wrongPassword': 'Wrong password',
     'zipBackup.mustBeCerobak': 'The file must be a .cerobak',
     'zipBackup.missingFile': 'Required file not found: {file}',
-    'zipBackup.notCeroCloud': 'This file is not a valid CeroCloud backup',
+    'zipBackup.notNexoraCloud': 'This file is not a valid NexoraCloud backup',
     'zipBackup.readFileError': 'Error reading the file: {error}',
     'zipBackup.readBackupError': 'Error reading the backup file',
 }

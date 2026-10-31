@@ -26,13 +26,13 @@ export function Sidebar() {
     const { t } = useTranslation()
     const { sidebarCollapsed, toggleSidebar, setSidebarCollapsed } = useUIStore()
     const user = useAuthStore((state) => state.user)
-    const [companyInfo, setCompanyInfo] = useState({ name: 'CeroCloud', logo: '' })
+    const [companyInfo, setCompanyInfo] = useState({ name: 'NexoraCloud', logo: '' })
 
     const loadCompanyInfo = () => {
         const settings = companyService.getSettings()
-        // If user deleted the name, fallback to default. If name is "CeroCloud", it's default.
+        // If user deleted the name, fallback to default. If name is "NexoraCloud", it's default.
         setCompanyInfo({
-            name: settings.name || 'CeroCloud',
+            name: settings.name || 'NexoraCloud',
             logo: settings.logo || ''
         })
     }
@@ -96,7 +96,7 @@ export function Sidebar() {
                                 {companyInfo.name}
                             </h1>
                             {/* Mostrar subtítulo solo si es el nombre por defecto o si queremos siempre mostrar algo */}
-                            {companyInfo.name === 'CeroCloud' && (
+                            {companyInfo.name === 'NexoraCloud' && (
                                 <p className="text-[10px] text-gray-400 -mt-0.5">{t('nav.tagline')}</p>
                             )}
                         </div>

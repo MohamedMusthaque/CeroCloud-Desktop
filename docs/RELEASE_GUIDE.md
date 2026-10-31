@@ -1,6 +1,6 @@
 # 📦 Guía Rápida: Crear tu Primer Release con Auto-Update
 
-**Para:** CeroCloud Desktop  
+**Para:** NexoraCloud Desktop  
 **Objetivo:** Publicar v1.1.0 con sistema de auto-actualización funcional
 
 ---
@@ -80,7 +80,7 @@ git push origin v1.1.0
 npm run build:win
 
 # Esto generará en la carpeta 'release':
-# - CeroCloud Setup 1.1.0.exe (~80-120 MB)
+# - NexoraCloud Setup 1.1.0.exe (~80-120 MB)
 # - latest.yml (metadata para auto-updater)
 ```
 
@@ -89,7 +89,7 @@ npm run build:win
 **📁 Archivos generados:**
 ```
 release/
-  ├── CeroCloud Setup 1.1.0.exe   ← Instalador principal
+  ├── NexoraCloud Setup 1.1.0.exe   ← Instalador principal
   └── latest.yml                   ← Metadata de actualización
 ```
 
@@ -110,21 +110,21 @@ release/
    ## 🎉 Novedades
    
    ### Sistema de Auto-Actualización
-   CeroCloud ahora se actualiza automáticamente:
+   NexoraCloud ahora se actualiza automáticamente:
    - ✅ Notificaciones de nuevas versiones
    - ✅ Descarga en segundo plano
    - ✅ Instalación sin interrumpir tu trabajo
    
    ### Mejoras Técnicas
    - Verificación cada 6 horas
-   - Logs detallados en `%APPDATA%\cerocloud\logs`
+   - Logs detallados en `%APPDATA%\nexoracloud\logs`
    - Compatible con GitHub Releases
    
    ## 📥 Descarga
    Descarga el instalador para Windows más abajo.
    
    ## 🔄 Actualización desde v1.0.0
-   Si ya tienes CeroCloud instalado:
+   Si ya tienes NexoraCloud instalado:
    1. La app te notificará automáticamente
    2. Click en "Descargar"
    3. Espera la descarga
@@ -135,7 +135,7 @@ release/
    ```
 
 4. **Subir archivos:**
-   - Arrastra `CeroCloud Setup 1.1.0.exe` al área de assets
+   - Arrastra `NexoraCloud Setup 1.1.0.exe` al área de assets
    - Arrastra `latest.yml` al área de assets
 
 5. Marcar como "**Latest release**" (checkbox)
@@ -155,7 +155,7 @@ gh auth login
 gh release create v1.1.0 \
   --title "v1.1.0 - Auto-Update & Mejoras" \
   --notes "Sistema de auto-actualización integrado. Ver changelog para detalles." \
-  "release/CeroCloud Setup 1.1.0.exe#CeroCloud-Setup-1.1.0.exe" \
+  "release/NexoraCloud Setup 1.1.0.exe#NexoraCloud-Setup-1.1.0.exe" \
   "release/latest.yml#latest.yml"
 ```
 
@@ -168,7 +168,7 @@ gh release create v1.1.0 \
 
 2. Verifica que aparezcan:
    - ✅ Tag: `v1.1.0`
-   - ✅ Archivo: `CeroCloud-Setup-1.1.0.exe` (~80-120 MB)
+   - ✅ Archivo: `NexoraCloud-Setup-1.1.0.exe` (~80-120 MB)
    - ✅ Archivo: `latest.yml` (~1 KB)
    - ✅ Descripción del release
 
@@ -203,7 +203,7 @@ Para verificar que funciona:
 
 ```powershell
 # En PowerShell
-Get-Content "$env:APPDATA\cerocloud\logs\main.log" -Tail 30
+Get-Content "$env:APPDATA\nexoracloud\logs\main.log" -Tail 30
 
 # Buscar líneas como:
 # 🔍 Verificando actualizaciones...
@@ -288,7 +288,7 @@ Antes de publicar, verifica:
 
 ## 🎉 ¡Listo!
 
-Ahora todos los usuarios que tengan CeroCloud instalado recibirán una notificación automática cuando haya v1.1.0 disponible.
+Ahora todos los usuarios que tengan NexoraCloud instalado recibirán una notificación automática cuando haya v1.1.0 disponible.
 
 ### Próxima vez (más simple):
 

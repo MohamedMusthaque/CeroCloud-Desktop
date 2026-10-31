@@ -54,7 +54,7 @@ export const zipBackupService = {
 
             // 1. metadata.json (NUNCA cifrado - necesario para detectar)
             const metadata: BackupMetadata = {
-                app: 'CeroCloud',
+                app: 'NexoraCloud',
                 createdAt: new Date().toISOString(),
                 appVersion: '0.2.0',
                 schemaVersion: 1,
@@ -133,7 +133,7 @@ export const zipBackupService = {
             // Nombre del archivo con extensión .cerobak
             const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0]
             const secureFlag = password ? t('zipBackup.protectedSuffix') : ''
-            const filename = `cerocloud_backup${secureFlag}_${timestamp}.cerobak`
+            const filename = `nexoracloud_backup${secureFlag}_${timestamp}.cerobak`
 
             // Descargar solo si download es true
             if (download) {
@@ -256,7 +256,7 @@ export const zipBackupService = {
     },
 
     /**
-     * Valida si un archivo es un backup válido de CeroCloud
+     * Valida si un archivo es un backup válido de NexoraCloud
      */
     validateZipBackup: async (file: File): Promise<{ valid: boolean; error?: string; metadata?: BackupMetadata }> => {
         try {
@@ -278,9 +278,9 @@ export const zipBackupService = {
             const metadataContent = await zip.files['metadata.json'].async('string')
             const metadata: BackupMetadata = JSON.parse(metadataContent)
 
-            // Validar que sea de CeroCloud o CeroCloud (Legacy)
-            if (metadata.app !== 'CeroCloud' && metadata.app !== 'CeroCloud Gestor Local') {
-                return { valid: false, error: t('zipBackup.notCeroCloud') }
+            // Validar que sea de NexoraCloud o de sus nombres anteriores (CeroCloud, CeroCloud Gestor Local)
+            if (!['NexoraCloud', 'CeroCloud', 'CeroCloud Gestor Local'].includes(metadata.app)) {
+                return { valid: false, error: t('zipBackup.notNexoraCloud') }
             }
 
             return { valid: true, metadata }

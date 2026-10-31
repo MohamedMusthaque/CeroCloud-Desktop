@@ -207,7 +207,7 @@ export const es = {
 
     // Updates tab
     'updates.title': 'Sistema y Actualizaciones',
-    'updates.subtitle': 'Mantén tu sistema CeroCloud al día con las últimas mejoras.',
+    'updates.subtitle': 'Mantén tu sistema NexoraCloud al día con las últimas mejoras.',
     'updates.available': 'Nueva actualización disponible',
     'updates.upToDate': 'El sistema está actualizado',
     'updates.checkError': 'Error al buscar actualizaciones',

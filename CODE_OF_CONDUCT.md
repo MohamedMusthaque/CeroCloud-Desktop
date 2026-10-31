@@ -2,7 +2,7 @@
 
 ## Our Commitment
 
-In the interest of fostering an open and welcoming environment, as contributors and maintainers of the **CeroCloud** project, we pledge to make participation in our project and community a harassment-free experience for everyone, regardless of:
+In the interest of fostering an open and welcoming environment, as contributors and maintainers of the **NexoraCloud** project, we pledge to make participation in our project and community a harassment-free experience for everyone, regardless of:
 
 - Age
 - Body size

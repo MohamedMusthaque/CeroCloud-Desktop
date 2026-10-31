@@ -4,7 +4,7 @@ Este directorio contiene la base de datos local SQLite del proyecto.
 
 ## Archivos
 
-- `cerocloud.db` - Base de datos principal (ignorado en Git)
+- `nexoracloud.db` - Base de datos principal (ignorado en Git)
 - `backups/` - Carpeta para respaldos automáticos
 
 ## Notas

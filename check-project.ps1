@@ -1,7 +1,7 @@
-# CeroCloud - Verificación Pre-Commit
+# NexoraCloud - Verificación Pre-Commit
 
 Write-Host "`n==================================" -ForegroundColor Cyan
-Write-Host "  CeroCloud - Pre-Commit Check" -ForegroundColor Cyan
+Write-Host "  NexoraCloud - Pre-Commit Check" -ForegroundColor Cyan
 Write-Host "==================================`n" -ForegroundColor Cyan
 
 $errors = 0

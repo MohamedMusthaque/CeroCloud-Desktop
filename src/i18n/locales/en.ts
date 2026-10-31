@@ -208,7 +208,7 @@ export const en: Record<TranslationKey, string> = {
 
     // Updates tab
     'updates.title': 'System & Updates',
-    'updates.subtitle': 'Keep your CeroCloud system up to date with the latest improvements.',
+    'updates.subtitle': 'Keep your NexoraCloud system up to date with the latest improvements.',
     'updates.available': 'New update available',
     'updates.upToDate': 'The system is up to date',
     'updates.checkError': 'Error checking for updates',

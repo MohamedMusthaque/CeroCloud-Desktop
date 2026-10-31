@@ -1,4 +1,4 @@
-# 🎉 Estado del Proyecto - CeroCloud
+# 🎉 Estado del Proyecto - NexoraCloud
 
 **Actualizado:** 8 de Enero de 2026  
 **Versión:** 1.0.0 - Primera Versión Estable
@@ -48,7 +48,7 @@ Fase 5: Futuro / Escalar      ░░░░░░░░░░░░░░░░�
 
 ### Entregables Alcanzados
 - **Dashboard Premium:** Gráficos con Recharts, KPIs animados y diseño responsive.
-- **Identidad de Marca:** Sistema de colores CeroCloud (Indigo/Teal), logo hexagonal y tipografía consistente.
+- **Identidad de Marca:** Sistema de colores NexoraCloud (Indigo/Teal), logo hexagonal y tipografía consistente.
 - **Modo Oscuro Perfecto:** Paleta de colores ajustada manualmente para confort visual nocturno.
 - **Micro-interacciones:** Hover effects, transiciones entre páginas y feedback táctil en botones.
 

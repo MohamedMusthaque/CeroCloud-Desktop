@@ -1,5 +1,5 @@
 /**
- * Servicio de cifrado profesional para CeroCloud
+ * Servicio de cifrado profesional para NexoraCloud
  * 
  * Usa:
  * - PBKDF2 para derivación de clave (KDF) - Web Crypto API nativa

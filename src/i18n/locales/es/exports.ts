@@ -90,11 +90,11 @@ export const exportTexts = {
     'zipBackup.protectedSuffix': '_protegido',
     'zipBackup.invalidFile': 'Archivo de respaldo inválido',
     'zipBackup.passwordRequired': 'Esta copia está protegida. Ingresa tu contraseña.',
-    'zipBackup.newerVersion': 'Este respaldo requiere una versión más reciente de CeroCloud',
+    'zipBackup.newerVersion': 'Este respaldo requiere una versión más reciente de NexoraCloud',
     'zipBackup.wrongPassword': 'Contraseña incorrecta',
     'zipBackup.mustBeCerobak': 'El archivo debe ser un .cerobak',
     'zipBackup.missingFile': 'Archivo requerido no encontrado: {file}',
-    'zipBackup.notCeroCloud': 'Este archivo no es un respaldo válido de CeroCloud',
+    'zipBackup.notNexoraCloud': 'Este archivo no es un respaldo válido de NexoraCloud',
     'zipBackup.readFileError': 'Error al leer el archivo: {error}',
     'zipBackup.readBackupError': 'Error al leer el archivo de respaldo',
 }

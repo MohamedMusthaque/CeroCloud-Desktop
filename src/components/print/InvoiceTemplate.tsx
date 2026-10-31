@@ -86,7 +86,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
 
                 <div className="text-center mt-4 mb-2 break-words px-2">
                     <p className="italic">{settings.invoice?.disclaimer || t('print.thanks')}</p>
-                    <p className="mt-2 text-[9px] opacity-60">-- CeroCloud --</p>
+                    <p className="mt-2 text-[9px] opacity-60">-- NexoraCloud --</p>
                 </div>
 
                 {/* Banner Inferior */}

@@ -1,4 +1,4 @@
-# 📍 Dónde Encontrar las Actualizaciones - CeroCloud
+# 📍 Dónde Encontrar las Actualizaciones - NexoraCloud
 
 ## 🎯 Respuesta Rápida
 
@@ -29,7 +29,7 @@ Las notificaciones de actualización aparecen **automáticamente** cada 6 horas:
 ### 📍 **Ubicación: Settings → Actualizaciones**
 
 **Pasos:**
-1. Abrir CeroCloud
+1. Abrir NexoraCloud
 2. Ir al menú lateral
 3. Click en "⚙️ **Configuración**" (último item del menú)
 4. Click en la tab "**Actualizaciones** 🔄"
@@ -65,7 +65,7 @@ Las notificaciones de actualización aparecen **automáticamente** cada 6 horas:
 ┌──────────────────────────────────────┐
 │  🛡️ Auto-actualizaciones        [ON]  │
 │                                       │
-│  CeroCloud verifica nuevas versiones │
+│  NexoraCloud verifica nuevas versiones │
 │  cada 6 horas automáticamente.        │
 └──────────────────────────────────────┘
 ```

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Gitflow Helper Script para CeroCloud (Linux/Mac)
+# Gitflow Helper Script para NexoraCloud (Linux/Mac)
 # Este script ayuda a crear y gestionar ramas siguiendo Gitflow
 
 set -e

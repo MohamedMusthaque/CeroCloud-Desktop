@@ -38,7 +38,7 @@ export const useLanguageStore = create<LanguageStore>()(
             }
         }),
         {
-            name: 'cerocloud-language',
+            name: 'nexoracloud-language',
             onRehydrateStorage: () => (state) => {
                 if (state) document.documentElement.lang = state.language
             }

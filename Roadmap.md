@@ -1,6 +1,6 @@
-# Roadmap – CeroCloud
+# Roadmap – NexoraCloud
 
-Este documento describe la evolución planificada del proyecto **CeroCloud**, organizada por fases y versiones.
+Este documento describe la evolución planificada del proyecto **NexoraCloud**, organizada por fases y versiones.
 
 El roadmap es flexible y puede ajustarse según las necesidades del desarrollo.
 
@@ -132,4 +132,4 @@ El roadmap es flexible y puede ajustarse según las necesidades del desarrollo.
 
 ---
 
-Este roadmap sirve como guía estratégica para el desarrollo de **CeroCloud**.
+Este roadmap sirve como guía estratégica para el desarrollo de **NexoraCloud**.
