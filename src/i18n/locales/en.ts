@@ -19,6 +19,7 @@ import { printTexts } from './en/print'
 import { shell } from './en/shell'
 import { exportTexts } from './en/exports'
 import { expenses } from './en/expenses'
+import { views } from './en/views'
 
 export const en: Record<TranslationKey, string> = {
     ...common,
@@ -41,6 +42,7 @@ export const en: Record<TranslationKey, string> = {
     ...shell,
     ...exportTexts,
     ...expenses,
+    ...views,
 
     // Navigation
     'nav.dashboard': 'Dashboard',

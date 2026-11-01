@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
-import { Plus, Search, Edit2, Trash2, Wallet, Shapes, CalendarDays, Receipt, TrendingUp } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Eye, Wallet, Shapes, CalendarDays, Receipt, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -235,7 +236,9 @@ export function Expenses() {
                                         const wasEdited = expense.updated_by && expense.updated_at && expense.updated_at !== expense.created_at
                                         return (
                                             <tr key={expense.id} className="group hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                                <td className="px-4 py-3 whitespace-nowrap text-gray-900 dark:text-white">{formatDay(expense.expense_date)}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <Link to={`/expenses/${expense.id}`} className="text-gray-900 dark:text-white hover:text-primary hover:underline">{formatDay(expense.expense_date)}</Link>
+                                                </td>
                                                 <td className="px-4 py-3">
                                                     <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary whitespace-nowrap">
                                                         {expense.expense_type_name}
@@ -255,6 +258,13 @@ export function Expenses() {
                                                 <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white whitespace-nowrap">{formatCurrency(expense.amount)}</td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                                        <Link
+                                                            to={`/expenses/${expense.id}`}
+                                                            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                                            title={t('view.view')}
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </Link>
                                                         <button
                                                             onClick={() => { setEditing(expense); setFormOpen(true) }}
                                                             className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"

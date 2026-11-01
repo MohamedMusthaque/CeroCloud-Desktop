@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import {
-    Plus, Search, Edit2, Trash2, Users, Mail, Phone,
+    Plus, Search, Edit2, Trash2, Eye, Users, Mail, Phone,
     MapPin, LayoutGrid, List as ListIcon, History,
     CreditCard, FileText
 } from 'lucide-react'
@@ -294,12 +295,15 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
                 {/* Main information */}
                 <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex justify-between items-start">
-                        <h3 className="font-bold text-gray-900 dark:text-white text-lg truncate pr-2 leading-tight">
+                        <Link to={`/clients/${client.id}`} className="block font-bold text-gray-900 dark:text-white text-lg truncate pr-2 leading-tight hover:text-cyan-600 hover:underline">
                             {client.name}
-                        </h3>
+                        </Link>
                         {/* Quick actions menu (grid only) */}
                         {viewMode === 'grid' && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1">
+                                <Link to={`/clients/${client.id}`} title={t('view.view')} className="p-1.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-colors">
+                                    <Eye className="w-4 h-4" />
+                                </Link>
                                 <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-colors">
                                     <Edit2 className="w-4 h-4" />
                                 </button>
@@ -364,6 +368,13 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
             {/* Actions for list mode */}
             {viewMode === 'list' && (
                 <div className="flex items-center gap-2 ml-4 border-l border-gray-100 dark:border-gray-700 pl-4">
+                    <Link
+                        to={`/clients/${client.id}`}
+                        className="p-2 text-gray-400 hover:text-cyan-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                        title={t('view.view')}
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Link>
                     <button
                         onClick={onHistory}
                         className="p-2 text-gray-400 hover:text-cyan-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"

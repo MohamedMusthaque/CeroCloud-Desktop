@@ -932,6 +932,19 @@ export const saleQueries = {
       ...sale,
       items: getItems.all(sale.id) as SaleItem[]
     }))
+  },
+
+  // Sales that include the product (newest first), with all their items
+  getByProductId: (productId: number): Sale[] => {
+    const sales = db.prepare(`
+      SELECT * FROM sales WHERE id IN (SELECT sale_id FROM sale_items WHERE product_id = ?)
+      ORDER BY created_at DESC
+    `).all(productId) as Sale[]
+    const getItems = db.prepare('SELECT * FROM sale_items WHERE sale_id = ?')
+    return sales.map(sale => ({
+      ...sale,
+      items: getItems.all(sale.id) as SaleItem[]
+    }))
   }
 }
 

@@ -52,6 +52,7 @@ interface ElectronAPI {
         create: (sale: any) => Promise<any>
         cancel: (id: number) => Promise<any>
         getByCustomerName: (name: string) => Promise<any[]>
+        getByProductId: (productId: number) => Promise<any[]>
     }
     suppliers: {
         getAll: () => Promise<any[]>

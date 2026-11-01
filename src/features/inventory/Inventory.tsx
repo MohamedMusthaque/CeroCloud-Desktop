@@ -2,11 +2,13 @@
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
     Plus,
     Search,
     Edit2,
     Trash2,
+    Eye,
     Package,
     Upload,
     LayoutGrid,
@@ -59,7 +61,9 @@ export function Inventory() {
     const [isImportOpen, setIsImportOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [loading, setLoading] = useState(true)
-    const [section, setSection] = useState<'products' | 'categories'>('products')
+    // A category page links back with ?section=categories
+    const [searchParams] = useSearchParams()
+    const [section, setSection] = useState<'products' | 'categories'>(searchParams.get('section') === 'categories' ? 'categories' : 'products')
 
     // Load Data
     useEffect(() => {
@@ -526,6 +530,13 @@ function ProductCard({ product, settings, onEdit, onDelete }: { product: Product
 
                 {/* Overlay actions on hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3 backdrop-blur-[2px]">
+                    <Link
+                        to={`/inventory/${product.id}`}
+                        className="p-2.5 bg-white rounded-full text-gray-900 hover:bg-primary hover:text-white transition-colors shadow-lg hover:scale-110 active:scale-90"
+                        title={t('view.view')}
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Link>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -555,7 +566,7 @@ function ProductCard({ product, settings, onEdit, onDelete }: { product: Product
                             {product.category || 'General'}
                         </span>
                         <h3 className="font-bold text-gray-900 dark:text-white line-clamp-1" title={product.name}>
-                            {product.name}
+                            <Link to={`/inventory/${product.id}`} className="hover:text-primary hover:underline">{product.name}</Link>
                         </h3>
                     </div>
                 </div>
@@ -614,7 +625,7 @@ function ProductRow({ product, settings, onEdit, onDelete, virtualStyle }: { pro
 
             {/* Product Info */}
             <div className="min-w-0">
-                <p className="font-medium text-gray-900 dark:text-white line-clamp-1">{product.name}</p>
+                <Link to={`/inventory/${product.id}`} className="block font-medium text-gray-900 dark:text-white line-clamp-1 hover:text-primary hover:underline">{product.name}</Link>
                 <p className="text-xs text-gray-500 font-mono">{product.code}</p>
             </div>
 
@@ -653,6 +664,13 @@ function ProductRow({ product, settings, onEdit, onDelete, virtualStyle }: { pro
 
             {/* Actions */}
             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Link
+                    to={`/inventory/${product.id}`}
+                    className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    title={t('view.view')}
+                >
+                    <Eye className="w-4 h-4" />
+                </Link>
                 <button
                     onClick={onEdit}
                     className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"

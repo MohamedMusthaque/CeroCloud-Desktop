@@ -313,6 +313,10 @@ export function registerIpcHandlers() {
         return cancelSale(id, actorName())
     })
 
+    ipcMain.handle('sales:getByProductId', (_event, productId: number) => {
+        return saleQueries.getByProductId(productId)
+    })
+
     ipcMain.handle('sales:getByCustomerName', (_event, name: string) => {
         return saleQueries.getByCustomerName(name)
     })

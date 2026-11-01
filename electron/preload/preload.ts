@@ -50,6 +50,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         getSalesToday: () => ipcRenderer.invoke('sales:getSalesToday'),
         cancel: (id: number) => ipcRenderer.invoke('sales:cancel', id),
         getByCustomerName: (name: string) => ipcRenderer.invoke('sales:getByCustomerName', name),
+        getByProductId: (productId: number) => ipcRenderer.invoke('sales:getByProductId', productId),
     },
 
     // Suppliers

@@ -11,6 +11,12 @@ import { Suppliers } from '@/features/suppliers/Suppliers'
 import { Clients } from '@/features/clients/Clients'
 import { Users } from '@/features/users/Users'
 import { Expenses } from '@/features/expenses/Expenses'
+import { UserView } from '@/features/users/UserView'
+import { ProductView } from '@/features/inventory/ProductView'
+import { CategoryView } from '@/features/inventory/CategoryView'
+import { SupplierView } from '@/features/suppliers/SupplierView'
+import { ClientView } from '@/features/clients/ClientView'
+import { ExpenseView } from '@/features/expenses/ExpenseView'
 
 export function AppRoutes() {
     return (
@@ -18,12 +24,18 @@ export function AppRoutes() {
             <Route path="/" element={<MainLayout />}>
                 <Route index element={<RequirePage page="dashboard"><Dashboard /></RequirePage>} />
                 <Route path="inventory" element={<RequirePage page="inventory"><Inventory /></RequirePage>} />
+                <Route path="inventory/categories/:id" element={<RequirePage page="inventory"><CategoryView /></RequirePage>} />
+                <Route path="inventory/:id" element={<RequirePage page="inventory"><ProductView /></RequirePage>} />
                 <Route path="sales" element={<RequirePage page="sales"><Sales /></RequirePage>} />
                 <Route path="suppliers" element={<RequirePage page="suppliers"><Suppliers /></RequirePage>} />
+                <Route path="suppliers/:id" element={<RequirePage page="suppliers"><SupplierView /></RequirePage>} />
                 <Route path="clients" element={<RequirePage page="clients"><Clients /></RequirePage>} />
+                <Route path="clients/:id" element={<RequirePage page="clients"><ClientView /></RequirePage>} />
                 <Route path="expenses" element={<RequirePage page="expenses"><Expenses /></RequirePage>} />
+                <Route path="expenses/:id" element={<RequirePage page="expenses"><ExpenseView /></RequirePage>} />
                 <Route path="reports" element={<RequirePage page="reports"><Reports /></RequirePage>} />
                 <Route path="users" element={<RequirePage page="users"><Users /></RequirePage>} />
+                <Route path="users/:id" element={<RequirePage page="users"><UserView /></RequirePage>} />
                 <Route path="settings" element={<RequirePage page="settings"><Settings /></RequirePage>} />
                 <Route path="about" element={<About />} />
             </Route>

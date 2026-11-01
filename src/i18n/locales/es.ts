@@ -18,6 +18,7 @@ import { printTexts } from './es/print'
 import { shell } from './es/shell'
 import { exportTexts } from './es/exports'
 import { expenses } from './es/expenses'
+import { views } from './es/views'
 
 export const es = {
     ...common,
@@ -40,6 +41,7 @@ export const es = {
     ...shell,
     ...exportTexts,
     ...expenses,
+    ...views,
 
     // Navigation
     'nav.dashboard': 'Dashboard',

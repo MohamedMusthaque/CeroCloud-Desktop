@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, Edit2, Trash2, Tags, Save, Loader2 } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Eye, Tags, Save, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, type TranslationKey } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -133,9 +134,16 @@ export function Categories({ onProductsChanged }: CategoriesProps) {
                                     <div className="w-11 h-11 shrink-0 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                                         <Tags className="w-5 h-5" />
                                     </div>
-                                    <h3 className="font-bold text-gray-900 dark:text-white truncate" title={category.name}>{category.name}</h3>
+                                    <Link to={`/inventory/categories/${category.id}`} className="block font-bold text-gray-900 dark:text-white truncate hover:text-primary hover:underline" title={category.name}>{category.name}</Link>
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                    <Link
+                                        to={`/inventory/categories/${category.id}`}
+                                        className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                        title={t('view.view')}
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </Link>
                                     <button
                                         onClick={() => { setEditing(category); setFormOpen(true) }}
                                         className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
@@ -194,7 +202,7 @@ interface CategoryFormProps {
     onSaved: (renamed: boolean) => void
 }
 
-function CategoryForm({ isOpen, category, onClose, onSaved }: CategoryFormProps) {
+export function CategoryForm({ isOpen, category, onClose, onSaved }: CategoryFormProps) {
     const { t } = useTranslation()
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')

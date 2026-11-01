@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import {
-    Plus, Search, Edit2, Trash2, Package, Mail, Phone,
+    Plus, Search, Edit2, Trash2, Eye, Package, Mail, Phone,
     User, LayoutGrid, List as ListIcon,
     ShoppingBag, Globe
 } from 'lucide-react'
@@ -311,12 +312,15 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
                 {/* Main information */}
                 <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex justify-between items-start">
-                        <h3 className="font-bold text-gray-900 dark:text-white text-lg truncate pr-2 leading-tight">
+                        <Link to={`/suppliers/${supplier.id}`} className="block font-bold text-gray-900 dark:text-white text-lg truncate pr-2 leading-tight hover:text-indigo-500 hover:underline">
                             {supplier.name}
-                        </h3>
+                        </Link>
                         {/* Quick actions menu (grid only, to avoid clutter) */}
                         {viewMode === 'grid' && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1">
+                                <Link to={`/suppliers/${supplier.id}`} title={t('view.view')} className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors">
+                                    <Eye className="w-4 h-4" />
+                                </Link>
                                 <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors">
                                     <Edit2 className="w-4 h-4" />
                                 </button>
@@ -373,6 +377,13 @@ function SupplierCard({ supplier, viewMode, onEdit, onDelete, onViewProducts }: 
             {/* Actions for list mode */}
             {viewMode === 'list' && (
                 <div className="flex items-center gap-2 ml-4 border-l border-gray-100 dark:border-gray-700 pl-4">
+                    <Link
+                        to={`/suppliers/${supplier.id}`}
+                        className="p-2 text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                        title={t('view.view')}
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Link>
                     <button
                         onClick={onViewProducts}
                         className="p-2 text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"

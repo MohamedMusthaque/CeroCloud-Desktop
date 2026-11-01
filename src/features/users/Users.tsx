@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, Edit2, Trash2, ShieldCheck, User as UserIcon, UserCog } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Plus, Edit2, Trash2, Eye, ShieldCheck, User as UserIcon, UserCog } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/i18n'
 import { cn } from '@/lib/utils'
@@ -78,9 +79,9 @@ export function Users() {
                 <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-900/50 text-xs font-semibold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700">
                     <div className="col-span-3">{t('users.col.user')}</div>
                     <div className="col-span-2">{t('users.col.role')}</div>
-                    <div className="col-span-4">{t('users.col.access')}</div>
+                    <div className="col-span-3">{t('users.col.access')}</div>
                     <div className="col-span-2">{t('users.col.created')}</div>
-                    <div className="col-span-1 text-right">{t('users.col.actions')}</div>
+                    <div className="col-span-2 text-right">{t('users.col.actions')}</div>
                 </div>
 
                 {loading ? (
@@ -101,7 +102,7 @@ export function Users() {
                                             {user.username.charAt(0).toUpperCase()}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="font-bold text-gray-900 dark:text-white truncate">{user.username}</p>
+                                            <Link to={`/users/${user.id}`} className="block font-bold text-gray-900 dark:text-white truncate hover:text-indigo-600 hover:underline">{user.username}</Link>
                                             {isSelf && (
                                                 <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t('users.you')}</span>
                                             )}
@@ -122,7 +123,7 @@ export function Users() {
                                     </div>
 
                                     {/* Page access */}
-                                    <div className="md:col-span-4 flex flex-wrap gap-1.5">
+                                    <div className="md:col-span-3 flex flex-wrap gap-1.5">
                                         {isAdmin ? (
                                             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('users.allPages')}</span>
                                         ) : user.permissions.length === 0 ? (
@@ -142,7 +143,14 @@ export function Users() {
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="md:col-span-1 flex items-center justify-end gap-1">
+                                    <div className="md:col-span-2 flex items-center justify-end gap-1">
+                                        <Link
+                                            to={`/users/${user.id}`}
+                                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                                            title={t('view.view')}
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </Link>
                                         <button
                                             onClick={() => { setEditingUser(user); setFormOpen(true) }}
                                             className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"

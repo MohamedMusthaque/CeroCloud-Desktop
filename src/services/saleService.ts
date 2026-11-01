@@ -24,4 +24,12 @@ export const saleService = {
     async getSalesToday(): Promise<Sale[]> {
         return await window.electronAPI.sales.getSalesToday()
     },
+
+    async getByCustomerName(name: string): Promise<Sale[]> {
+        return await window.electronAPI.sales.getByCustomerName(name)
+    },
+
+    async getByProductId(productId: number): Promise<Sale[]> {
+        return await window.electronAPI.sales.getByProductId(productId)
+    },
 }
