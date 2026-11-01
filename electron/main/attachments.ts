@@ -1,10 +1,11 @@
-import { app, shell } from 'electron'
+import { shell } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import crypto from 'crypto'
+import { dataPath } from './dataLocation'
 
 // NIC (national identity card) scans attached to suppliers and clients.
-// Files live in userData/attachments/nic; records store only the generated file name.
+// Files live in <data folder>/attachments/nic; records store only the generated file name.
 
 // Only PDFs and images are accepted. The extension is a first filter; the file's own bytes decide (see detectFileType)
 export const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.tif', '.tiff', '.heic', '.heif']
@@ -36,7 +37,7 @@ export class AttachmentError extends Error {
 }
 
 function nicDir(): string {
-    const dir = path.join(app.getPath('userData'), 'attachments', 'nic')
+    const dir = dataPath('attachments', 'nic')
     fs.mkdirSync(dir, { recursive: true })
     return dir
 }

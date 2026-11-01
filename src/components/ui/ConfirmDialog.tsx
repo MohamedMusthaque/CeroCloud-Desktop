@@ -12,6 +12,9 @@ interface ConfirmDialogProps {
     variant?: 'danger' | 'warning' | 'info'
     onConfirm: () => void
     onCancel: () => void
+    // Optional third choice, shown below the main buttons as a destructive outline button
+    secondaryText?: string
+    onSecondary?: () => void
 }
 
 export function ConfirmDialog({
@@ -22,7 +25,9 @@ export function ConfirmDialog({
     cancelText,
     variant = 'danger',
     onConfirm,
-    onCancel
+    onCancel,
+    secondaryText,
+    onSecondary
 }: ConfirmDialogProps) {
     const { t } = useTranslation()
     const colors = {
@@ -92,6 +97,14 @@ export function ConfirmDialog({
                                     {confirmText ?? t('common.confirm')}
                                 </button>
                             </div>
+                            {secondaryText && onSecondary && (
+                                <button
+                                    onClick={onSecondary}
+                                    className="w-full mt-3 px-4 py-2.5 rounded-xl font-bold border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                >
+                                    {secondaryText}
+                                </button>
+                            )}
                         </div>
                     </motion.div>
                 </div>

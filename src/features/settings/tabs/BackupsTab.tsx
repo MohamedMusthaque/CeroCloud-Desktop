@@ -4,6 +4,7 @@ import { CompanySettings } from '@/types/database'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/i18n'
+import { DataManagement } from '../components/DataManagement'
 import {
     Download,
     Upload,
@@ -248,6 +249,8 @@ export function BackupsTab({ settings, setSettings, onOpenWizard, onOpenRestoreW
                 </div>
 
             </div>
+
+            <DataManagement />
         </div>
     )
 }

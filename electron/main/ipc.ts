@@ -1,10 +1,11 @@
-import { ipcMain, app } from 'electron'
+import { ipcMain, app, dialog, shell, BrowserWindow } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, expenseQueries, expenseTypeQueries, ExpenseError, type AuthUser, type Actor } from './database'
+import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
-import { AttachmentError, saveNicAttachment, openNicAttachment, deleteNicAttachment, readNicAttachment, restoreNicAttachment } from './attachments'
+import { AttachmentError, saveNicAttachment, openNicAttachment, deleteNicAttachment, readNicAttachment, restoreNicAttachment, sweepNicAttachments } from './attachments'
+import { dataPath, getDataDirectory, getDbPath, defaultDirectory, isDefaultDirectory, isWritableDirectory, hasDatabase, samePath, copyDataTo, saveDataDirectory } from './dataLocation'
 
 // Signed-in user of this app session (set on login, cleared on logout)
 let sessionUser: AuthUser | null = null
@@ -31,6 +32,37 @@ function withUserAdmin<T>(action: (actor: AuthUser) => T) {
         if (error instanceof UserError) return { success: false, error: error.code }
         logger.error('Users', error)
         return { success: false, error: 'UNKNOWN' }
+    }
+}
+
+// Database maintenance (reset, data folder) is limited to administrators
+async function withAdmin<T>(action: (actor: AuthUser) => Promise<T> | T): Promise<{ success: boolean; data?: T; error?: string }> {
+    const actor = currentUser()
+    if (!actor || actor.role !== 'admin') return { success: false, error: 'FORBIDDEN' }
+    try {
+        return { success: true, data: await action(actor) }
+    } catch (error) {
+        if (error instanceof DataLocationError) return { success: false, error: error.code }
+        logger.error('Database', error)
+        return { success: false, error: 'UNKNOWN' }
+    }
+}
+
+class DataLocationError extends Error {
+    constructor(public code: 'CANCELED' | 'SAME_LOCATION' | 'NOT_WRITABLE') {
+        super(code)
+    }
+}
+
+function dataLocationInfo() {
+    const directory = getDataDirectory()
+    return {
+        directory,
+        dbPath: getDbPath(),
+        defaultDirectory: defaultDirectory(),
+        isDefault: isDefaultDirectory(directory),
+        // Moving back to the default folder usually finds the copy left there by the previous move
+        defaultHasDatabase: hasDatabase(defaultDirectory())
     }
 }
 
@@ -85,16 +117,56 @@ export function registerIpcHandlers() {
         }
     })
 
-    ipcMain.handle('database:clearAll', () => {
-        try {
-            clearAll()
-            logger.info('Database', 'Database cleared')
-            return { success: true }
-        } catch (error) {
-            logger.error('Database Clear', error)
-            return { success: false, error: String(error) }
-        }
+    // Reset: deletes all business data but keeps users
+    ipcMain.handle('database:clearAll', () => withAdmin(actor => {
+        clearAll()
+        // The records are gone, so are the files they pointed to
+        fs.rmSync(dataPath('images', 'products'), { recursive: true, force: true })
+        sweepNicAttachments(getNicAttachmentNames())
+        logger.info('Database', `Database reset by ${actor.username}`)
+    }))
+
+    // Data folder (database + product images + NIC scans)
+    ipcMain.handle('database:getLocation', () => dataLocationInfo())
+
+    ipcMain.handle('database:showLocation', () => {
+        shell.showItemInFolder(getDbPath())
+        return { success: true }
     })
+
+    // Step 1: the admin picks a folder; the UI then asks what to do if it already holds a database
+    ipcMain.handle('database:pickLocation', (event) => withAdmin(async () => {
+        const window = BrowserWindow.fromWebContents(event.sender)
+        const options: Electron.OpenDialogOptions = {
+            defaultPath: getDataDirectory(),
+            properties: ['openDirectory', 'createDirectory']
+        }
+        const result = window ? await dialog.showOpenDialog(window, options) : await dialog.showOpenDialog(options)
+        const directory = result.filePaths[0]
+        if (result.canceled || !directory) throw new DataLocationError('CANCELED')
+        if (samePath(directory, getDataDirectory())) throw new DataLocationError('SAME_LOCATION')
+        if (!isWritableDirectory(directory)) throw new DataLocationError('NOT_WRITABLE')
+        return { directory, hasDatabase: hasDatabase(directory) }
+    }))
+
+    // Step 2: copy the current data there (or open the database already there), then restart on it.
+    // The previous folder is left untouched as a safety copy.
+    ipcMain.handle('database:moveLocation', (_event, directory: string, mode: 'copy' | 'useExisting') => withAdmin(async actor => {
+        const target = String(directory ?? '')
+        if (!target || samePath(target, getDataDirectory())) throw new DataLocationError('SAME_LOCATION')
+        if (!isWritableDirectory(target)) throw new DataLocationError('NOT_WRITABLE')
+        const useExisting = mode === 'useExisting' && hasDatabase(target)
+        if (!useExisting) await copyDataTo(backupDatabaseTo, target)
+        saveDataDirectory(target)
+        logger.info('Data Location', `${actor.username} moved the data folder to ${target}${useExisting ? ' (existing database)' : ''}`)
+
+        // Give the UI a moment to show the result, then restart on the new folder
+        setTimeout(() => {
+            closeDatabase()
+            app.relaunch()
+            app.exit(0)
+        }, 1500)
+    }))
 
 
     // Products
@@ -140,9 +212,8 @@ export function registerIpcHandlers() {
     // Image Handlers
     ipcMain.handle('products:saveImage', async (_event, sourcePath: string) => {
         try {
-            // Images folder inside userData
-            const userDataPath = app.getPath('userData')
-            const imagesDir = path.join(userDataPath, 'images', 'products')
+            // Images folder inside the data folder
+            const imagesDir = dataPath('images', 'products')
 
             // Create the folder if it doesn't exist
             if (!fs.existsSync(imagesDir)) {
@@ -166,7 +237,7 @@ export function registerIpcHandlers() {
 
     ipcMain.handle('products:getImage', async (_event, filename: string) => {
         try {
-            const imagePath = path.join(app.getPath('userData'), 'images', 'products', filename)
+            const imagePath = dataPath('images', 'products', filename)
 
             if (fs.existsSync(imagePath)) {
                 // Read as a buffer for the backup
@@ -183,8 +254,7 @@ export function registerIpcHandlers() {
     // Restore Image
     ipcMain.handle('products:restoreImage', async (_event, filename: string, buffer: Uint8Array) => {
         try {
-            const userDataPath = app.getPath('userData')
-            const imagesDir = path.join(userDataPath, 'images', 'products')
+            const imagesDir = dataPath('images', 'products')
 
             if (!fs.existsSync(imagesDir)) {
                 fs.mkdirSync(imagesDir, { recursive: true })

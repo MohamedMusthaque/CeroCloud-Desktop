@@ -4,6 +4,7 @@ import fs from 'fs'
 import { pathToFileURL } from 'url'
 import './migrateLegacyData'
 import { initializeDatabase, closeDatabase, getNicAttachmentNames } from './database'
+import { initDataDirectory, getDbPath, dataPath } from './dataLocation'
 import { sweepNicAttachments } from './attachments'
 import { registerIpcHandlers } from './ipc'
 import { AutoUpdateService } from './autoUpdater'
@@ -71,8 +72,12 @@ if (!gotTheLock) {
 app.whenReady().then(() => {
     if (!gotTheLock) return
 
-    // Initialize database and IPC handlers
-    initializeDatabase()
+    // Locate the data folder (may ask the user if a custom folder is missing), then open the database
+    if (!initDataDirectory()) {
+        app.exit(0)
+        return
+    }
+    initializeDatabase(getDbPath())
     registerIpcHandlers()
     rescueOldImages()
     // NIC files left by forms closed without saving, or replaced by a restore
@@ -87,7 +92,7 @@ app.whenReady().then(() => {
         if (filename.endsWith('/') || filename.endsWith('\\')) {
             filename = filename.slice(0, -1)
         }
-        const imagePath = path.join(app.getPath('userData'), 'images', 'products', filename)
+        const imagePath = dataPath('images', 'products', filename)
 
         // Use pathToFileURL for maximum compatibility
         return net.fetch(pathToFileURL(imagePath).toString())
@@ -115,7 +120,7 @@ app.whenReady().then(() => {
 function rescueOldImages() {
     try {
         const oldPath = path.join(app.getPath('appData'), 'nexus-gestor-local', 'images', 'products')
-        const newPath = path.join(app.getPath('userData'), 'images', 'products')
+        const newPath = dataPath('images', 'products')
 
         if (fs.existsSync(oldPath)) {
             console.log('Previous installation found. Migrating images...')

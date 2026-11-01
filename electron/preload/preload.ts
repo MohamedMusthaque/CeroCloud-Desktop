@@ -100,6 +100,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     database: {
         clearAll: () => ipcRenderer.invoke('database:clearAll'),
         restore: (data: any) => ipcRenderer.invoke('database:restore', data),
+        getLocation: () => ipcRenderer.invoke('database:getLocation'),
+        showLocation: () => ipcRenderer.invoke('database:showLocation'),
+        pickLocation: () => ipcRenderer.invoke('database:pickLocation'),
+        moveLocation: (directory: string, mode: 'copy' | 'useExisting') => ipcRenderer.invoke('database:moveLocation', directory, mode),
     },
 
     // Inventory Logs

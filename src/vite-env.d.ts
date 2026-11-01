@@ -88,8 +88,12 @@ interface ElectronAPI {
         restoreNic: (filename: string, buffer: Uint8Array) => Promise<{ success: boolean; error?: string }>
     }
     database: {
-        clearAll: () => Promise<{ success: boolean; error?: string }>
+        clearAll: () => Promise<UserResult<void>>
         restore: (data: any) => Promise<{ success: boolean; error?: string }>
+        getLocation: () => Promise<import('@/services/databaseService').DataLocation>
+        showLocation: () => Promise<{ success: boolean }>
+        pickLocation: () => Promise<UserResult<{ directory: string; hasDatabase: boolean }>>
+        moveLocation: (directory: string, mode: 'copy' | 'useExisting') => Promise<UserResult<void>>
     }
     inventoryLogs: {
         getAll: () => Promise<any[]>

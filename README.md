@@ -140,7 +140,13 @@ Everything lives in Electron's per-user data folder:
 | macOS | `~/Library/Application Support/NexoraCloud/` |
 | Linux | `~/.config/NexoraCloud/` |
 
-Inside it, `nexoracloud.db` is the SQLite database and `images/products/` holds product images. In development (`npm run dev`) the folder is named `nexoracloud` (lowercase) instead. On first launch, data from a previous `CeroCloud` install is moved into this folder automatically.
+Inside it, `nexoracloud.db` is the SQLite database, `images/products/` holds product images and `attachments/nic/` holds NIC scans. In development (`npm run dev`) the folder is named `nexoracloud` (lowercase) instead. On first launch, data from a previous `CeroCloud` install is moved into this folder automatically.
+
+An administrator can move the data to another folder (another drive, for example) from **Settings → Backups → Data Location**. The app copies the database, images and attachments there and restarts. The old folder is left in place as a safety copy. If the chosen folder already holds a NexoraCloud database, you can open that one or replace it with your current data. The choice is saved in `data-location.json` in the per-user folder above, which always keeps the logs. If the folder can't be reached at startup (for example, an unplugged drive), the app asks whether to retry, use the default location or quit.
+
+### Resetting the database
+
+**Settings → Backups → Reset Database** (administrators only) permanently deletes all products, categories, sales, clients, suppliers and expenses, along with their images and attachments. User accounts and app settings are kept, and the default expense types are recreated. Create a backup first if you might need the data.
 
 ## Usage
 

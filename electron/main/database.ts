@@ -6,14 +6,9 @@ import crypto from 'crypto'
 import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType } from '../../src/types/database'
 import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
-// Database setup
-const dbPath = path.join(app.getPath('userData'), 'nexoracloud.db')
-const db = new Database(dbPath)
-
-// Enable WAL (write-ahead logging) for better performance and safety
-db.pragma('journal_mode = WAL')
-// Enable foreign keys
-db.pragma('foreign_keys = ON')
+// Database setup: opened by initializeDatabase() once the data folder is known (see dataLocation.ts)
+let db: Database.Database
+let dbPath = ''
 
 // ==========================================
 // 1. Schema definition
@@ -1284,6 +1279,7 @@ export function getNicAttachmentNames(): Set<string> {
   return new Set(rows.map(r => r.name))
 }
 
+// Deletes all business data; users (and their ID sequence) are kept so everyone can still sign in
 export function clearAll() {
   const clearTx = db.transaction(() => {
     db.prepare('DELETE FROM expenses').run()
@@ -1294,7 +1290,8 @@ export function clearAll() {
     db.prepare('DELETE FROM categories').run()
     db.prepare('DELETE FROM suppliers').run()
     db.prepare('DELETE FROM clients').run()
-    db.prepare('DELETE FROM sqlite_sequence').run()
+    db.prepare("DELETE FROM sqlite_sequence WHERE name != 'users'").run()
+    seedExpenseTypes()
   })
   clearTx()
   console.log('Database cleared.')
@@ -1302,7 +1299,14 @@ export function clearAll() {
 
 
 
-export function initializeDatabase() {
+export function initializeDatabase(filePath: string) {
+  dbPath = filePath
+  db = new Database(dbPath)
+  // Enable WAL (write-ahead logging) for better performance and safety
+  db.pragma('journal_mode = WAL')
+  // Enable foreign keys
+  db.pragma('foreign_keys = ON')
+
   initSchema()
   try {
     migrateFromJSON()
@@ -1312,7 +1316,13 @@ export function initializeDatabase() {
   console.log(`SQLite database ready at: ${dbPath}`)
 }
 
+// Consistent copy of the open database (used to move it to another folder)
+export function backupDatabaseTo(destination: string) {
+  return db.backup(destination)
+}
+
 export function closeDatabase() {
+  if (!db?.open) return
   db.close()
   console.log('SQLite connection closed.')
 }
