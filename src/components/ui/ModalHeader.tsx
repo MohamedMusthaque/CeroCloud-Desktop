@@ -8,7 +8,7 @@ interface ModalHeaderProps {
     className?: string
 }
 
-// Dark title bar shared by the New / Edit forms (client, product, category, supplier, expense, expense type, savings account and transaction)
+// Dark title bar shared by the New / Edit forms (client, product, category, supplier, expense, expense type, savings account and transaction, purchase order, supplier payment)
 export function ModalHeader({ title, onClose, className }: ModalHeaderProps) {
     const { t } = useTranslation()
 

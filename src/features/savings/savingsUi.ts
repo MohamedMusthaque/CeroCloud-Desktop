@@ -2,7 +2,7 @@ import { Briefcase, User, Target } from 'lucide-react'
 import type { TranslationKey } from '@/i18n'
 import type { SavingsCategory, SavingsTransactionType } from '@/types/database'
 
-export const PAYMENT_METHODS = ['cash', 'card', 'transfer', 'cheque', 'other'] as const
+export { PAYMENT_METHODS } from '@/lib/paymentMethods'
 
 // Look of each savings category across the page, cards and detail view
 export const CATEGORY_STYLES: Record<SavingsCategory, { icon: React.ElementType; badge: string; stat: string; gradient: string }> = {

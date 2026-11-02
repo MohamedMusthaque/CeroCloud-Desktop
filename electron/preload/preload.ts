@@ -94,6 +94,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
         delete: (id: number) => ipcRenderer.invoke('expenses:delete', id),
     },
 
+    // Purchase orders
+    purchases: {
+        getAll: () => ipcRenderer.invoke('purchases:getAll'),
+        getById: (id: number) => ipcRenderer.invoke('purchases:getById', id),
+        create: (purchase: any) => ipcRenderer.invoke('purchases:create', purchase),
+        update: (id: number, purchase: any) => ipcRenderer.invoke('purchases:update', id, purchase),
+        receive: (id: number, input: any) => ipcRenderer.invoke('purchases:receive', id, input),
+        cancel: (id: number) => ipcRenderer.invoke('purchases:cancel', id),
+        delete: (id: number) => ipcRenderer.invoke('purchases:delete', id),
+    },
+
+    // Supplier payments and running accounts
+    supplierPayments: {
+        getAll: () => ipcRenderer.invoke('supplierPayments:getAll'),
+        create: (payment: any) => ipcRenderer.invoke('supplierPayments:create', payment),
+        delete: (id: number) => ipcRenderer.invoke('supplierPayments:delete', id),
+    },
+    supplierAccounts: {
+        get: (supplierId: number) => ipcRenderer.invoke('supplierAccounts:get', supplierId),
+        getAll: () => ipcRenderer.invoke('supplierAccounts:getAll'),
+    },
+
     // Savings accounts
     savingsAccounts: {
         getAll: () => ipcRenderer.invoke('savingsAccounts:getAll'),

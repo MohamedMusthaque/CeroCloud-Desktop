@@ -29,11 +29,14 @@ class SupplierService {
         return window.electronAPI.suppliers.update(id, supplier)
     }
 
+    // Fails with an Error whose message is the code (e.g. 'HAS_PURCHASES') when the supplier can't be deleted
     async delete(id: number): Promise<{ success: boolean }> {
         if (!window.electronAPI?.suppliers) {
             throw new Error('Supplier API not available')
         }
-        return window.electronAPI.suppliers.delete(id)
+        const result = await window.electronAPI.suppliers.delete(id)
+        if (!result.success) throw new Error(result.error || 'UNKNOWN')
+        return result
     }
 }
 

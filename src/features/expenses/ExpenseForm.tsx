@@ -11,8 +11,7 @@ import { companyService } from '@/services/companyService'
 import type { Expense, ExpenseType } from '@/types/database'
 import { expenseErrorMessage } from './expenseErrors'
 import { ExpenseTypeForm } from './ExpenseTypes'
-
-const PAYMENT_METHODS = ['cash', 'card', 'transfer', 'cheque', 'other'] as const
+import { PAYMENT_METHODS } from '@/lib/paymentMethods'
 
 interface ExpenseFormProps {
     isOpen: boolean

@@ -3,7 +3,7 @@ import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
 import crypto from 'crypto'
-import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES } from '../../src/types/database'
+import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES, Purchase, PurchaseItem, SupplierPayment, SupplierAccount } from '../../src/types/database'
 import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
 // Database setup: opened by initializeDatabase() once the data folder is known (see dataLocation.ts)
@@ -374,6 +374,56 @@ function initSchema() {
         FOREIGN KEY (account_id) REFERENCES savings_accounts(id)
     )`)
 
+  // Table: purchase orders (goods ordered from a supplier, received later)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS purchase_orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        supplier_id INTEGER NOT NULL,
+        order_date TEXT NOT NULL,
+        received_date TEXT,
+        status TEXT NOT NULL DEFAULT 'ordered',
+        total REAL NOT NULL DEFAULT 0,
+        notes TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT,
+        FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+    )`)
+
+  // Table: purchase order items
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS purchase_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        purchase_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        product_code TEXT,
+        product_name TEXT,
+        ordered_quantity INTEGER NOT NULL,
+        received_quantity INTEGER,
+        unit_cost REAL NOT NULL,
+        FOREIGN KEY (purchase_id) REFERENCES purchase_orders(id) ON DELETE CASCADE
+    )`)
+
+  // Table: money paid to (or refunded by) suppliers, optionally for one order
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS supplier_payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        supplier_id INTEGER NOT NULL,
+        purchase_id INTEGER,
+        type TEXT NOT NULL,
+        amount REAL NOT NULL,
+        payment_date TEXT NOT NULL,
+        payment_method TEXT,
+        notes TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT,
+        FOREIGN KEY (supplier_id) REFERENCES suppliers(id),
+        FOREIGN KEY (purchase_id) REFERENCES purchase_orders(id)
+    )`)
+
   // Table: users (local login)
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -423,6 +473,10 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_expenses_type_id ON expenses(expense_type_id);
     CREATE INDEX IF NOT EXISTS idx_savings_transactions_account_id ON savings_transactions(account_id);
     CREATE INDEX IF NOT EXISTS idx_savings_transactions_date ON savings_transactions(transaction_date);
+    CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier_id ON purchase_orders(supplier_id);
+    CREATE INDEX IF NOT EXISTS idx_purchase_items_purchase_id ON purchase_items(purchase_id);
+    CREATE INDEX IF NOT EXISTS idx_supplier_payments_supplier_id ON supplier_payments(supplier_id);
+    CREATE INDEX IF NOT EXISTS idx_supplier_payments_purchase_id ON supplier_payments(purchase_id);
   `)
 
   console.log('SQLite schema initialized.')
@@ -862,10 +916,19 @@ export const supplierQueries = {
     return supplierQueries.getById(id) || null
   },
 
+  // Callers check supplierHasPurchases() first: orders and payments keep the supplier's history
   delete: (id: number): boolean => {
     const info = db.prepare('DELETE FROM suppliers WHERE id = ?').run(id)
     return info.changes > 0
   }
+}
+
+export function supplierHasPurchases(id: number): boolean {
+  return !!db.prepare(`
+    SELECT 1 FROM purchase_orders WHERE supplier_id = @id
+    UNION ALL SELECT 1 FROM supplier_payments WHERE supplier_id = @id
+    LIMIT 1
+  `).get({ id })
 }
 
 export const saleQueries = {
@@ -1360,6 +1423,335 @@ export const savingsTransactionQueries = {
 }
 
 // ==========================================
+// Purchases: orders to suppliers, advance payments and goods receiving
+// ==========================================
+//
+// Each supplier has a running account: payments add to it, refunds and received goods take from it.
+// A payment can be linked to an order; while that order hasn't arrived the money is reserved for it
+// ("open advance"), so it isn't used up by other goods. When goods arrive their value is charged to
+// the account; any remaining credit stays as an advance for the supplier's next goods.
+
+// Purchase errors; the UI translates the code
+export class PurchaseError extends Error {
+  constructor(public code: 'SUPPLIER_REQUIRED' | 'ITEMS_REQUIRED' | 'PRODUCT_REQUIRED' | 'QUANTITY_INVALID' | 'COST_INVALID' | 'DATE_INVALID' | 'AMOUNT_INVALID' | 'TYPE_INVALID' | 'NOT_EDITABLE' | 'HAS_PAYMENTS' | 'ORDER_INVALID' | 'REFUND_TOO_HIGH' | 'NOT_FOUND') {
+    super(code)
+  }
+}
+
+export interface PurchaseItemInput {
+  product_id?: number
+  quantity?: number
+  unit_cost?: number
+}
+
+export interface PaymentDetailsInput {
+  amount?: number
+  payment_date?: string
+  payment_method?: string
+  notes?: string
+}
+
+export interface PurchaseInput {
+  supplier_id?: number
+  order_date?: string
+  notes?: string
+  items?: PurchaseItemInput[]
+  // Paid to the supplier when placing the order
+  advance?: PaymentDetailsInput | null
+}
+
+export interface ReceivePurchaseInput {
+  received_date?: string
+  // Actual quantity and cost per order item; items left out arrive as ordered
+  items?: { id?: number; received_quantity?: number; unit_cost?: number }[]
+  // Store the received unit cost as the product's cost
+  update_costs?: boolean
+  // Settled while receiving: pay what's due, or take back an overpayment
+  settlement?: (PaymentDetailsInput & { type?: string }) | null
+}
+
+export interface SupplierPaymentInput extends PaymentDetailsInput {
+  supplier_id?: number
+  purchase_id?: number | null
+  type?: string
+}
+
+const isDay = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !isNaN(Date.parse(value))
+
+function requireDay(value: unknown): string {
+  const day = String(value ?? '')
+  if (!isDay(day)) throw new PurchaseError('DATE_INVALID')
+  return day
+}
+
+function requireAmount(value: unknown): number {
+  const amount = roundMoney(Number(value))
+  if (!Number.isFinite(amount) || amount <= 0) throw new PurchaseError('AMOUNT_INVALID')
+  return amount
+}
+
+export const supplierAccountQueries = {
+  get: (supplierId: number): SupplierAccount => {
+    const row = db.prepare(`
+      SELECT
+        COALESCE((SELECT SUM(amount) FROM supplier_payments WHERE supplier_id = @id AND type = 'payment'), 0) AS total_paid,
+        COALESCE((SELECT SUM(amount) FROM supplier_payments WHERE supplier_id = @id AND type = 'refund'), 0) AS total_refunded,
+        COALESCE((SELECT SUM(total) FROM purchase_orders WHERE supplier_id = @id AND status = 'received'), 0) AS total_received,
+        COALESCE((
+          SELECT SUM(CASE WHEN p.type = 'payment' THEN p.amount ELSE -p.amount END)
+          FROM supplier_payments p JOIN purchase_orders o ON o.id = p.purchase_id
+          WHERE p.supplier_id = @id AND o.status = 'ordered'
+        ), 0) AS open_advances
+    `).get({ id: supplierId }) as Omit<SupplierAccount, 'supplier_id' | 'balance' | 'available'>
+    const balance = roundMoney(row.total_paid - row.total_refunded - row.total_received)
+    const openAdvances = roundMoney(row.open_advances)
+    return {
+      supplier_id: supplierId,
+      total_paid: roundMoney(row.total_paid),
+      total_refunded: roundMoney(row.total_refunded),
+      total_received: roundMoney(row.total_received),
+      balance,
+      open_advances: openAdvances,
+      available: roundMoney(balance - openAdvances)
+    }
+  },
+
+  getAll: (): SupplierAccount[] => {
+    const ids = db.prepare('SELECT id FROM suppliers').all() as { id: number }[]
+    return ids.map(({ id }) => supplierAccountQueries.get(id))
+  }
+}
+
+const PURCHASE_SELECT = `
+  SELECT o.*, s.name AS supplier_name,
+    (SELECT COUNT(*) FROM purchase_items i WHERE i.purchase_id = o.id) AS items_count,
+    COALESCE((SELECT SUM(CASE WHEN p.type = 'payment' THEN p.amount ELSE -p.amount END) FROM supplier_payments p WHERE p.purchase_id = o.id), 0) AS paid
+  FROM purchase_orders o
+  LEFT JOIN suppliers s ON s.id = o.supplier_id
+`
+
+// Validates the order items and snapshots each product's code and name
+function normalizePurchaseItems(items: PurchaseItemInput[] | undefined) {
+  if (!Array.isArray(items) || items.length === 0) throw new PurchaseError('ITEMS_REQUIRED')
+  const getProduct = db.prepare('SELECT id, code, name FROM products WHERE id = ?')
+  return items.map(item => {
+    const product = getProduct.get(Number(item.product_id)) as { id: number; code: string; name: string } | undefined
+    if (!product) throw new PurchaseError('PRODUCT_REQUIRED')
+    const quantity = Number(item.quantity)
+    if (!Number.isInteger(quantity) || quantity <= 0) throw new PurchaseError('QUANTITY_INVALID')
+    const unitCost = roundMoney(Number(item.unit_cost))
+    if (!Number.isFinite(unitCost) || unitCost < 0) throw new PurchaseError('COST_INVALID')
+    return { product_id: product.id, product_code: product.code, product_name: product.name, ordered_quantity: quantity, unit_cost: unitCost }
+  })
+}
+
+function insertSupplierPayment(values: Omit<SupplierPayment, 'id'>, actor: Actor): number {
+  const now = new Date().toISOString()
+  const info = db.prepare(`
+    INSERT INTO supplier_payments(supplier_id, purchase_id, type, amount, payment_date, payment_method, notes, created_at, created_by, updated_at, updated_by)
+    VALUES(@supplier_id, @purchase_id, @type, @amount, @payment_date, @payment_method, @notes, @created_at, @created_by, @updated_at, @updated_by)
+  `).run({ ...values, purchase_id: values.purchase_id ?? null, created_at: now, created_by: actor, updated_at: now, updated_by: actor })
+  return Number(info.lastInsertRowid)
+}
+
+function paymentDetails(input: PaymentDetailsInput, fallbackDate: string) {
+  return {
+    amount: requireAmount(input.amount),
+    payment_date: requireDay(input.payment_date || fallbackDate),
+    payment_method: String(input.payment_method || 'cash'),
+    notes: String(input.notes ?? '').trim()
+  }
+}
+
+export const purchaseQueries = {
+  // Newest first, with supplier name, item count and the amount paid for each order
+  getAll: (): Purchase[] => {
+    const rows = db.prepare(`${PURCHASE_SELECT} ORDER BY o.order_date DESC, o.id DESC`).all() as Purchase[]
+    return rows.map(row => ({ ...row, paid: roundMoney(row.paid ?? 0) }))
+  },
+
+  getById: (id: number): Purchase | undefined => {
+    const order = db.prepare(`${PURCHASE_SELECT} WHERE o.id = ?`).get(id) as Purchase | undefined
+    if (!order) return undefined
+    const items = db.prepare('SELECT * FROM purchase_items WHERE purchase_id = ? ORDER BY id ASC').all(id) as PurchaseItem[]
+    return { ...order, paid: roundMoney(order.paid ?? 0), items }
+  },
+
+  create: (input: PurchaseInput, actor: Actor = null): Purchase => {
+    const supplierId = Number(input.supplier_id)
+    if (!supplierId || !db.prepare('SELECT 1 FROM suppliers WHERE id = ?').get(supplierId)) throw new PurchaseError('SUPPLIER_REQUIRED')
+    const orderDate = requireDay(input.order_date)
+    const items = normalizePurchaseItems(input.items)
+    const advance = input.advance ? paymentDetails(input.advance, orderDate) : null
+    const total = roundMoney(items.reduce((sum, item) => sum + item.ordered_quantity * item.unit_cost, 0))
+    const now = new Date().toISOString()
+
+    const id = db.transaction(() => {
+      const info = db.prepare(`
+        INSERT INTO purchase_orders(supplier_id, order_date, status, total, notes, created_at, created_by, updated_at, updated_by)
+        VALUES(@supplier_id, @order_date, 'ordered', @total, @notes, @created_at, @created_by, @updated_at, @updated_by)
+      `).run({ supplier_id: supplierId, order_date: orderDate, total, notes: String(input.notes ?? '').trim(), created_at: now, created_by: actor, updated_at: now, updated_by: actor })
+      const purchaseId = Number(info.lastInsertRowid)
+      const insertItem = db.prepare(`
+        INSERT INTO purchase_items(purchase_id, product_id, product_code, product_name, ordered_quantity, unit_cost)
+        VALUES(@purchase_id, @product_id, @product_code, @product_name, @ordered_quantity, @unit_cost)
+      `)
+      for (const item of items) insertItem.run({ ...item, purchase_id: purchaseId })
+      if (advance) insertSupplierPayment({ ...advance, supplier_id: supplierId, purchase_id: purchaseId, type: 'payment' }, actor)
+      return purchaseId
+    })()
+    return purchaseQueries.getById(id)!
+  },
+
+  // Only orders still waiting for the goods can be edited
+  update: (id: number, input: PurchaseInput, actor: Actor = null): Purchase => {
+    const existing = purchaseQueries.getById(id)
+    if (!existing) throw new PurchaseError('NOT_FOUND')
+    if (existing.status !== 'ordered') throw new PurchaseError('NOT_EDITABLE')
+    const supplierId = Number(input.supplier_id ?? existing.supplier_id)
+    if (!supplierId || !db.prepare('SELECT 1 FROM suppliers WHERE id = ?').get(supplierId)) throw new PurchaseError('SUPPLIER_REQUIRED')
+    // Payments already made belong to the original supplier
+    if (supplierId !== existing.supplier_id && db.prepare('SELECT 1 FROM supplier_payments WHERE purchase_id = ? LIMIT 1').get(id)) {
+      throw new PurchaseError('HAS_PAYMENTS')
+    }
+    const orderDate = requireDay(input.order_date ?? existing.order_date)
+    const items = normalizePurchaseItems(input.items ?? existing.items?.map(i => ({ product_id: i.product_id, quantity: i.ordered_quantity, unit_cost: i.unit_cost })))
+    const total = roundMoney(items.reduce((sum, item) => sum + item.ordered_quantity * item.unit_cost, 0))
+
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE purchase_orders SET supplier_id = @supplier_id, order_date = @order_date, total = @total, notes = @notes,
+          updated_at = @updated_at, updated_by = @updated_by
+        WHERE id = @id
+      `).run({ id, supplier_id: supplierId, order_date: orderDate, total, notes: String(input.notes ?? existing.notes ?? '').trim(), updated_at: new Date().toISOString(), updated_by: actor })
+      db.prepare('DELETE FROM purchase_items WHERE purchase_id = ?').run(id)
+      const insertItem = db.prepare(`
+        INSERT INTO purchase_items(purchase_id, product_id, product_code, product_name, ordered_quantity, unit_cost)
+        VALUES(@purchase_id, @product_id, @product_code, @product_name, @ordered_quantity, @unit_cost)
+      `)
+      for (const item of items) insertItem.run({ ...item, purchase_id: id })
+    })()
+    return purchaseQueries.getById(id)!
+  },
+
+  // Goods arrive: stock goes up, the goods' value is charged to the supplier account and the difference is settled
+  receive: (id: number, input: ReceivePurchaseInput, actor: Actor = null): Purchase => {
+    const order = purchaseQueries.getById(id)
+    if (!order) throw new PurchaseError('NOT_FOUND')
+    if (order.status !== 'ordered') throw new PurchaseError('NOT_EDITABLE')
+    const receivedDate = requireDay(input.received_date)
+
+    const changes = new Map((input.items ?? []).map(item => [Number(item.id), item]))
+    const items = (order.items ?? []).map(item => {
+      const change = changes.get(item.id!)
+      const quantity = Number(change?.received_quantity ?? item.ordered_quantity)
+      if (!Number.isInteger(quantity) || quantity < 0) throw new PurchaseError('QUANTITY_INVALID')
+      const unitCost = roundMoney(Number(change?.unit_cost ?? item.unit_cost))
+      if (!Number.isFinite(unitCost) || unitCost < 0) throw new PurchaseError('COST_INVALID')
+      return { ...item, received_quantity: quantity, unit_cost: unitCost }
+    })
+    if (!items.some(item => item.received_quantity > 0)) throw new PurchaseError('QUANTITY_INVALID')
+    const total = roundMoney(items.reduce((sum, item) => sum + item.received_quantity * item.unit_cost, 0))
+
+    // What's left after charging the goods: advance for this order plus any free credit with the supplier
+    const account = supplierAccountQueries.get(order.supplier_id)
+    const excess = roundMoney((order.paid ?? 0) + Math.max(account.available, 0) - total)
+
+    let settlement: (ReturnType<typeof paymentDetails> & { type: 'payment' | 'refund' }) | null = null
+    if (input.settlement) {
+      const type = input.settlement.type
+      if (type !== 'payment' && type !== 'refund') throw new PurchaseError('TYPE_INVALID')
+      settlement = { ...paymentDetails(input.settlement, receivedDate), type }
+      if (type === 'refund' && settlement.amount > Math.max(excess, 0)) throw new PurchaseError('REFUND_TOO_HIGH')
+    }
+
+    db.transaction(() => {
+      const updateItem = db.prepare('UPDATE purchase_items SET received_quantity = @received_quantity, unit_cost = @unit_cost WHERE id = @id')
+      const addStock = db.prepare('UPDATE products SET stock = stock + @qty, updated_at = @now, updated_by = @actor WHERE id = @id')
+      const updateCost = db.prepare('UPDATE products SET cost = @cost WHERE id = @id')
+      const now = new Date().toISOString()
+      for (const item of items) {
+        updateItem.run({ id: item.id, received_quantity: item.received_quantity, unit_cost: item.unit_cost })
+        if (item.received_quantity > 0) {
+          addStock.run({ id: item.product_id, qty: item.received_quantity, now, actor })
+          if (input.update_costs) updateCost.run({ id: item.product_id, cost: item.unit_cost })
+        }
+      }
+      db.prepare(`
+        UPDATE purchase_orders SET status = 'received', received_date = @received_date, total = @total, updated_at = @updated_at, updated_by = @updated_by
+        WHERE id = @id
+      `).run({ id, received_date: receivedDate, total, updated_at: now, updated_by: actor })
+      if (settlement) insertSupplierPayment({ ...settlement, supplier_id: order.supplier_id, purchase_id: id }, actor)
+    })()
+    return purchaseQueries.getById(id)!
+  },
+
+  // A cancelled order's advance stays in the supplier account (refund it or keep it for other goods)
+  cancel: (id: number, actor: Actor = null): Purchase => {
+    const order = purchaseQueries.getById(id)
+    if (!order) throw new PurchaseError('NOT_FOUND')
+    if (order.status !== 'ordered') throw new PurchaseError('NOT_EDITABLE')
+    db.prepare("UPDATE purchase_orders SET status = 'cancelled', updated_at = ?, updated_by = ? WHERE id = ?").run(new Date().toISOString(), actor, id)
+    return purchaseQueries.getById(id)!
+  },
+
+  // Received orders already changed stock and the supplier account, so they stay
+  delete: (id: number): void => {
+    const order = purchaseQueries.getById(id)
+    if (!order) throw new PurchaseError('NOT_FOUND')
+    if (order.status === 'received') throw new PurchaseError('NOT_EDITABLE')
+    if (db.prepare('SELECT 1 FROM supplier_payments WHERE purchase_id = ? LIMIT 1').get(id)) throw new PurchaseError('HAS_PAYMENTS')
+    db.prepare('DELETE FROM purchase_orders WHERE id = ?').run(id)
+  }
+}
+
+const SUPPLIER_PAYMENT_SELECT = `
+  SELECT p.*, s.name AS supplier_name
+  FROM supplier_payments p
+  LEFT JOIN suppliers s ON s.id = p.supplier_id
+`
+
+export const supplierPaymentQueries = {
+  // Newest first, with the supplier name
+  getAll: (): SupplierPayment[] => {
+    return db.prepare(`${SUPPLIER_PAYMENT_SELECT} ORDER BY p.payment_date DESC, p.id DESC`).all() as SupplierPayment[]
+  },
+
+  getById: (id: number): SupplierPayment | undefined => {
+    return db.prepare(`${SUPPLIER_PAYMENT_SELECT} WHERE p.id = ?`).get(id) as SupplierPayment | undefined
+  },
+
+  create: (input: SupplierPaymentInput, actor: Actor = null): SupplierPayment => {
+    const supplierId = Number(input.supplier_id)
+    if (!supplierId || !db.prepare('SELECT 1 FROM suppliers WHERE id = ?').get(supplierId)) throw new PurchaseError('SUPPLIER_REQUIRED')
+    const type = input.type
+    if (type !== 'payment' && type !== 'refund') throw new PurchaseError('TYPE_INVALID')
+    const details = paymentDetails(input, '')
+
+    // Optional order: must be this supplier's and not cancelled
+    let purchaseId: number | null = null
+    if (input.purchase_id) {
+      const order = db.prepare('SELECT supplier_id, status FROM purchase_orders WHERE id = ?').get(Number(input.purchase_id)) as { supplier_id: number; status: string } | undefined
+      if (!order || order.supplier_id !== supplierId || order.status === 'cancelled') throw new PurchaseError('ORDER_INVALID')
+      purchaseId = Number(input.purchase_id)
+    }
+
+    // The supplier can only give back money they're holding for us
+    if (type === 'refund' && details.amount > Math.max(supplierAccountQueries.get(supplierId).balance, 0)) {
+      throw new PurchaseError('REFUND_TOO_HIGH')
+    }
+
+    const id = insertSupplierPayment({ ...details, supplier_id: supplierId, purchase_id: purchaseId, type }, actor)
+    return supplierPaymentQueries.getById(id)!
+  },
+
+  delete: (id: number): void => {
+    const info = db.prepare('DELETE FROM supplier_payments WHERE id = ?').run(id)
+    if (info.changes === 0) throw new PurchaseError('NOT_FOUND')
+  }
+}
+
+// ==========================================
 // Inventory logs (stock card / traceability)
 // ==========================================
 
@@ -1378,7 +1770,10 @@ export function restoreDatabase(data: any) {
       ...(hasSavings ? [] : ['savings_transactions', 'savings_accounts'])
     ]
 
-    // 1. Clear everything
+    // 1. Clear everything (purchases reference suppliers and products, which are always replaced)
+    db.prepare('DELETE FROM supplier_payments').run()
+    db.prepare('DELETE FROM purchase_items').run()
+    db.prepare('DELETE FROM purchase_orders').run()
     if (hasExpenses) {
       db.prepare('DELETE FROM expenses').run()
       db.prepare('DELETE FROM expense_types').run()
@@ -1535,7 +1930,45 @@ export function restoreDatabase(data: any) {
       }
     }
 
-    // 8. Restore savings accounts and transactions
+    // 8. Restore purchases and supplier payments (stock already reflects received goods)
+    if (Array.isArray(data.purchases)) {
+      const insertPurchase = db.prepare(`
+        INSERT INTO purchase_orders(id, supplier_id, order_date, received_date, status, total, notes, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @supplier_id, @order_date, @received_date, @status, @total, @notes, @created_at, @created_by, @updated_at, @updated_by)
+      `)
+      const insertPurchaseItem = db.prepare(`
+        INSERT INTO purchase_items(id, purchase_id, product_id, product_code, product_name, ordered_quantity, received_quantity, unit_cost)
+        VALUES(@id, @purchase_id, @product_id, @product_code, @product_name, @ordered_quantity, @received_quantity, @unit_cost)
+      `)
+      for (const o of data.purchases) {
+        insertPurchase.run({
+          id: o.id, supplier_id: o.supplier_id, order_date: o.order_date, received_date: o.received_date ?? null,
+          status: o.status || 'ordered', total: o.total || 0, notes: o.notes || '',
+          created_at: o.created_at || new Date().toISOString(), updated_at: o.updated_at ?? null, ...auditOf(o)
+        })
+        for (const i of o.items ?? []) {
+          insertPurchaseItem.run({
+            id: i.id ?? null, purchase_id: o.id, product_id: i.product_id, product_code: i.product_code || '', product_name: i.product_name || '',
+            ordered_quantity: i.ordered_quantity, received_quantity: i.received_quantity ?? null, unit_cost: i.unit_cost || 0
+          })
+        }
+      }
+    }
+    if (Array.isArray(data.supplierPayments)) {
+      const insertSupplierPaymentRow = db.prepare(`
+        INSERT INTO supplier_payments(id, supplier_id, purchase_id, type, amount, payment_date, payment_method, notes, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @supplier_id, @purchase_id, @type, @amount, @payment_date, @payment_method, @notes, @created_at, @created_by, @updated_at, @updated_by)
+      `)
+      for (const pay of data.supplierPayments) {
+        insertSupplierPaymentRow.run({
+          id: pay.id, supplier_id: pay.supplier_id, purchase_id: pay.purchase_id ?? null, type: pay.type, amount: pay.amount,
+          payment_date: pay.payment_date, payment_method: pay.payment_method || 'cash', notes: pay.notes || '',
+          created_at: pay.created_at || new Date().toISOString(), updated_at: pay.updated_at ?? null, ...auditOf(pay)
+        })
+      }
+    }
+
+    // 9. Restore savings accounts and transactions
     if (hasSavings) {
       const insertSavingsAccount = db.prepare(`
         INSERT INTO savings_accounts(id, name, category, description, created_at, created_by, updated_at, updated_by)
@@ -1578,6 +2011,9 @@ export function getNicAttachmentNames(): Set<string> {
 // Deletes all business data; users (and their ID sequence) are kept so everyone can still sign in
 export function clearAll() {
   const clearTx = db.transaction(() => {
+    db.prepare('DELETE FROM supplier_payments').run()
+    db.prepare('DELETE FROM purchase_items').run()
+    db.prepare('DELETE FROM purchase_orders').run()
     db.prepare('DELETE FROM savings_transactions').run()
     db.prepare('DELETE FROM savings_accounts').run()
     db.prepare('DELETE FROM expenses').run()

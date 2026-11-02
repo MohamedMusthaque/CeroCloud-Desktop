@@ -1,7 +1,7 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import { secureEncryptionService, arrayToBase64, base64ToArray } from './secureEncryptionService'
-import { Product, Category, Sale, Supplier, CompanySettings, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction } from '@/types/database'
+import { Product, Category, Sale, Supplier, CompanySettings, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, Purchase, SupplierPayment } from '@/types/database'
 import { t } from '@/i18n'
 
 interface BackupMetadata {
@@ -29,6 +29,9 @@ interface BackupData {
     // Absent in backups made before savings existed
     savingsAccounts?: SavingsAccount[]
     savingsTransactions?: SavingsTransaction[]
+    // Absent in backups made before purchases existed
+    purchases?: Purchase[]
+    supplierPayments?: SupplierPayment[]
 }
 
 export const zipBackupService = {
@@ -54,6 +57,10 @@ export const zipBackupService = {
             const expenses = await window.electronAPI.expenses.getAll() as Expense[]
             const savingsAccounts = await window.electronAPI.savingsAccounts.getAll() as SavingsAccount[]
             const savingsTransactions = await window.electronAPI.savingsTransactions.getAll() as SavingsTransaction[]
+            // Orders with their items
+            const purchaseList = await window.electronAPI.purchases.getAll() as Purchase[]
+            const purchases = await Promise.all(purchaseList.map(p => window.electronAPI.purchases.getById(p.id!))) as Purchase[]
+            const supplierPayments = await window.electronAPI.supplierPayments.getAll() as SupplierPayment[]
 
             // Get the settings 
             const settingsStr = localStorage.getItem('companySettings')
@@ -89,7 +96,9 @@ export const zipBackupService = {
                 expenseTypes,
                 expenses,
                 savingsAccounts,
-                savingsTransactions
+                savingsTransactions,
+                purchases,
+                supplierPayments
             }
             const databaseJson = JSON.stringify(databaseData, null, 2)
             const databaseContent = password

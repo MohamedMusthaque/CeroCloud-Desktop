@@ -14,6 +14,8 @@ export const backupService = {
             const expenses = await window.electronAPI.expenses.getAll()
             const savingsAccounts = await window.electronAPI.savingsAccounts.getAll()
             const savingsTransactions = await window.electronAPI.savingsTransactions.getAll()
+            const purchases = await Promise.all((await window.electronAPI.purchases.getAll()).map(p => window.electronAPI.purchases.getById(p.id)))
+            const supplierPayments = await window.electronAPI.supplierPayments.getAll()
 
             const backupData = {
                 version: '1.0',
@@ -27,6 +29,8 @@ export const backupService = {
                     expenses,
                     savingsAccounts,
                     savingsTransactions,
+                    purchases,
+                    supplierPayments,
                 }
             }
 

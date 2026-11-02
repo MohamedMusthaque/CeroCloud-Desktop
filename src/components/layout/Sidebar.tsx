@@ -14,6 +14,7 @@ import {
     UserCog,
     Wallet,
     PiggyBank,
+    ClipboardList,
 } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { motion } from 'framer-motion'
@@ -62,6 +63,7 @@ export function Sidebar() {
 
         { name: t('nav.sales'), href: '/sales', icon: ShoppingCart, shortcut: 'V' },
         { name: t('nav.suppliers'), href: '/suppliers', icon: Truck, shortcut: 'P' },
+        { name: t('nav.purchases'), href: '/purchases', icon: ClipboardList, shortcut: 'O' },
         { name: t('nav.clients'), href: '/clients', icon: Users, shortcut: 'C' },
         { name: t('nav.expenses'), href: '/expenses', icon: Wallet, shortcut: 'E' },
         { name: t('nav.savings'), href: '/savings', icon: PiggyBank, shortcut: 'H' },

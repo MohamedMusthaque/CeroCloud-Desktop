@@ -13,14 +13,16 @@ interface DateRangeInputsProps {
     onChange: (range: DateRange) => void
     // Matches the inputs to the surrounding toolbar
     inputClassName?: string
+    // Hide the "Clear dates" button when the toolbar's Clear filters button already resets the dates
+    showClear?: boolean
 }
 
 const defaultInputClass = "px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
 
 // From / To date pickers with a button to clear both, shown once either date is set
-export function DateRangeInputs({ value, onChange, inputClassName = defaultInputClass }: DateRangeInputsProps) {
+export function DateRangeInputs({ value, onChange, inputClassName = defaultInputClass, showClear = true }: DateRangeInputsProps) {
     const { t } = useTranslation()
-    const hasDates = !!(value.from || value.to)
+    const hasDates = showClear && !!(value.from || value.to)
 
     return (
         <div className="flex flex-wrap items-center gap-2">

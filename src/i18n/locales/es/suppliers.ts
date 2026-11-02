@@ -3,6 +3,7 @@ export const suppliers = {
     'sup.loadError': 'Error al cargar datos',
     'sup.deleted': 'Proveedor eliminado correctamente',
     'sup.deleteError': 'Error al eliminar proveedor',
+    'sup.hasPurchases': 'Este proveedor tiene pedidos o pagos en Compras, por eso no se puede eliminar',
     'sup.title': 'Proveedores',
     'sup.subtitle': 'Gestión de cadena de suministro y contactos',
     'sup.new': 'Nuevo Proveedor',

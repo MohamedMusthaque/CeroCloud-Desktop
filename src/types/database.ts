@@ -117,6 +117,63 @@ export interface SavingsTransaction extends AuditFields {
     description?: string
 }
 
+export type PurchaseStatus = 'ordered' | 'received' | 'cancelled'
+
+export interface PurchaseItem {
+    id?: number
+    purchase_id?: number
+    product_id: number
+    product_code?: string
+    product_name?: string
+    ordered_quantity: number
+    received_quantity?: number | null // Set when the goods arrive
+    unit_cost: number
+}
+
+export interface Purchase extends AuditFields {
+    id?: number
+    supplier_id: number
+    supplier_name?: string
+    order_date: string // Local day 'YYYY-MM-DD'
+    received_date?: string | null
+    status: PurchaseStatus
+    // Ordered value until received, then the value of the goods actually received
+    total: number
+    notes?: string
+    items?: PurchaseItem[]
+    items_count?: number
+    // Payments minus refunds linked to this order
+    paid?: number
+}
+
+export type SupplierPaymentType = 'payment' | 'refund'
+
+export interface SupplierPayment extends AuditFields {
+    id?: number
+    supplier_id: number
+    supplier_name?: string
+    purchase_id?: number | null
+    type: SupplierPaymentType // payment = we paid the supplier, refund = the supplier paid us back
+    amount: number
+    payment_date: string // Local day 'YYYY-MM-DD'
+    payment_method: string
+    notes?: string
+}
+
+// Running account with a supplier
+export interface SupplierAccount {
+    supplier_id: number
+    total_paid: number
+    total_refunded: number
+    total_received: number
+    // Paid - refunded - goods received: > 0 we have credit with the supplier, < 0 we owe them
+    balance: number
+    // Advances paid for orders that haven't arrived yet (reserved for those orders)
+    open_advances: number
+    // balance - open_advances: > 0 credit usable on any goods, < 0 amount owed
+    available: number
+}
+
 export interface SaleItem {
     id?: number
     sale_id?: number

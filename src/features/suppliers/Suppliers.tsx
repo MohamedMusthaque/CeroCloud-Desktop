@@ -71,7 +71,7 @@ export function Suppliers() {
                 toast.success(t('sup.deleted'))
             } catch (error) {
                 console.error('Error deleting supplier:', error)
-                toast.error(t('sup.deleteError'))
+                toast.error(error instanceof Error && error.message === 'HAS_PURCHASES' ? t('sup.hasPurchases') : t('sup.deleteError'))
             } finally {
                 setConfirmOpen(false)
                 setSupplierToDelete(null)

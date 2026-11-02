@@ -4,8 +4,16 @@ import { cn } from '@/lib/utils'
 
 export type ViewMode = 'grid' | 'list'
 
+interface ViewModeToggleProps {
+    value: ViewMode
+    onChange: (mode: ViewMode) => void
+    className?: string
+    // Text colour of the selected button, to match the page's accent
+    activeClassName?: string
+}
+
 // Grid / list switch shown at the end of a page's filter bar
-export function ViewModeToggle({ value, onChange, className }: { value: ViewMode; onChange: (mode: ViewMode) => void; className?: string }) {
+export function ViewModeToggle({ value, onChange, className, activeClassName = 'text-cyan-600' }: ViewModeToggleProps) {
     const { t } = useTranslation()
     const options = [
         { mode: 'grid' as const, icon: LayoutGrid, label: t('common.gridView') },
@@ -24,7 +32,7 @@ export function ViewModeToggle({ value, onChange, className }: { value: ViewMode
                     className={cn(
                         "p-2 rounded-lg transition-colors",
                         value === mode
-                            ? "bg-gray-100 dark:bg-gray-700 text-cyan-600"
+                            ? cn("bg-gray-100 dark:bg-gray-700", activeClassName)
                             : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     )}
                 >

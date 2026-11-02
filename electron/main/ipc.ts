@@ -1,7 +1,7 @@
 import { ipcMain, app, dialog, shell, BrowserWindow } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, type AuthUser, type Actor } from './database'
+import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, purchaseQueries, supplierPaymentQueries, supplierAccountQueries, supplierHasPurchases, PurchaseError, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
 import { AttachmentError, saveNicAttachment, openNicAttachment, deleteNicAttachment, readNicAttachment, restoreNicAttachment, sweepNicAttachments } from './attachments'
@@ -88,6 +88,19 @@ function withSavingsAccess<T>(action: (actor: AuthUser) => T) {
     } catch (error) {
         if (error instanceof SavingsError) return { success: false, error: error.code }
         logger.error('Savings', error)
+        return { success: false, error: 'UNKNOWN' }
+    }
+}
+
+// Runs a purchase or supplier payment change only for users allowed on the Purchases page
+function withPurchaseAccess<T>(action: (actor: AuthUser) => T) {
+    const actor = currentUser()
+    if (!actor || !canAccessPage(actor, 'purchases')) return { success: false, error: 'FORBIDDEN' }
+    try {
+        return { success: true, data: action(actor) }
+    } catch (error) {
+        if (error instanceof PurchaseError) return { success: false, error: error.code }
+        logger.error('Purchases', error)
         return { success: false, error: 'UNKNOWN' }
     }
 }
@@ -360,6 +373,7 @@ export function registerIpcHandlers() {
     })
 
     ipcMain.handle('suppliers:delete', (_event, id: number) => {
+        if (supplierHasPurchases(id)) return { success: false, error: 'HAS_PURCHASES' }
         const nic = supplierQueries.getById(id)?.nic_attachment
         supplierQueries.delete(id)
         deleteNicAttachment(nic)
@@ -463,6 +477,29 @@ export function registerIpcHandlers() {
         withExpenseAccess(actor => expenseQueries.update(id, input ?? {}, actor.username)))
     ipcMain.handle('expenses:delete', (_event, id: number) =>
         withExpenseAccess(() => expenseQueries.delete(id)))
+
+    // Purchases (reads stay open so backups include them for every user)
+    ipcMain.handle('purchases:getAll', () => purchaseQueries.getAll())
+    ipcMain.handle('purchases:getById', (_event, id: number) => purchaseQueries.getById(id) ?? null)
+    ipcMain.handle('purchases:create', (_event, input) =>
+        withPurchaseAccess(actor => purchaseQueries.create(input ?? {}, actor.username)))
+    ipcMain.handle('purchases:update', (_event, id: number, input) =>
+        withPurchaseAccess(actor => purchaseQueries.update(id, input ?? {}, actor.username)))
+    ipcMain.handle('purchases:receive', (_event, id: number, input) =>
+        withPurchaseAccess(actor => purchaseQueries.receive(id, input ?? {}, actor.username)))
+    ipcMain.handle('purchases:cancel', (_event, id: number) =>
+        withPurchaseAccess(actor => purchaseQueries.cancel(id, actor.username)))
+    ipcMain.handle('purchases:delete', (_event, id: number) =>
+        withPurchaseAccess(() => purchaseQueries.delete(id)))
+
+    // Supplier payments and accounts
+    ipcMain.handle('supplierPayments:getAll', () => supplierPaymentQueries.getAll())
+    ipcMain.handle('supplierPayments:create', (_event, input) =>
+        withPurchaseAccess(actor => supplierPaymentQueries.create(input ?? {}, actor.username)))
+    ipcMain.handle('supplierPayments:delete', (_event, id: number) =>
+        withPurchaseAccess(() => supplierPaymentQueries.delete(id)))
+    ipcMain.handle('supplierAccounts:get', (_event, supplierId: number) => supplierAccountQueries.get(supplierId))
+    ipcMain.handle('supplierAccounts:getAll', () => supplierAccountQueries.getAll())
 
     // Savings accounts (reads stay open so backups include them for every user)
     ipcMain.handle('savingsAccounts:getAll', () => savingsAccountQueries.getAll())

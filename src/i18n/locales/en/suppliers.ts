@@ -5,6 +5,7 @@ export const suppliers: Record<keyof typeof es, string> = {
     'sup.loadError': 'Error loading data',
     'sup.deleted': 'Supplier deleted successfully',
     'sup.deleteError': 'Error deleting supplier',
+    'sup.hasPurchases': 'This supplier has orders or payments in Purchases, so it cannot be deleted',
     'sup.title': 'Suppliers',
     'sup.subtitle': 'Supply chain and contact management',
     'sup.new': 'New Supplier',

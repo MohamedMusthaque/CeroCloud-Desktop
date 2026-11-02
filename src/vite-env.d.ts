@@ -63,7 +63,7 @@ interface ElectronAPI {
         getById: (id: number) => Promise<any>
         create: (supplier: any) => Promise<any>
         update: (id: number, supplier: any) => Promise<any>
-        delete: (id: number) => Promise<{ success: boolean }>
+        delete: (id: number) => Promise<{ success: boolean; error?: string }>
     }
     clients: {
         getAll: () => Promise<any[]>
@@ -85,6 +85,24 @@ interface ElectronAPI {
         create: (expense: any) => Promise<UserResult<any>>
         update: (id: number, expense: any) => Promise<UserResult<any>>
         delete: (id: number) => Promise<UserResult<void>>
+    }
+    purchases: {
+        getAll: () => Promise<any[]>
+        getById: (id: number) => Promise<any>
+        create: (purchase: any) => Promise<UserResult<any>>
+        update: (id: number, purchase: any) => Promise<UserResult<any>>
+        receive: (id: number, input: any) => Promise<UserResult<any>>
+        cancel: (id: number) => Promise<UserResult<any>>
+        delete: (id: number) => Promise<UserResult<void>>
+    }
+    supplierPayments: {
+        getAll: () => Promise<any[]>
+        create: (payment: any) => Promise<UserResult<any>>
+        delete: (id: number) => Promise<UserResult<void>>
+    }
+    supplierAccounts: {
+        get: (supplierId: number) => Promise<any>
+        getAll: () => Promise<any[]>
     }
     savingsAccounts: {
         getAll: () => Promise<any[]>
