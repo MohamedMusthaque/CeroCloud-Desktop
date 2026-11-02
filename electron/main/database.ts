@@ -3,7 +3,7 @@ import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
 import crypto from 'crypto'
-import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType } from '../../src/types/database'
+import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES } from '../../src/types/database'
 import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
 // Database setup: opened by initializeDatabase() once the data folder is known (see dataLocation.ts)
@@ -344,6 +344,36 @@ function initSchema() {
         FOREIGN KEY (expense_type_id) REFERENCES expense_types(id)
     )`)
 
+  // Table: savings accounts (employee, personal or other savings)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS savings_accounts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL COLLATE NOCASE,
+        category TEXT NOT NULL DEFAULT 'other',
+        description TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT
+    )`)
+
+  // Table: savings deposits and withdrawals
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS savings_transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_id INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        amount REAL NOT NULL,
+        transaction_date TEXT NOT NULL,
+        payment_method TEXT,
+        description TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT,
+        FOREIGN KEY (account_id) REFERENCES savings_accounts(id)
+    )`)
+
   // Table: users (local login)
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -391,6 +421,8 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_sales_client_id ON sales(client_id);
     CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
     CREATE INDEX IF NOT EXISTS idx_expenses_type_id ON expenses(expense_type_id);
+    CREATE INDEX IF NOT EXISTS idx_savings_transactions_account_id ON savings_transactions(account_id);
+    CREATE INDEX IF NOT EXISTS idx_savings_transactions_date ON savings_transactions(transaction_date);
   `)
 
   console.log('SQLite schema initialized.')
@@ -1133,6 +1165,201 @@ export const expenseQueries = {
 }
 
 // ==========================================
+// Savings accounts and transactions
+// ==========================================
+
+// Savings errors; the UI translates the code
+export class SavingsError extends Error {
+  constructor(public code: 'NAME_REQUIRED' | 'NAME_TAKEN' | 'CATEGORY_INVALID' | 'ACCOUNT_REQUIRED' | 'ACCOUNT_IN_USE' | 'TYPE_INVALID' | 'AMOUNT_INVALID' | 'DATE_INVALID' | 'INSUFFICIENT_BALANCE' | 'NOT_FOUND') {
+    super(code)
+  }
+}
+
+export interface SavingsAccountInput {
+  name?: string
+  category?: string
+  description?: string
+}
+
+export interface SavingsTransactionInput {
+  account_id?: number
+  type?: string
+  amount?: number
+  transaction_date?: string
+  payment_method?: string
+  description?: string
+}
+
+const SAVINGS_ACCOUNT_SELECT = `
+  SELECT a.*,
+    COALESCE(SUM(CASE WHEN t.type = 'deposit' THEN t.amount ELSE -t.amount END), 0) AS balance,
+    COALESCE(SUM(CASE WHEN t.type = 'deposit' THEN t.amount END), 0) AS total_deposits,
+    COALESCE(SUM(CASE WHEN t.type = 'withdrawal' THEN t.amount END), 0) AS total_withdrawals,
+    COUNT(t.id) AS transactions_count,
+    MAX(t.transaction_date) AS last_transaction_date
+  FROM savings_accounts a
+  LEFT JOIN savings_transactions t ON t.account_id = a.id
+`
+
+// Sums of REAL amounts carry float noise (e.g. -7e-15): round to cents, and `+ 0` turns -0 into 0
+const roundMoney = (value: number) => Math.round(value * 100) / 100 + 0
+
+function withRoundedTotals(account: SavingsAccount): SavingsAccount {
+  return {
+    ...account,
+    balance: roundMoney(account.balance ?? 0),
+    total_deposits: roundMoney(account.total_deposits ?? 0),
+    total_withdrawals: roundMoney(account.total_withdrawals ?? 0)
+  }
+}
+
+// Validates and normalizes account fields; `existing` supplies values not sent when editing
+function normalizeSavingsAccount(input: SavingsAccountInput, id?: number, existing?: SavingsAccount) {
+  const name = String(input.name ?? existing?.name ?? '').trim()
+  if (!name) throw new SavingsError('NAME_REQUIRED')
+  const category = String(input.category ?? existing?.category ?? '')
+  if (!(SAVINGS_CATEGORIES as readonly string[]).includes(category)) throw new SavingsError('CATEGORY_INVALID')
+  // Names are unique within a category (the same person can have a personal and an employee account)
+  if (db.prepare('SELECT 1 FROM savings_accounts WHERE name = ? AND category = ? AND id != ?').get(name, category, id ?? 0)) {
+    throw new SavingsError('NAME_TAKEN')
+  }
+  return { name, category, description: String(input.description ?? existing?.description ?? '').trim() }
+}
+
+export const savingsAccountQueries = {
+  // Includes the balance and totals of each account
+  getAll: (): SavingsAccount[] => {
+    return (db.prepare(`${SAVINGS_ACCOUNT_SELECT} GROUP BY a.id ORDER BY a.name ASC`).all() as SavingsAccount[]).map(withRoundedTotals)
+  },
+
+  getById: (id: number): SavingsAccount | undefined => {
+    const account = db.prepare(`${SAVINGS_ACCOUNT_SELECT} WHERE a.id = ? GROUP BY a.id`).get(id) as SavingsAccount | undefined
+    return account && withRoundedTotals(account)
+  },
+
+  create: (input: SavingsAccountInput, actor: Actor = null): SavingsAccount => {
+    const now = new Date().toISOString()
+    const info = db.prepare(`
+      INSERT INTO savings_accounts(name, category, description, created_at, created_by, updated_at, updated_by)
+      VALUES(@name, @category, @description, @created_at, @created_by, @updated_at, @updated_by)
+    `).run({ ...normalizeSavingsAccount(input), created_at: now, created_by: actor, updated_at: now, updated_by: actor })
+    return savingsAccountQueries.getById(Number(info.lastInsertRowid))!
+  },
+
+  update: (id: number, input: SavingsAccountInput, actor: Actor = null): SavingsAccount => {
+    const existing = savingsAccountQueries.getById(id)
+    if (!existing) throw new SavingsError('NOT_FOUND')
+    db.prepare(`
+      UPDATE savings_accounts SET name = @name, category = @category, description = @description,
+        updated_at = @updated_at, updated_by = @updated_by
+      WHERE id = @id
+    `).run({ ...normalizeSavingsAccount(input, id, existing), id, updated_at: new Date().toISOString(), updated_by: actor })
+    return savingsAccountQueries.getById(id)!
+  },
+
+  // An account with transactions can't be deleted (its history would be lost)
+  delete: (id: number): void => {
+    if (!db.prepare('SELECT 1 FROM savings_accounts WHERE id = ?').get(id)) throw new SavingsError('NOT_FOUND')
+    if (db.prepare('SELECT 1 FROM savings_transactions WHERE account_id = ? LIMIT 1').get(id)) throw new SavingsError('ACCOUNT_IN_USE')
+    db.prepare('DELETE FROM savings_accounts WHERE id = ?').run(id)
+  }
+}
+
+// Validates and normalizes transaction fields; `existing` supplies values not sent when editing
+function normalizeSavingsTransaction(input: SavingsTransactionInput, existing?: SavingsTransaction) {
+  const accountId = Number(input.account_id ?? existing?.account_id)
+  if (!accountId || !db.prepare('SELECT 1 FROM savings_accounts WHERE id = ?').get(accountId)) throw new SavingsError('ACCOUNT_REQUIRED')
+
+  const type = String(input.type ?? existing?.type ?? '')
+  if (type !== 'deposit' && type !== 'withdrawal') throw new SavingsError('TYPE_INVALID')
+
+  const amount = Math.round(Number(input.amount ?? existing?.amount) * 100) / 100
+  if (!Number.isFinite(amount) || amount <= 0) throw new SavingsError('AMOUNT_INVALID')
+
+  // Transaction date as a local day 'YYYY-MM-DD'
+  const date = String(input.transaction_date ?? existing?.transaction_date ?? '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(Date.parse(date))) throw new SavingsError('DATE_INVALID')
+
+  return {
+    account_id: accountId,
+    type,
+    amount,
+    transaction_date: date,
+    payment_method: String(input.payment_method ?? existing?.payment_method ?? 'cash'),
+    description: String(input.description ?? existing?.description ?? '').trim()
+  }
+}
+
+// Withdrawals can't take an account below zero; call it inside the transaction that made the change so it rolls back
+function assertSavingsBalance(accountIds: number[]) {
+  for (const id of new Set(accountIds)) {
+    const { balance } = db.prepare(`
+      SELECT COALESCE(SUM(CASE WHEN type = 'deposit' THEN amount ELSE -amount END), 0) AS balance
+      FROM savings_transactions WHERE account_id = ?
+    `).get(id) as { balance: number }
+    // Rounded to cents so float noise doesn't count as overdrawn
+    if (roundMoney(balance) < 0) throw new SavingsError('INSUFFICIENT_BALANCE')
+  }
+}
+
+const SAVINGS_TRANSACTION_SELECT = `
+  SELECT t.*, a.name AS account_name, a.category AS account_category
+  FROM savings_transactions t
+  LEFT JOIN savings_accounts a ON a.id = t.account_id
+`
+
+export const savingsTransactionQueries = {
+  // Newest first, with the account name and category
+  getAll: (): SavingsTransaction[] => {
+    return db.prepare(`${SAVINGS_TRANSACTION_SELECT} ORDER BY t.transaction_date DESC, t.id DESC`).all() as SavingsTransaction[]
+  },
+
+  getById: (id: number): SavingsTransaction | undefined => {
+    return db.prepare(`${SAVINGS_TRANSACTION_SELECT} WHERE t.id = ?`).get(id) as SavingsTransaction | undefined
+  },
+
+  create: (input: SavingsTransactionInput, actor: Actor = null): SavingsTransaction => {
+    const values = normalizeSavingsTransaction(input)
+    const now = new Date().toISOString()
+    const id = db.transaction(() => {
+      const info = db.prepare(`
+        INSERT INTO savings_transactions(account_id, type, amount, transaction_date, payment_method, description, created_at, created_by, updated_at, updated_by)
+        VALUES(@account_id, @type, @amount, @transaction_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
+      `).run({ ...values, created_at: now, created_by: actor, updated_at: now, updated_by: actor })
+      assertSavingsBalance([values.account_id])
+      return Number(info.lastInsertRowid)
+    })()
+    return savingsTransactionQueries.getById(id)!
+  },
+
+  update: (id: number, input: SavingsTransactionInput, actor: Actor = null): SavingsTransaction => {
+    const existing = savingsTransactionQueries.getById(id)
+    if (!existing) throw new SavingsError('NOT_FOUND')
+    const values = normalizeSavingsTransaction(input, existing)
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE savings_transactions SET account_id = @account_id, type = @type, amount = @amount, transaction_date = @transaction_date,
+          payment_method = @payment_method, description = @description, updated_at = @updated_at, updated_by = @updated_by
+        WHERE id = @id
+      `).run({ ...values, id, updated_at: new Date().toISOString(), updated_by: actor })
+      // Moving or shrinking a deposit can overdraw the account it came from
+      assertSavingsBalance([existing.account_id, values.account_id])
+    })()
+    return savingsTransactionQueries.getById(id)!
+  },
+
+  delete: (id: number): void => {
+    const existing = savingsTransactionQueries.getById(id)
+    if (!existing) throw new SavingsError('NOT_FOUND')
+    db.transaction(() => {
+      db.prepare('DELETE FROM savings_transactions WHERE id = ?').run(id)
+      // Deleting a deposit that later withdrawals relied on would overdraw the account
+      assertSavingsBalance([existing.account_id])
+    })()
+  }
+}
+
+// ==========================================
 // Inventory logs (stock card / traceability)
 // ==========================================
 
@@ -1143,13 +1370,22 @@ export function restoreDatabase(data: any) {
   const restoreTx = db.transaction(() => {
     console.log('Restoring database...')
 
-    // Backups made before expenses existed don't include them: keep the current ones in that case
+    // Backups made before expenses or savings existed don't include them: keep the current ones in that case
     const hasExpenses = Array.isArray(data.expenseTypes)
+    const hasSavings = Array.isArray(data.savingsAccounts)
+    const keptTables = [
+      ...(hasExpenses ? [] : ['expenses', 'expense_types']),
+      ...(hasSavings ? [] : ['savings_transactions', 'savings_accounts'])
+    ]
 
     // 1. Clear everything
     if (hasExpenses) {
       db.prepare('DELETE FROM expenses').run()
       db.prepare('DELETE FROM expense_types').run()
+    }
+    if (hasSavings) {
+      db.prepare('DELETE FROM savings_transactions').run()
+      db.prepare('DELETE FROM savings_accounts').run()
     }
     db.prepare('DELETE FROM sale_items').run()
     db.prepare('DELETE FROM sales').run()
@@ -1157,7 +1393,7 @@ export function restoreDatabase(data: any) {
     db.prepare('DELETE FROM categories').run()
     db.prepare('DELETE FROM suppliers').run()
     db.prepare('DELETE FROM clients').run()
-    db.prepare(`DELETE FROM sqlite_sequence${hasExpenses ? '' : " WHERE name NOT IN ('expenses', 'expense_types')"}`).run()
+    db.prepare(`DELETE FROM sqlite_sequence${keptTables.length ? ` WHERE name NOT IN (${keptTables.map(name => `'${name}'`).join(', ')})` : ''}`).run()
 
     // Original audit fields from the backup (older backups don't include them)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1298,6 +1534,32 @@ export function restoreDatabase(data: any) {
         })
       }
     }
+
+    // 8. Restore savings accounts and transactions
+    if (hasSavings) {
+      const insertSavingsAccount = db.prepare(`
+        INSERT INTO savings_accounts(id, name, category, description, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @name, @category, @description, @created_at, @created_by, @updated_at, @updated_by)
+      `)
+      for (const a of data.savingsAccounts) {
+        insertSavingsAccount.run({
+          id: a.id, name: a.name, category: a.category || 'other', description: a.description || '',
+          created_at: a.created_at || new Date().toISOString(), updated_at: a.updated_at ?? null, ...auditOf(a)
+        })
+      }
+
+      const insertSavingsTransaction = db.prepare(`
+        INSERT INTO savings_transactions(id, account_id, type, amount, transaction_date, payment_method, description, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @account_id, @type, @amount, @transaction_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
+      `)
+      for (const t of data.savingsTransactions ?? []) {
+        insertSavingsTransaction.run({
+          id: t.id, account_id: t.account_id, type: t.type, amount: t.amount, transaction_date: t.transaction_date,
+          payment_method: t.payment_method || 'cash', description: t.description || '',
+          created_at: t.created_at || new Date().toISOString(), updated_at: t.updated_at ?? null, ...auditOf(t)
+        })
+      }
+    }
   })
 
   restoreTx()
@@ -1316,6 +1578,8 @@ export function getNicAttachmentNames(): Set<string> {
 // Deletes all business data; users (and their ID sequence) are kept so everyone can still sign in
 export function clearAll() {
   const clearTx = db.transaction(() => {
+    db.prepare('DELETE FROM savings_transactions').run()
+    db.prepare('DELETE FROM savings_accounts').run()
     db.prepare('DELETE FROM expenses').run()
     db.prepare('DELETE FROM expense_types').run()
     db.prepare('DELETE FROM sale_items').run()

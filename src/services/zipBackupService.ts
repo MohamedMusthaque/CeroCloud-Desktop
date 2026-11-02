@@ -1,7 +1,7 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import { secureEncryptionService, arrayToBase64, base64ToArray } from './secureEncryptionService'
-import { Product, Category, Sale, Supplier, CompanySettings, Client, Expense, ExpenseType } from '@/types/database'
+import { Product, Category, Sale, Supplier, CompanySettings, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction } from '@/types/database'
 import { t } from '@/i18n'
 
 interface BackupMetadata {
@@ -26,6 +26,9 @@ interface BackupData {
     // Absent in backups made before expenses existed
     expenseTypes?: ExpenseType[]
     expenses?: Expense[]
+    // Absent in backups made before savings existed
+    savingsAccounts?: SavingsAccount[]
+    savingsTransactions?: SavingsTransaction[]
 }
 
 export const zipBackupService = {
@@ -49,6 +52,8 @@ export const zipBackupService = {
             const clients = await window.electronAPI.clients.getAll() as Client[]
             const expenseTypes = await window.electronAPI.expenseTypes.getAll() as ExpenseType[]
             const expenses = await window.electronAPI.expenses.getAll() as Expense[]
+            const savingsAccounts = await window.electronAPI.savingsAccounts.getAll() as SavingsAccount[]
+            const savingsTransactions = await window.electronAPI.savingsTransactions.getAll() as SavingsTransaction[]
 
             // Get the settings 
             const settingsStr = localStorage.getItem('companySettings')
@@ -82,7 +87,9 @@ export const zipBackupService = {
                 suppliers,
                 clients,
                 expenseTypes,
-                expenses
+                expenses,
+                savingsAccounts,
+                savingsTransactions
             }
             const databaseJson = JSON.stringify(databaseData, null, 2)
             const databaseContent = password

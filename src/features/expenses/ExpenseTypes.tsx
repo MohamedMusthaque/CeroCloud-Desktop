@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useTranslation } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ModalHeader } from '@/components/ui/ModalHeader'
+import { ViewModeToggle, type ViewMode } from '@/components/ui/ViewModeToggle'
 import { expenseTypeService } from '@/services/expenseService'
 import { formatCurrency } from '@/lib/utils'
 import type { ExpenseType } from '@/types/database'
@@ -16,9 +17,11 @@ interface ExpenseTypesProps {
     loading: boolean
     // Reload types (and expenses, whose type names may have changed)
     onChanged: () => void
+    viewMode: ViewMode
+    onViewModeChange: (mode: ViewMode) => void
 }
 
-export function ExpenseTypes({ types, loading, onChanged }: ExpenseTypesProps) {
+export function ExpenseTypes({ types, loading, onChanged, viewMode, onViewModeChange }: ExpenseTypesProps) {
     const { t } = useTranslation()
     const [searchTerm, setSearchTerm] = useState('')
     const [formOpen, setFormOpen] = useState(false)
@@ -66,13 +69,16 @@ export function ExpenseTypes({ types, loading, onChanged }: ExpenseTypesProps) {
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                     />
                 </div>
-                <button
-                    onClick={() => { setEditing(null); setFormOpen(true) }}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 active:scale-95 transition-all font-medium shadow-lg shadow-primary/20 shrink-0"
-                >
-                    <Plus className="w-5 h-5" />
-                    {t('expType.new')}
-                </button>
+                <div className="flex items-center gap-4 shrink-0">
+                    <button
+                        onClick={() => { setEditing(null); setFormOpen(true) }}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 active:scale-95 transition-all font-medium shadow-lg shadow-primary/20 shrink-0"
+                    >
+                        <Plus className="w-5 h-5" />
+                        {t('expType.new')}
+                    </button>
+                    <ViewModeToggle value={viewMode} onChange={onViewModeChange} />
+                </div>
             </div>
 
             {/* Content */}
@@ -90,6 +96,57 @@ export function ExpenseTypes({ types, loading, onChanged }: ExpenseTypesProps) {
                         {types.length === 0 ? t('expType.empty') : t('expType.noResults')}
                     </h3>
                     {types.length === 0 && <p className="text-gray-500 mt-2">{t('expType.emptyDesc')}</p>}
+                </div>
+            ) : viewMode === 'list' ? (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-300 dark:border-gray-700 overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead className="bg-gray-50 dark:bg-gray-900/50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <tr>
+                                <th className="px-4 py-3">{t('expTypeForm.name')}</th>
+                                <th className="px-4 py-3">{t('exp.col.description')}</th>
+                                <th className="px-4 py-3">{t('exp.statCount')}</th>
+                                <th className="px-4 py-3 text-right">{t('exp.col.amount')}</th>
+                                <th className="px-4 py-3" />
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                            {filtered.map(type => (
+                                <tr key={type.id} className="group hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <span className="w-9 h-9 shrink-0 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                                <Shapes className="w-4 h-4" />
+                                            </span>
+                                            <span className="font-bold text-gray-900 dark:text-white truncate max-w-[14rem]" title={type.name}>{type.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300 max-w-xs truncate" title={type.description}>
+                                        {type.description || '-'}
+                                    </td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-gray-300">{countLabel(type.expenses_count ?? 0)}</td>
+                                    <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white whitespace-nowrap">{formatCurrency(type.total_amount ?? 0)}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => { setEditing(type); setFormOpen(true) }}
+                                                className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                                title={t('common.edit')}
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => requestDelete(type)}
+                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                                title={t('common.delete')}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

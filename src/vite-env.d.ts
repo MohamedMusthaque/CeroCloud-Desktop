@@ -86,6 +86,18 @@ interface ElectronAPI {
         update: (id: number, expense: any) => Promise<UserResult<any>>
         delete: (id: number) => Promise<UserResult<void>>
     }
+    savingsAccounts: {
+        getAll: () => Promise<any[]>
+        create: (account: any) => Promise<UserResult<any>>
+        update: (id: number, account: any) => Promise<UserResult<any>>
+        delete: (id: number) => Promise<UserResult<void>>
+    }
+    savingsTransactions: {
+        getAll: () => Promise<any[]>
+        create: (transaction: any) => Promise<UserResult<any>>
+        update: (id: number, transaction: any) => Promise<UserResult<any>>
+        delete: (id: number) => Promise<UserResult<void>>
+    }
     attachments: {
         saveNic: (sourcePath: string) => Promise<{ success: boolean; filename?: string; error?: string }>
         openNic: (filename: string) => Promise<{ success: boolean; error?: string }>

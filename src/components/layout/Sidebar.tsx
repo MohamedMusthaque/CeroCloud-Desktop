@@ -13,6 +13,7 @@ import {
     Users,
     UserCog,
     Wallet,
+    PiggyBank,
 } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { motion } from 'framer-motion'
@@ -63,6 +64,7 @@ export function Sidebar() {
         { name: t('nav.suppliers'), href: '/suppliers', icon: Truck, shortcut: 'P' },
         { name: t('nav.clients'), href: '/clients', icon: Users, shortcut: 'C' },
         { name: t('nav.expenses'), href: '/expenses', icon: Wallet, shortcut: 'E' },
+        { name: t('nav.savings'), href: '/savings', icon: PiggyBank, shortcut: 'H' },
         { name: t('nav.reports'), href: '/reports', icon: FileText, shortcut: 'R' },
     ].filter(item => canAccessPath(user, item.href))
 

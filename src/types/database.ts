@@ -87,6 +87,36 @@ export interface Expense extends AuditFields {
     description?: string
 }
 
+export const SAVINGS_CATEGORIES = ['employee', 'personal', 'other'] as const
+export type SavingsCategory = typeof SAVINGS_CATEGORIES[number]
+
+export interface SavingsAccount extends AuditFields {
+    id?: number
+    name: string
+    category: SavingsCategory
+    description?: string
+    // Computed from the account's transactions
+    balance?: number
+    total_deposits?: number
+    total_withdrawals?: number
+    transactions_count?: number
+    last_transaction_date?: string | null
+}
+
+export type SavingsTransactionType = 'deposit' | 'withdrawal'
+
+export interface SavingsTransaction extends AuditFields {
+    id?: number
+    account_id: number
+    account_name?: string
+    account_category?: SavingsCategory
+    type: SavingsTransactionType
+    amount: number
+    transaction_date: string // Local day 'YYYY-MM-DD'
+    payment_method: string
+    description?: string
+}
+
 export interface SaleItem {
     id?: number
     sale_id?: number

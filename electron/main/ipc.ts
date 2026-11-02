@@ -1,7 +1,7 @@
 import { ipcMain, app, dialog, shell, BrowserWindow } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, type AuthUser, type Actor } from './database'
+import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
 import { AttachmentError, saveNicAttachment, openNicAttachment, deleteNicAttachment, readNicAttachment, restoreNicAttachment, sweepNicAttachments } from './attachments'
@@ -75,6 +75,19 @@ function withExpenseAccess<T>(action: (actor: AuthUser) => T) {
     } catch (error) {
         if (error instanceof ExpenseError) return { success: false, error: error.code }
         logger.error('Expenses', error)
+        return { success: false, error: 'UNKNOWN' }
+    }
+}
+
+// Runs a savings change only for users allowed on the Savings page
+function withSavingsAccess<T>(action: (actor: AuthUser) => T) {
+    const actor = currentUser()
+    if (!actor || !canAccessPage(actor, 'savings')) return { success: false, error: 'FORBIDDEN' }
+    try {
+        return { success: true, data: action(actor) }
+    } catch (error) {
+        if (error instanceof SavingsError) return { success: false, error: error.code }
+        logger.error('Savings', error)
         return { success: false, error: 'UNKNOWN' }
     }
 }
@@ -450,6 +463,24 @@ export function registerIpcHandlers() {
         withExpenseAccess(actor => expenseQueries.update(id, input ?? {}, actor.username)))
     ipcMain.handle('expenses:delete', (_event, id: number) =>
         withExpenseAccess(() => expenseQueries.delete(id)))
+
+    // Savings accounts (reads stay open so backups include them for every user)
+    ipcMain.handle('savingsAccounts:getAll', () => savingsAccountQueries.getAll())
+    ipcMain.handle('savingsAccounts:create', (_event, input) =>
+        withSavingsAccess(actor => savingsAccountQueries.create(input ?? {}, actor.username)))
+    ipcMain.handle('savingsAccounts:update', (_event, id: number, input) =>
+        withSavingsAccess(actor => savingsAccountQueries.update(id, input ?? {}, actor.username)))
+    ipcMain.handle('savingsAccounts:delete', (_event, id: number) =>
+        withSavingsAccess(() => savingsAccountQueries.delete(id)))
+
+    // Savings transactions
+    ipcMain.handle('savingsTransactions:getAll', () => savingsTransactionQueries.getAll())
+    ipcMain.handle('savingsTransactions:create', (_event, input) =>
+        withSavingsAccess(actor => savingsTransactionQueries.create(input ?? {}, actor.username)))
+    ipcMain.handle('savingsTransactions:update', (_event, id: number, input) =>
+        withSavingsAccess(actor => savingsTransactionQueries.update(id, input ?? {}, actor.username)))
+    ipcMain.handle('savingsTransactions:delete', (_event, id: number) =>
+        withSavingsAccess(() => savingsTransactionQueries.delete(id)))
 
     // Auth
     ipcMain.handle('auth:login', (_event, username: string, password: string) => {

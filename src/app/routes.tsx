@@ -17,6 +17,8 @@ import { CategoryView } from '@/features/inventory/CategoryView'
 import { SupplierView } from '@/features/suppliers/SupplierView'
 import { ClientView } from '@/features/clients/ClientView'
 import { ExpenseView } from '@/features/expenses/ExpenseView'
+import { Savings } from '@/features/savings/Savings'
+import { SavingsAccountView } from '@/features/savings/SavingsAccountView'
 
 export function AppRoutes() {
     return (
@@ -33,6 +35,8 @@ export function AppRoutes() {
                 <Route path="clients/:id" element={<RequirePage page="clients"><ClientView /></RequirePage>} />
                 <Route path="expenses" element={<RequirePage page="expenses"><Expenses /></RequirePage>} />
                 <Route path="expenses/:id" element={<RequirePage page="expenses"><ExpenseView /></RequirePage>} />
+                <Route path="savings" element={<RequirePage page="savings"><Savings /></RequirePage>} />
+                <Route path="savings/:id" element={<RequirePage page="savings"><SavingsAccountView /></RequirePage>} />
                 <Route path="reports" element={<RequirePage page="reports"><Reports /></RequirePage>} />
                 <Route path="users" element={<RequirePage page="users"><Users /></RequirePage>} />
                 <Route path="users/:id" element={<RequirePage page="users"><UserView /></RequirePage>} />

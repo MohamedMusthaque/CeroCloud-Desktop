@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { format, parseISO } from 'date-fns'
 import { Plus, Search, Edit2, Trash2, Eye, Wallet, Shapes, CalendarDays, Receipt, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
@@ -7,6 +8,7 @@ import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
+import { ViewModeToggle, type ViewMode } from '@/components/ui/ViewModeToggle'
 import { expenseService, expenseTypeService } from '@/services/expenseService'
 import { cn, formatCurrency } from '@/lib/utils'
 import type { Expense, ExpenseType } from '@/types/database'
@@ -17,6 +19,9 @@ import { expenseErrorMessage } from './expenseErrors'
 export function Expenses() {
     const { t, locale } = useTranslation()
     const [section, setSection] = useState<'expenses' | 'types'>('expenses')
+    // Expenses read best as a table, expense types as cards
+    const [expensesView, setExpensesView] = useState<ViewMode>('list')
+    const [typesView, setTypesView] = useState<ViewMode>('grid')
     const [expenses, setExpenses] = useState<Expense[]>([])
     const [types, setTypes] = useState<ExpenseType[]>([])
     const [loading, setLoading] = useState(true)
@@ -155,7 +160,7 @@ export function Expenses() {
             </div>
 
             {section === 'types' ? (
-                <ExpenseTypes types={types} loading={loading} onChanged={loadData} />
+                <ExpenseTypes types={types} loading={loading} onChanged={loadData} viewMode={typesView} onViewModeChange={setTypesView} />
             ) : (
                 <>
                     {/* Stats */}
@@ -199,6 +204,7 @@ export function Expenses() {
                             inputClassName={filterInputClass}
                         />
                         <ClearFiltersButton visible={!!hasFilters} onClick={clearFilters} />
+                        <ViewModeToggle value={expensesView} onChange={setExpensesView} className="lg:ml-auto self-end lg:self-auto" />
                     </div>
 
                     {/* List */}
@@ -216,6 +222,61 @@ export function Expenses() {
                                 {expenses.length === 0 ? t('exp.empty') : t('exp.noResults')}
                             </h3>
                             {expenses.length === 0 && <p className="text-gray-500 mt-2">{t('exp.emptyDesc')}</p>}
+                        </div>
+                    ) : expensesView === 'grid' ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {filtered.map(expense => (
+                                <motion.div
+                                    key={expense.id}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-300 dark:border-gray-700 shadow-md hover:shadow-xl transition-all p-5 flex flex-col"
+                                >
+                                    <div className="flex items-start justify-between gap-2">
+                                        <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary truncate" title={expense.expense_type_name}>
+                                            {expense.expense_type_name}
+                                        </span>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
+                                            <Link
+                                                to={`/expenses/${expense.id}`}
+                                                className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                                title={t('view.view')}
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Link>
+                                            <button
+                                                onClick={() => { setEditing(expense); setFormOpen(true) }}
+                                                className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                                title={t('common.edit')}
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setToDelete(expense)}
+                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                                title={t('common.delete')}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3 flex-1 min-w-0">
+                                        <Link to={`/expenses/${expense.id}`} className="block text-2xl font-black text-gray-900 dark:text-white hover:text-primary truncate">
+                                            {formatCurrency(expense.amount)}
+                                        </Link>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                                            {expense.description || <span className="italic opacity-70">{t('expType.noDescription')}</span>}
+                                        </p>
+                                    </div>
+
+                                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                        <span className="whitespace-nowrap">{formatDay(expense.expense_date)}</span>
+                                        <span className="truncate">{paymentMethodLabel(expense.payment_method)}{expense.created_by ? ` · ${expense.created_by}` : ''}</span>
+                                    </div>
+                                </motion.div>
+                            ))}
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-300 dark:border-gray-700 overflow-x-auto">

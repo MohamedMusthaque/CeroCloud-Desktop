@@ -16,6 +16,8 @@ export const common: Record<keyof typeof es, string> = {
     'common.to': 'To',
     'common.clearDates': 'Clear dates',
     'common.clearFilters': 'Clear filters',
+    'common.gridView': 'Grid view',
+    'common.listView': 'List view',
 
     // NIC attachment (suppliers and clients)
     'nic.label': 'NIC Attachment',

@@ -14,6 +14,8 @@ export const common = {
     'common.to': 'Hasta',
     'common.clearDates': 'Borrar fechas',
     'common.clearFilters': 'Limpiar filtros',
+    'common.gridView': 'Vista de cuadrícula',
+    'common.listView': 'Vista de lista',
 
     // NIC attachment (suppliers and clients)
     'nic.label': 'Adjunto de NIC',

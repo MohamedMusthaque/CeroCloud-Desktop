@@ -94,6 +94,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
         delete: (id: number) => ipcRenderer.invoke('expenses:delete', id),
     },
 
+    // Savings accounts
+    savingsAccounts: {
+        getAll: () => ipcRenderer.invoke('savingsAccounts:getAll'),
+        create: (account: any) => ipcRenderer.invoke('savingsAccounts:create', account),
+        update: (id: number, account: any) => ipcRenderer.invoke('savingsAccounts:update', id, account),
+        delete: (id: number) => ipcRenderer.invoke('savingsAccounts:delete', id),
+    },
+
+    // Savings transactions
+    savingsTransactions: {
+        getAll: () => ipcRenderer.invoke('savingsTransactions:getAll'),
+        create: (transaction: any) => ipcRenderer.invoke('savingsTransactions:create', transaction),
+        update: (id: number, transaction: any) => ipcRenderer.invoke('savingsTransactions:update', id, transaction),
+        delete: (id: number) => ipcRenderer.invoke('savingsTransactions:delete', id),
+    },
+
     // NIC attachments (suppliers and clients)
     attachments: {
         saveNic: (sourcePath: string) => ipcRenderer.invoke('attachments:saveNic', sourcePath),
