@@ -94,6 +94,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
         delete: (id: number) => ipcRenderer.invoke('expenses:delete', id),
     },
 
+    // Capital and other income
+    capital: {
+        getAll: () => ipcRenderer.invoke('capital:getAll'),
+        create: (entry: any) => ipcRenderer.invoke('capital:create', entry),
+        update: (id: number, entry: any) => ipcRenderer.invoke('capital:update', id, entry),
+        delete: (id: number) => ipcRenderer.invoke('capital:delete', id),
+        settle: (id: number, input: any) => ipcRenderer.invoke('capital:settle', id, input),
+        deleteSettlement: (id: number) => ipcRenderer.invoke('capital:deleteSettlement', id),
+    },
+
     // Purchase orders
     purchases: {
         getAll: () => ipcRenderer.invoke('purchases:getAll'),

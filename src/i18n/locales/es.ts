@@ -21,6 +21,7 @@ import { expenses } from './es/expenses'
 import { views } from './es/views'
 import { savings } from './es/savings'
 import { purchases } from './es/purchases'
+import { capital } from './es/capital'
 
 export const es = {
     ...common,
@@ -46,6 +47,7 @@ export const es = {
     ...views,
     ...savings,
     ...purchases,
+    ...capital,
 
     // Navigation
     'nav.dashboard': 'Dashboard',
@@ -55,6 +57,7 @@ export const es = {
     'nav.clients': 'Clientes',
     'nav.expenses': 'Gastos',
     'nav.savings': 'Ahorros',
+    'nav.capital': 'Capital e Ingresos',
     'nav.purchases': 'Compras',
     'nav.reports': 'Reportes',
     'nav.settings': 'Configuración',
@@ -216,11 +219,11 @@ export const es = {
     'dataManagement.replaceExisting': 'Reemplazar con mis datos actuales',
     'dataManagement.restarting': 'Ubicación cambiada. Reiniciando...',
     'dataManagement.reset': 'Restablecer Base de Datos',
-    'dataManagement.resetDesc': 'Elimina productos, categorías, ventas, clientes, proveedores, compras, gastos y ahorros',
+    'dataManagement.resetDesc': 'Elimina productos, categorías, ventas, clientes, proveedores, compras, gastos, ahorros y capital',
     'dataManagement.resetKeeps': 'Las cuentas de usuario y la configuración se conservan',
     'dataManagement.resetButton': 'Restablecer Base de Datos',
     'dataManagement.resetTitle': '¿Restablecer la base de datos?',
-    'dataManagement.resetConfirm': 'Se eliminarán de forma permanente todos los productos, categorías, ventas, clientes, proveedores, compras, gastos y ahorros, junto con sus imágenes y adjuntos. Los usuarios se conservan. Crea un respaldo antes si podrías necesitar estos datos.',
+    'dataManagement.resetConfirm': 'Se eliminarán de forma permanente todos los productos, categorías, ventas, clientes, proveedores, compras, gastos, ahorros y capital, junto con sus imágenes y adjuntos. Los usuarios se conservan. Crea un respaldo antes si podrías necesitar estos datos.',
     'dataManagement.resetSuccess': 'Base de datos restablecida',
     'dataManagement.error.FORBIDDEN': 'Solo un administrador puede hacer esto',
     'dataManagement.error.NOT_WRITABLE': 'No se puede escribir en esa carpeta. Elige otra.',

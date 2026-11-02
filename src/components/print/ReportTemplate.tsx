@@ -2,7 +2,7 @@
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { forwardRef } from 'react'
-import { Sale, CompanySettings, Product, Expense, SupplierPayment } from '@/types/database'
+import { Sale, CompanySettings, Product, Expense, SupplierPayment, CapitalEntry } from '@/types/database'
 import { format, parseISO } from 'date-fns'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 
@@ -12,7 +12,7 @@ interface ReportTemplateProps {
     data: any[]
     allData?: any[] // For calculating totals across pages
     pageInfo?: { current: number, total: number }
-    type: 'sales' | 'expenses' | 'supplier-payments' | 'inventory' | 'low-stock' | 'daily-closing'
+    type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'inventory' | 'low-stock' | 'daily-closing'
     settings: CompanySettings
     range?: string
 }
@@ -170,6 +170,35 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
         </table>
     )
 
+    const renderCapitalTable = () => (
+        <table className="w-full text-sm">
+            <thead>
+                <tr className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
+                    <th className="py-3 px-4 text-left">{t('print.col.date')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.type')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.form')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.source')}</th>
+                    <th className="py-3 px-4 text-center">{t('print.col.payment')}</th>
+                    <th className="py-3 px-4 text-right">{t('print.col.amount')}</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+                {data.map((entry: CapitalEntry, i) => (
+                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="py-2 px-4 whitespace-nowrap">{format(parseISO(entry.entry_date), 'dd/MM/yy')}</td>
+                        <td className="py-2 px-4 font-medium">{t(`cap.type.${entry.type}`)}</td>
+                        <td className="py-2 px-4">{t(`cap.form.${entry.form || 'money'}`)}</td>
+                        <td className="py-2 px-4 text-gray-600 truncate max-w-[220px]">{(entry.form === 'supplier_credit' ? entry.supplier_name : entry.source) || '-'}</td>
+                        <td className="py-2 px-4 text-center">{entry.payment_method ? paymentMethodLabel(entry.payment_method) : '-'}</td>
+                        <td className={`py-2 px-4 text-right font-bold ${entry.type === 'withdrawal' ? 'text-red-600' : 'text-gray-900'}`}>
+                            {entry.type === 'withdrawal' ? '-' : ''}{settings.currencySymbol}{entry.amount.toFixed(2)}
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    )
+
     // --- SUMMARY STATISTICS ---
     // Use allData if available for correct totals across pages
     const sourceData = allData || data
@@ -187,6 +216,14 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
             for (const e of sourceData) byType.set(e.expense_type_name ?? '', (byType.get(e.expense_type_name ?? '') ?? 0) + e.amount)
             const topType = [...byType.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
             return { total, count: sourceData.length, topType }
+        }
+        if (type === 'capital') {
+            const sumOf = (match: (e: CapitalEntry) => boolean) => sourceData.filter(match).reduce((sum, e) => sum + e.amount, 0)
+            return {
+                capitalIn: sumOf(e => e.type === 'initial_capital' || e.type === 'capital'),
+                otherIncome: sumOf(e => e.type === 'income'),
+                withdrawals: sumOf(e => e.type === 'withdrawal')
+            }
         }
         if (type === 'supplier-payments') {
             const paid = sourceData.filter(p => p.type === 'payment').reduce((sum, p) => sum + p.amount, 0)
@@ -265,6 +302,23 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                     </>
                 )}
 
+                {type === 'capital' && (
+                    <>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.capitalIn')}</p>
+                            <p className="text-3xl font-black text-indigo-600">{settings.currencySymbol}{stats.capitalIn?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.otherIncome')}</p>
+                            <p className="text-3xl font-black text-green-600">{settings.currencySymbol}{stats.otherIncome?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.withdrawals')}</p>
+                            <p className="text-3xl font-black text-red-600">{settings.currencySymbol}{stats.withdrawals?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                    </>
+                )}
+
                 {type === 'supplier-payments' && (
                     <>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -298,7 +352,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
 
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-8 shadow-sm">
-                {(type === 'sales' || type === 'daily-closing') ? renderSalesTable() : type === 'expenses' ? renderExpensesTable() : type === 'supplier-payments' ? renderSupplierPaymentsTable() : renderInventoryTable()}
+                {(type === 'sales' || type === 'daily-closing') ? renderSalesTable() : type === 'expenses' ? renderExpensesTable() : type === 'supplier-payments' ? renderSupplierPaymentsTable() : type === 'capital' ? renderCapitalTable() : renderInventoryTable()}
             </div>
 
             {/* Footer */}

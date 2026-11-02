@@ -16,7 +16,8 @@ import {
     ArrowUpDown,
     Search,
     ClipboardList,
-    Banknote
+    Banknote,
+    Landmark
 } from 'lucide-react'
 import {
     AreaChart,
@@ -36,11 +37,12 @@ import { productService } from '@/services/productService'
 import { saleService } from '@/services/saleService'
 import { pdfGenerator } from '@/services/pdfGenerator'
 import { companyService } from '@/services/companyService'
-import { Expense, Product, Purchase, Sale, SupplierAccount, SupplierPayment } from '@/types/database'
+import { CapitalEntry, Expense, Product, Purchase, Sale, SupplierAccount, SupplierPayment } from '@/types/database'
 import { expenseService } from '@/services/expenseService'
 import { ProfitReport } from './ProfitReport'
 import { PurchasesReport } from './PurchasesReport'
 import { purchaseService, supplierAccountService, supplierPaymentService } from '@/services/purchaseService'
+import { capitalService } from '@/services/capitalService'
 import { format, subDays, startOfDay } from 'date-fns'
 import { ReportPeriodFilter } from './ReportPeriodFilter'
 import { filterSalesByPeriod, filterExpensesByPeriod, filterByDayPeriod, periodLabel, type ReportPeriod } from '@/lib/reportPeriod'
@@ -62,6 +64,7 @@ export function Reports() {
     const [purchases, setPurchases] = useState<Purchase[]>([])
     const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([])
     const [supplierAccounts, setSupplierAccounts] = useState<SupplierAccount[]>([])
+    const [capitalEntries, setCapitalEntries] = useState<CapitalEntry[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'sales' | 'profit' | 'purchases' | 'inventory' | 'export' | 'transactions'>('sales')
     const [settings] = useState(companyService.getSettings())
@@ -165,13 +168,14 @@ export function Reports() {
     const loadData = async () => {
         try {
             setLoading(true)
-            const [productsData, salesData, expensesData, purchasesData, paymentsData, accountsData] = await Promise.all([
+            const [productsData, salesData, expensesData, purchasesData, paymentsData, accountsData, capitalData] = await Promise.all([
                 productService.getAll(),
                 saleService.getAll(),
                 expenseService.getAll(),
                 purchaseService.getAll(),
                 supplierPaymentService.getAll(),
-                supplierAccountService.getAll()
+                supplierAccountService.getAll(),
+                capitalService.getAll()
             ])
             setProducts(productsData)
             setSales(salesData)
@@ -179,6 +183,7 @@ export function Reports() {
             setPurchases(purchasesData)
             setSupplierPayments(paymentsData)
             setSupplierAccounts(accountsData)
+            setCapitalEntries(capitalData)
         } catch (error) {
             console.error('Error loading data:', error)
             // Non-reactive translate keeps the load function free of hook dependencies
@@ -471,7 +476,7 @@ export function Reports() {
                     )}
 
                     {activeTab === 'profit' && (
-                        <ProfitReport sales={sales} expenses={expenses} products={products} purchases={purchases} supplierPayments={supplierPayments} />
+                        <ProfitReport sales={sales} expenses={expenses} products={products} purchases={purchases} supplierPayments={supplierPayments} capitalEntries={capitalEntries} />
                     )}
 
                     {activeTab === 'purchases' && (
@@ -736,7 +741,7 @@ export function Reports() {
                     )}
 
                     {activeTab === 'export' && (
-                        <ExportSection sales={sales} expenses={expenses} supplierPayments={supplierPayments} products={products} settings={settings} />
+                        <ExportSection sales={sales} expenses={expenses} supplierPayments={supplierPayments} capitalEntries={capitalEntries} products={products} settings={settings} />
                     )}
 
                     {activeTab === 'transactions' && (
@@ -947,7 +952,7 @@ function MetricCard({ title, value, subtitle, icon: Icon, color }: any) {
     )
 }
 
-function ExportSection({ sales, expenses, supplierPayments, products, settings }: { sales: Sale[]; expenses: Expense[]; supplierPayments: SupplierPayment[]; products: Product[]; settings: any }) {
+function ExportSection({ sales, expenses, supplierPayments, capitalEntries, products, settings }: { sales: Sale[]; expenses: Expense[]; supplierPayments: SupplierPayment[]; capitalEntries: CapitalEntry[]; products: Product[]; settings: any }) {
     const { t, locale, dateLocale } = useTranslation()
     const [period, setPeriod] = useState<ReportPeriod>({ range: 'today' })
     const timeRange = period.range
@@ -955,6 +960,7 @@ function ExportSection({ sales, expenses, supplierPayments, products, settings }
     const filteredSales = filterSalesByPeriod(sales, period, dateLocale)
     const filteredExpenses = filterExpensesByPeriod(expenses, period, dateLocale)
     const filteredSupplierPayments = filterByDayPeriod(supplierPayments, p => p.payment_date, period, dateLocale)
+    const filteredCapital = filterByDayPeriod(capitalEntries, c => c.entry_date, period, dateLocale)
     // Products don't usually filter by date unless it's "created_at", but for inventory snapshots we usually want current state.
     // However, for "Low Stock" we just filter by logic. Used products remains full list usually.
 
@@ -962,11 +968,12 @@ function ExportSection({ sales, expenses, supplierPayments, products, settings }
 
     const rangeLabel = periodLabel(period, t, locale)
 
-    const handleExport = (type: 'sales' | 'expenses' | 'supplier-payments' | 'inventory' | 'low-stock' | 'daily-closing') => {
+    const handleExport = (type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'inventory' | 'low-stock' | 'daily-closing') => {
         const titleMap = {
             'sales': t('rep.export.salesTitle'),
             'expenses': t('rep.export.expensesTitle'),
             'supplier-payments': t('rep.export.supplierPaymentsTitle'),
+            'capital': t('rep.export.capitalTitle'),
             'inventory': t('rep.export.inventoryTitle'),
             'low-stock': t('rep.export.lowStockTitle'),
             'daily-closing': t('rep.export.closingTitle')
@@ -975,6 +982,7 @@ function ExportSection({ sales, expenses, supplierPayments, products, settings }
             'sales': t('rep.export.salesSubtitle'),
             'expenses': t('rep.export.expensesSubtitle'),
             'supplier-payments': t('rep.export.supplierPaymentsSubtitle'),
+            'capital': t('rep.export.capitalSubtitle'),
             'inventory': t('rep.export.inventorySubtitle'),
             'low-stock': t('rep.export.lowStockSubtitle'),
             'daily-closing': t('rep.export.closingSubtitle')
@@ -986,6 +994,7 @@ function ExportSection({ sales, expenses, supplierPayments, products, settings }
         if (type === 'sales') dataToExport = filteredSales
         if (type === 'expenses') dataToExport = filteredExpenses
         if (type === 'supplier-payments') dataToExport = filteredSupplierPayments
+        if (type === 'capital') dataToExport = filteredCapital
         if (type === 'daily-closing') {
             // Daily closing is specifically Today regardless of filter, or we can respect filter if user selects "Today" specifically? 
             // Usually Daily Closing implies Today. Let's force filter to today for this button or use current filter if it makes sense.
@@ -1074,6 +1083,24 @@ function ExportSection({ sales, expenses, supplierPayments, products, settings }
                         <div key={p.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="truncate max-w-[150px] text-gray-500">{p.supplier_name}</span>
                             <span className="font-medium text-gray-900 dark:text-white">{p.type === 'payment' ? '-' : '+'}{settings.currencySymbol}{p.amount.toFixed(2)}</span>
+                        </div>
+                    ))}
+                />
+
+                {/* Capital & Income Card (follows the period); total = money in minus withdrawals */}
+                <NewExportCard
+                    title={t('rep.export.capitalTitle')}
+                    description={t('rep.export.capitalDesc', { range: timeRange === 'today' ? t('rep.export.descToday') : timeRange === 'all' ? t('rep.export.descAll') : rangeLabel })}
+                    count={filteredCapital.length}
+                    total={filteredCapital.reduce((s, c) => s + (c.type === 'withdrawal' ? -c.amount : c.amount), 0)}
+                    currencySymbol={settings.currencySymbol}
+                    icon={Landmark}
+                    color="purple"
+                    onClick={() => handleExport('capital')}
+                    previewData={filteredCapital.slice(0, 3).map(c => (
+                        <div key={c.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
+                            <span className="truncate max-w-[150px] text-gray-500">{t(`cap.type.${c.type}`)}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{c.type === 'withdrawal' ? '-' : ''}{settings.currencySymbol}{c.amount.toFixed(2)}</span>
                         </div>
                     ))}
                 />

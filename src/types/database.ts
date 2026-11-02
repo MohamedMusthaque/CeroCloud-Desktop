@@ -117,6 +117,59 @@ export interface SavingsTransaction extends AuditFields {
     description?: string
 }
 
+// Capital the owner puts in, income earned outside sales, and money the owner takes out
+export const CAPITAL_ENTRY_TYPES = ['initial_capital', 'capital', 'income', 'withdrawal'] as const
+export type CapitalEntryType = typeof CAPITAL_ENTRY_TYPES[number]
+
+// How capital was provided (income and withdrawals are always money)
+//   money           cash / bank, in the business now
+//   goods           the owner's own goods, added to stock
+//   supplier_credit goods from a supplier on credit: added to stock, owed on the supplier account
+//   loan            borrowed money: in the business now, repaid over time
+//   pledge          promised capital: committed now, paid in over time
+export const CAPITAL_FORMS = ['money', 'goods', 'supplier_credit', 'loan', 'pledge'] as const
+export type CapitalForm = typeof CAPITAL_FORMS[number]
+
+export interface CapitalItem {
+    id?: number
+    entry_id?: number
+    product_id: number
+    product_code?: string
+    product_name?: string
+    quantity: number
+    unit_cost: number
+}
+
+// A loan repayment or a payment in towards promised capital
+export interface CapitalSettlement extends AuditFields {
+    id?: number
+    entry_id: number
+    amount: number
+    settlement_date: string // Local day 'YYYY-MM-DD'
+    payment_method: string
+    notes?: string
+}
+
+export interface CapitalEntry extends AuditFields {
+    id?: number
+    type: CapitalEntryType
+    form: CapitalForm
+    // Where it came from, e.g. "Own savings", the lender, "Commission"
+    source?: string
+    amount: number
+    entry_date: string // Local day 'YYYY-MM-DD'
+    payment_method: string
+    description?: string
+    // Goods on credit: the supplier and the received purchase order holding the debt
+    supplier_id?: number | null
+    supplier_name?: string
+    purchase_id?: number | null
+    items?: CapitalItem[]
+    settlements?: CapitalSettlement[]
+    // Repaid (loan) or paid in (pledge) so far
+    settled?: number
+}
+
 export type PurchaseStatus = 'ordered' | 'received' | 'cancelled'
 
 export interface PurchaseItem {

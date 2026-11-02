@@ -22,6 +22,7 @@ import { expenses } from './en/expenses'
 import { views } from './en/views'
 import { savings } from './en/savings'
 import { purchases } from './en/purchases'
+import { capital } from './en/capital'
 
 export const en: Record<TranslationKey, string> = {
     ...common,
@@ -47,6 +48,7 @@ export const en: Record<TranslationKey, string> = {
     ...views,
     ...savings,
     ...purchases,
+    ...capital,
 
     // Navigation
     'nav.dashboard': 'Dashboard',
@@ -56,6 +58,7 @@ export const en: Record<TranslationKey, string> = {
     'nav.clients': 'Clients',
     'nav.expenses': 'Expenses',
     'nav.savings': 'Savings',
+    'nav.capital': 'Capital & Income',
     'nav.purchases': 'Purchases',
     'nav.reports': 'Reports',
     'nav.settings': 'Settings',
@@ -217,11 +220,11 @@ export const en: Record<TranslationKey, string> = {
     'dataManagement.replaceExisting': 'Replace with my current data',
     'dataManagement.restarting': 'Location changed. Restarting...',
     'dataManagement.reset': 'Reset Database',
-    'dataManagement.resetDesc': 'Deletes products, categories, sales, clients, suppliers, purchases, expenses and savings',
+    'dataManagement.resetDesc': 'Deletes products, categories, sales, clients, suppliers, purchases, expenses, savings and capital',
     'dataManagement.resetKeeps': 'User accounts and settings are kept',
     'dataManagement.resetButton': 'Reset Database',
     'dataManagement.resetTitle': 'Reset the database?',
-    'dataManagement.resetConfirm': 'This permanently deletes all products, categories, sales, clients, suppliers, purchases, expenses and savings, along with their images and attachments. Users are kept. Create a backup first if you might need this data.',
+    'dataManagement.resetConfirm': 'This permanently deletes all products, categories, sales, clients, suppliers, purchases, expenses, savings and capital, along with their images and attachments. Users are kept. Create a backup first if you might need this data.',
     'dataManagement.resetSuccess': 'Database reset',
     'dataManagement.error.FORBIDDEN': 'Only an administrator can do this',
     'dataManagement.error.NOT_WRITABLE': 'That folder cannot be written to. Choose another one.',

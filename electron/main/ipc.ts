@@ -1,7 +1,7 @@
 import { ipcMain, app, dialog, shell, BrowserWindow } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, purchaseQueries, supplierPaymentQueries, supplierAccountQueries, supplierHasPurchases, PurchaseError, type AuthUser, type Actor } from './database'
+import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, purchaseQueries, supplierPaymentQueries, supplierAccountQueries, supplierHasPurchases, PurchaseError, capitalQueries, CapitalError, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
 import { AttachmentError, saveNicAttachment, openNicAttachment, deleteNicAttachment, readNicAttachment, restoreNicAttachment, sweepNicAttachments } from './attachments'
@@ -101,6 +101,19 @@ function withPurchaseAccess<T>(action: (actor: AuthUser) => T) {
     } catch (error) {
         if (error instanceof PurchaseError) return { success: false, error: error.code }
         logger.error('Purchases', error)
+        return { success: false, error: 'UNKNOWN' }
+    }
+}
+
+// Runs a capital / income change only for users allowed on the Capital page
+function withCapitalAccess<T>(action: (actor: AuthUser) => T) {
+    const actor = currentUser()
+    if (!actor || !canAccessPage(actor, 'capital')) return { success: false, error: 'FORBIDDEN' }
+    try {
+        return { success: true, data: action(actor) }
+    } catch (error) {
+        if (error instanceof CapitalError) return { success: false, error: error.code }
+        logger.error('Capital', error)
         return { success: false, error: 'UNKNOWN' }
     }
 }
@@ -477,6 +490,19 @@ export function registerIpcHandlers() {
         withExpenseAccess(actor => expenseQueries.update(id, input ?? {}, actor.username)))
     ipcMain.handle('expenses:delete', (_event, id: number) =>
         withExpenseAccess(() => expenseQueries.delete(id)))
+
+    // Capital and other income (reads stay open so backups and reports include them for every user)
+    ipcMain.handle('capital:getAll', () => capitalQueries.getAll())
+    ipcMain.handle('capital:create', (_event, input) =>
+        withCapitalAccess(actor => capitalQueries.create(input ?? {}, actor.username)))
+    ipcMain.handle('capital:update', (_event, id: number, input) =>
+        withCapitalAccess(actor => capitalQueries.update(id, input ?? {}, actor.username)))
+    ipcMain.handle('capital:delete', (_event, id: number) =>
+        withCapitalAccess(() => capitalQueries.delete(id)))
+    ipcMain.handle('capital:settle', (_event, id: number, input) =>
+        withCapitalAccess(actor => capitalQueries.settle(id, input ?? {}, actor.username)))
+    ipcMain.handle('capital:deleteSettlement', (_event, id: number) =>
+        withCapitalAccess(() => capitalQueries.deleteSettlement(id)))
 
     // Purchases (reads stay open so backups include them for every user)
     ipcMain.handle('purchases:getAll', () => purchaseQueries.getAll())

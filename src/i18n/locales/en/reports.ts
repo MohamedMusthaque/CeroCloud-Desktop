@@ -159,6 +159,7 @@ export const reports: Record<keyof typeof es, string> = {
     'profit.line.netSales': 'Net sales',
     'profit.line.cogs': 'Cost of goods sold',
     'profit.line.grossProfit': 'Gross profit',
+    'profit.line.otherIncome': 'Other income',
     'profit.line.expenses': 'Expenses',
     'profit.line.netProfit': 'Net profit',
     'profit.taxNote': 'Tax collected ({amount}) is excluded: it is owed, not earned. Cancelled bills are not counted.',
@@ -197,6 +198,10 @@ export const reports: Record<keyof typeof es, string> = {
     // Cash flow (Profit tab)
     'profit.cash.title': 'Cash flow',
     'profit.cash.salesCollected': 'Sales collected',
+    'profit.cash.otherIncome': 'Other income',
+    'profit.cash.capital': 'Capital put in',
+    'profit.cash.loanRepayments': 'Loan repayments',
+    'profit.cash.withdrawals': 'Owner withdrawals',
     'profit.cash.expenses': 'Expenses paid',
     'profit.cash.paidToSuppliers': 'Paid to suppliers',
     'profit.cash.refunds': 'Refunds from suppliers',
@@ -209,4 +214,7 @@ export const reports: Record<keyof typeof es, string> = {
     'rep.export.supplierPaymentsTitle': 'Supplier Payments Report',
     'rep.export.supplierPaymentsSubtitle': 'Payments and refunds',
     'rep.export.supplierPaymentsDesc': 'Generate a report of payments to and refunds from suppliers ({range}).',
+    'rep.export.capitalTitle': 'Capital & Income Report',
+    'rep.export.capitalSubtitle': 'Capital, income and withdrawals',
+    'rep.export.capitalDesc': 'Generate a report of capital, loans, other income and owner withdrawals ({range}).',
 }

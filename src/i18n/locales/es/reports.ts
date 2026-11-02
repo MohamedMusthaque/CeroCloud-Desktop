@@ -157,6 +157,7 @@ export const reports = {
     'profit.line.netSales': 'Ventas netas',
     'profit.line.cogs': 'Costo de productos vendidos',
     'profit.line.grossProfit': 'Ganancia bruta',
+    'profit.line.otherIncome': 'Otros ingresos',
     'profit.line.expenses': 'Gastos',
     'profit.line.netProfit': 'Ganancia neta',
     'profit.taxNote': 'El impuesto cobrado ({amount}) no se incluye: se debe, no se gana. Las facturas canceladas no se cuentan.',
@@ -195,6 +196,10 @@ export const reports = {
     // Cash flow (Profit tab)
     'profit.cash.title': 'Flujo de caja',
     'profit.cash.salesCollected': 'Ventas cobradas',
+    'profit.cash.otherIncome': 'Otros ingresos',
+    'profit.cash.capital': 'Capital aportado',
+    'profit.cash.loanRepayments': 'Pagos de préstamos',
+    'profit.cash.withdrawals': 'Retiros del dueño',
     'profit.cash.expenses': 'Gastos pagados',
     'profit.cash.paidToSuppliers': 'Pagado a proveedores',
     'profit.cash.refunds': 'Reembolsos de proveedores',
@@ -207,4 +212,7 @@ export const reports = {
     'rep.export.supplierPaymentsTitle': 'Reporte de Pagos a Proveedores',
     'rep.export.supplierPaymentsSubtitle': 'Pagos y reembolsos',
     'rep.export.supplierPaymentsDesc': 'Generar un reporte de pagos y reembolsos de proveedores ({range}).',
+    'rep.export.capitalTitle': 'Reporte de Capital e Ingresos',
+    'rep.export.capitalSubtitle': 'Capital, ingresos y retiros',
+    'rep.export.capitalDesc': 'Generar un reporte de capital, préstamos, otros ingresos y retiros del dueño ({range}).',
 }

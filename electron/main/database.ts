@@ -3,7 +3,7 @@ import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
 import crypto from 'crypto'
-import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES, Purchase, PurchaseItem, SupplierPayment, SupplierAccount } from '../../src/types/database'
+import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES, Purchase, PurchaseItem, SupplierPayment, SupplierAccount, CapitalEntry, CapitalItem, CapitalSettlement, CAPITAL_ENTRY_TYPES, CAPITAL_FORMS } from '../../src/types/database'
 import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
 // Database setup: opened by initializeDatabase() once the data folder is known (see dataLocation.ts)
@@ -424,6 +424,55 @@ function initSchema() {
         FOREIGN KEY (purchase_id) REFERENCES purchase_orders(id)
     )`)
 
+  // Table: owner capital, income earned outside sales and owner withdrawals
+  // (supplier_id / purchase_id have no foreign key: a restore can replace purchases while keeping these)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS capital_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL,
+        form TEXT NOT NULL DEFAULT 'money',
+        source TEXT,
+        supplier_id INTEGER,
+        purchase_id INTEGER,
+        amount REAL NOT NULL,
+        entry_date TEXT NOT NULL,
+        payment_method TEXT,
+        description TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT
+    )`)
+
+  // Table: goods given as capital
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS capital_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entry_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        product_code TEXT,
+        product_name TEXT,
+        quantity INTEGER NOT NULL,
+        unit_cost REAL NOT NULL,
+        FOREIGN KEY (entry_id) REFERENCES capital_entries(id) ON DELETE CASCADE
+    )`)
+
+  // Table: loan repayments and payments in towards promised capital
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS capital_settlements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entry_id INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        settlement_date TEXT NOT NULL,
+        payment_method TEXT,
+        notes TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT,
+        FOREIGN KEY (entry_id) REFERENCES capital_entries(id) ON DELETE CASCADE
+    )`)
+
   // Table: users (local login)
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -438,6 +487,9 @@ function initSchema() {
 
   // Columns added after the first version (existing databases)
   addColumnIfMissing('clients', 'credit_limit', 'REAL DEFAULT 0')
+  addColumnIfMissing('capital_entries', 'form', "TEXT NOT NULL DEFAULT 'money'")
+  addColumnIfMissing('capital_entries', 'supplier_id', 'INTEGER')
+  addColumnIfMissing('capital_entries', 'purchase_id', 'INTEGER')
   if (addColumnIfMissing('clients', 'credit_limit_enabled', 'INTEGER DEFAULT 0')) {
     // Existing clients were always limit-checked: keep enforcing it for them
     db.exec('UPDATE clients SET credit_limit_enabled = 1')
@@ -477,6 +529,9 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_purchase_items_purchase_id ON purchase_items(purchase_id);
     CREATE INDEX IF NOT EXISTS idx_supplier_payments_supplier_id ON supplier_payments(supplier_id);
     CREATE INDEX IF NOT EXISTS idx_supplier_payments_purchase_id ON supplier_payments(purchase_id);
+    CREATE INDEX IF NOT EXISTS idx_capital_entries_date ON capital_entries(entry_date);
+    CREATE INDEX IF NOT EXISTS idx_capital_items_entry_id ON capital_items(entry_id);
+    CREATE INDEX IF NOT EXISTS idx_capital_settlements_entry_id ON capital_settlements(entry_id);
   `)
 
   console.log('SQLite schema initialized.')
@@ -1423,6 +1478,248 @@ export const savingsTransactionQueries = {
 }
 
 // ==========================================
+// Capital, other income and owner withdrawals
+// ==========================================
+//
+// Capital (initial or additional) is what the owner puts into the business. It never counts as profit.
+// It can arrive as money, as goods (the owner's own, or a supplier's on credit, owed on the supplier
+// account), as borrowed money that is repaid over time, or as a promise paid in over time.
+// Other income is money earned outside sales and adds to profit; withdrawals are money the owner takes out.
+
+// Capital errors; the UI translates the code
+export class CapitalError extends Error {
+  constructor(public code: 'TYPE_INVALID' | 'FORM_INVALID' | 'AMOUNT_INVALID' | 'DATE_INVALID' | 'SUPPLIER_REQUIRED' | 'ITEMS_REQUIRED' | 'PRODUCT_REQUIRED' | 'QUANTITY_INVALID' | 'COST_INVALID' | 'NOT_EDITABLE' | 'NOT_SETTLEABLE' | 'AMOUNT_TOO_HIGH' | 'BELOW_SETTLED' | 'HAS_SETTLEMENTS' | 'HAS_PAYMENTS' | 'STOCK_USED' | 'NOT_FOUND') {
+    super(code)
+  }
+}
+
+export interface CapitalEntryInput {
+  type?: string
+  form?: string
+  source?: string
+  amount?: number
+  entry_date?: string
+  payment_method?: string
+  description?: string
+  supplier_id?: number | null
+  // Goods forms: what was given, at what cost
+  items?: { product_id?: number; quantity?: number; unit_cost?: number }[]
+  // Goods forms: store the given unit cost as the product's cost
+  update_costs?: boolean
+}
+
+export interface CapitalSettlementInput {
+  amount?: number
+  settlement_date?: string
+  payment_method?: string
+  notes?: string
+}
+
+const CAPITAL_TYPES = ['initial_capital', 'capital']
+const GOODS_FORMS = ['goods', 'supplier_credit']
+const SETTLED_FORMS = ['loan', 'pledge']
+
+function requireCapitalDay(value: unknown): string {
+  const day = String(value ?? '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || isNaN(Date.parse(day))) throw new CapitalError('DATE_INVALID')
+  return day
+}
+
+function requireCapitalAmount(value: unknown): number {
+  const amount = roundMoney(Number(value))
+  if (!Number.isFinite(amount) || amount <= 0) throw new CapitalError('AMOUNT_INVALID')
+  return amount
+}
+
+// Validates goods and snapshots each product's code and name
+function normalizeCapitalItems(items: CapitalEntryInput['items']) {
+  if (!Array.isArray(items) || items.length === 0) throw new CapitalError('ITEMS_REQUIRED')
+  const getProduct = db.prepare('SELECT id, code, name FROM products WHERE id = ?')
+  return items.map(item => {
+    const product = getProduct.get(Number(item.product_id)) as { id: number; code: string; name: string } | undefined
+    if (!product) throw new CapitalError('PRODUCT_REQUIRED')
+    const quantity = Number(item.quantity)
+    if (!Number.isInteger(quantity) || quantity <= 0) throw new CapitalError('QUANTITY_INVALID')
+    const unitCost = roundMoney(Number(item.unit_cost))
+    if (!Number.isFinite(unitCost) || unitCost < 0) throw new CapitalError('COST_INVALID')
+    return { product_id: product.id, product_code: product.code, product_name: product.name, quantity, unit_cost: unitCost }
+  })
+}
+
+export const capitalQueries = {
+  // Newest first, each with its goods, settlements and the amount settled so far
+  getAll: (): CapitalEntry[] => {
+    const entries = db.prepare(`
+      SELECT c.*, s.name AS supplier_name FROM capital_entries c
+      LEFT JOIN suppliers s ON s.id = c.supplier_id
+      ORDER BY c.entry_date DESC, c.id DESC
+    `).all() as CapitalEntry[]
+    const items = db.prepare('SELECT * FROM capital_items ORDER BY id ASC').all() as CapitalItem[]
+    const settlements = db.prepare('SELECT * FROM capital_settlements ORDER BY settlement_date ASC, id ASC').all() as CapitalSettlement[]
+    return entries.map(entry => {
+      const own = settlements.filter(st => st.entry_id === entry.id)
+      return {
+        ...entry,
+        items: items.filter(i => i.entry_id === entry.id),
+        settlements: own,
+        settled: roundMoney(own.reduce((sum, st) => sum + st.amount, 0))
+      }
+    })
+  },
+
+  getById: (id: number): CapitalEntry | undefined => {
+    return capitalQueries.getAll().find(entry => entry.id === id)
+  },
+
+  create: (input: CapitalEntryInput, actor: Actor = null): CapitalEntry => {
+    const type = String(input.type ?? '')
+    if (!(CAPITAL_ENTRY_TYPES as readonly string[]).includes(type)) throw new CapitalError('TYPE_INVALID')
+    // Only capital comes in other forms; income and withdrawals are money
+    const form = CAPITAL_TYPES.includes(type) ? String(input.form ?? 'money') : 'money'
+    if (!(CAPITAL_FORMS as readonly string[]).includes(form)) throw new CapitalError('FORM_INVALID')
+    const date = requireCapitalDay(input.entry_date)
+
+    const isGoods = GOODS_FORMS.includes(form)
+    const items = isGoods ? normalizeCapitalItems(input.items) : []
+    const amount = isGoods
+      ? requireCapitalAmount(items.reduce((sum, item) => sum + item.quantity * item.unit_cost, 0))
+      : requireCapitalAmount(input.amount)
+
+    let supplierId: number | null = null
+    if (form === 'supplier_credit') {
+      supplierId = Number(input.supplier_id)
+      if (!supplierId || !db.prepare('SELECT 1 FROM suppliers WHERE id = ?').get(supplierId)) throw new CapitalError('SUPPLIER_REQUIRED')
+    }
+
+    const now = new Date().toISOString()
+    const values = {
+      type, form, amount, entry_date: date, supplier_id: supplierId,
+      source: String(input.source ?? '').trim(),
+      // Goods and promises bring no money in on the day
+      payment_method: isGoods || form === 'pledge' ? '' : String(input.payment_method || 'cash'),
+      description: String(input.description ?? '').trim()
+    }
+
+    const id = db.transaction(() => {
+      const info = db.prepare(`
+        INSERT INTO capital_entries(type, form, source, supplier_id, amount, entry_date, payment_method, description, created_at, created_by, updated_at, updated_by)
+        VALUES(@type, @form, @source, @supplier_id, @amount, @entry_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
+      `).run({ ...values, created_at: now, created_by: actor, updated_at: now, updated_by: actor })
+      const entryId = Number(info.lastInsertRowid)
+      if (!isGoods) return entryId
+
+      const insertItem = db.prepare(`
+        INSERT INTO capital_items(entry_id, product_id, product_code, product_name, quantity, unit_cost)
+        VALUES(@entry_id, @product_id, @product_code, @product_name, @quantity, @unit_cost)
+      `)
+      const addStock = db.prepare('UPDATE products SET stock = stock + @qty, updated_at = @now, updated_by = @actor WHERE id = @id')
+      const updateCost = db.prepare('UPDATE products SET cost = @cost WHERE id = @id')
+      for (const item of items) {
+        insertItem.run({ ...item, entry_id: entryId })
+        addStock.run({ id: item.product_id, qty: item.quantity, now, actor })
+        if (input.update_costs) updateCost.run({ id: item.product_id, cost: item.unit_cost })
+      }
+
+      // Goods on credit: a received order on the supplier account holds the debt, paid off from Purchases
+      if (form === 'supplier_credit') {
+        const order = db.prepare(`
+          INSERT INTO purchase_orders(supplier_id, order_date, received_date, status, total, notes, created_at, created_by, updated_at, updated_by)
+          VALUES(@supplier_id, @date, @date, 'received', @total, @notes, @now, @actor, @now, @actor)
+        `).run({ supplier_id: supplierId, date, total: amount, notes: `Capital #${entryId}`, now, actor })
+        const purchaseId = Number(order.lastInsertRowid)
+        const insertPurchaseItem = db.prepare(`
+          INSERT INTO purchase_items(purchase_id, product_id, product_code, product_name, ordered_quantity, received_quantity, unit_cost)
+          VALUES(@purchase_id, @product_id, @product_code, @product_name, @quantity, @quantity, @unit_cost)
+        `)
+        for (const item of items) insertPurchaseItem.run({ ...item, purchase_id: purchaseId })
+        db.prepare('UPDATE capital_entries SET purchase_id = ? WHERE id = ?').run(purchaseId, entryId)
+      }
+      return entryId
+    })()
+    return capitalQueries.getById(id)!
+  },
+
+  // Type, form and goods can't change once recorded (stock and supplier accounts already moved)
+  update: (id: number, input: CapitalEntryInput, actor: Actor = null): CapitalEntry => {
+    const existing = capitalQueries.getById(id)
+    if (!existing) throw new CapitalError('NOT_FOUND')
+    if ((input.type && input.type !== existing.type) || (input.form && input.form !== existing.form)) throw new CapitalError('NOT_EDITABLE')
+
+    const date = requireCapitalDay(input.entry_date ?? existing.entry_date)
+    const isGoods = GOODS_FORMS.includes(existing.form)
+    const amount = isGoods ? existing.amount : requireCapitalAmount(input.amount ?? existing.amount)
+    if (SETTLED_FORMS.includes(existing.form) && amount < (existing.settled ?? 0)) throw new CapitalError('BELOW_SETTLED')
+    const now = new Date().toISOString()
+
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE capital_entries SET source = @source, amount = @amount, entry_date = @entry_date, payment_method = @payment_method,
+          description = @description, updated_at = @updated_at, updated_by = @updated_by
+        WHERE id = @id
+      `).run({
+        id, amount, entry_date: date,
+        source: String(input.source ?? existing.source ?? '').trim(),
+        payment_method: isGoods || existing.form === 'pledge' ? '' : String(input.payment_method ?? existing.payment_method ?? 'cash'),
+        description: String(input.description ?? existing.description ?? '').trim(),
+        updated_at: now, updated_by: actor
+      })
+      if (existing.purchase_id) {
+        db.prepare('UPDATE purchase_orders SET order_date = ?, received_date = ?, updated_at = ?, updated_by = ? WHERE id = ?').run(date, date, now, actor, existing.purchase_id)
+      }
+    })()
+    return capitalQueries.getById(id)!
+  },
+
+  // Goods are taken back out of stock; refused when they were already sold or the supplier was paid
+  delete: (id: number): void => {
+    const existing = capitalQueries.getById(id)
+    if (!existing) throw new CapitalError('NOT_FOUND')
+    if (existing.settlements?.length) throw new CapitalError('HAS_SETTLEMENTS')
+    if (existing.purchase_id && db.prepare('SELECT 1 FROM supplier_payments WHERE purchase_id = ? LIMIT 1').get(existing.purchase_id)) {
+      throw new CapitalError('HAS_PAYMENTS')
+    }
+    const getStock = db.prepare('SELECT stock FROM products WHERE id = ?')
+    for (const item of existing.items ?? []) {
+      const product = getStock.get(item.product_id) as { stock: number } | undefined
+      if (product && product.stock < item.quantity) throw new CapitalError('STOCK_USED')
+    }
+
+    db.transaction(() => {
+      const removeStock = db.prepare('UPDATE products SET stock = stock - @qty WHERE id = @id')
+      for (const item of existing.items ?? []) removeStock.run({ id: item.product_id, qty: item.quantity })
+      if (existing.purchase_id) {
+        db.prepare('DELETE FROM purchase_items WHERE purchase_id = ?').run(existing.purchase_id)
+        db.prepare('DELETE FROM purchase_orders WHERE id = ?').run(existing.purchase_id)
+      }
+      db.prepare('DELETE FROM capital_entries WHERE id = ?').run(id)
+    })()
+  },
+
+  // Loan repayment or payment in towards promised capital, up to what's still outstanding
+  settle: (entryId: number, input: CapitalSettlementInput, actor: Actor = null): CapitalEntry => {
+    const entry = capitalQueries.getById(entryId)
+    if (!entry) throw new CapitalError('NOT_FOUND')
+    if (!SETTLED_FORMS.includes(entry.form)) throw new CapitalError('NOT_SETTLEABLE')
+    const amount = requireCapitalAmount(input.amount)
+    if (amount > roundMoney(entry.amount - (entry.settled ?? 0))) throw new CapitalError('AMOUNT_TOO_HIGH')
+    const now = new Date().toISOString()
+    db.prepare(`
+      INSERT INTO capital_settlements(entry_id, amount, settlement_date, payment_method, notes, created_at, created_by, updated_at, updated_by)
+      VALUES(@entry_id, @amount, @settlement_date, @payment_method, @notes, @now, @actor, @now, @actor)
+    `).run({
+      entry_id: entryId, amount, settlement_date: requireCapitalDay(input.settlement_date),
+      payment_method: String(input.payment_method || 'cash'), notes: String(input.notes ?? '').trim(), now, actor
+    })
+    return capitalQueries.getById(entryId)!
+  },
+
+  deleteSettlement: (id: number): void => {
+    const info = db.prepare('DELETE FROM capital_settlements WHERE id = ?').run(id)
+    if (info.changes === 0) throw new CapitalError('NOT_FOUND')
+  }
+}
+
+// ==========================================
 // Purchases: orders to suppliers, advance payments and goods receiving
 // ==========================================
 //
@@ -1762,12 +2059,14 @@ export function restoreDatabase(data: any) {
   const restoreTx = db.transaction(() => {
     console.log('Restoring database...')
 
-    // Backups made before expenses or savings existed don't include them: keep the current ones in that case
+    // Backups made before expenses, savings or capital existed don't include them: keep the current ones in that case
     const hasExpenses = Array.isArray(data.expenseTypes)
     const hasSavings = Array.isArray(data.savingsAccounts)
+    const hasCapital = Array.isArray(data.capitalEntries)
     const keptTables = [
       ...(hasExpenses ? [] : ['expenses', 'expense_types']),
-      ...(hasSavings ? [] : ['savings_transactions', 'savings_accounts'])
+      ...(hasSavings ? [] : ['savings_transactions', 'savings_accounts']),
+      ...(hasCapital ? [] : ['capital_entries', 'capital_items', 'capital_settlements'])
     ]
 
     // 1. Clear everything (purchases reference suppliers and products, which are always replaced)
@@ -1781,6 +2080,11 @@ export function restoreDatabase(data: any) {
     if (hasSavings) {
       db.prepare('DELETE FROM savings_transactions').run()
       db.prepare('DELETE FROM savings_accounts').run()
+    }
+    if (hasCapital) {
+      db.prepare('DELETE FROM capital_settlements').run()
+      db.prepare('DELETE FROM capital_items').run()
+      db.prepare('DELETE FROM capital_entries').run()
     }
     db.prepare('DELETE FROM sale_items').run()
     db.prepare('DELETE FROM sales').run()
@@ -1993,6 +2297,44 @@ export function restoreDatabase(data: any) {
         })
       }
     }
+
+    // 10. Restore capital and other income
+    if (hasCapital) {
+      const insertCapitalEntry = db.prepare(`
+        INSERT INTO capital_entries(id, type, form, source, supplier_id, purchase_id, amount, entry_date, payment_method, description, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @type, @form, @source, @supplier_id, @purchase_id, @amount, @entry_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
+      `)
+      const insertCapitalItem = db.prepare(`
+        INSERT INTO capital_items(id, entry_id, product_id, product_code, product_name, quantity, unit_cost)
+        VALUES(@id, @entry_id, @product_id, @product_code, @product_name, @quantity, @unit_cost)
+      `)
+      const insertCapitalSettlement = db.prepare(`
+        INSERT INTO capital_settlements(id, entry_id, amount, settlement_date, payment_method, notes, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @entry_id, @amount, @settlement_date, @payment_method, @notes, @created_at, @created_by, @updated_at, @updated_by)
+      `)
+      // Stock and supplier accounts already reflect these entries, so they are inserted as-is
+      for (const c of data.capitalEntries) {
+        insertCapitalEntry.run({
+          id: c.id, type: c.type, form: c.form || 'money', source: c.source || '',
+          supplier_id: c.supplier_id ?? null, purchase_id: c.purchase_id ?? null,
+          amount: c.amount, entry_date: c.entry_date, payment_method: c.payment_method ?? 'cash', description: c.description || '',
+          created_at: c.created_at || new Date().toISOString(), updated_at: c.updated_at ?? null, ...auditOf(c)
+        })
+        for (const i of c.items ?? []) {
+          insertCapitalItem.run({
+            id: i.id ?? null, entry_id: c.id, product_id: i.product_id, product_code: i.product_code || '', product_name: i.product_name || '',
+            quantity: i.quantity, unit_cost: i.unit_cost || 0
+          })
+        }
+        for (const st of c.settlements ?? []) {
+          insertCapitalSettlement.run({
+            id: st.id ?? null, entry_id: c.id, amount: st.amount, settlement_date: st.settlement_date,
+            payment_method: st.payment_method || 'cash', notes: st.notes || '',
+            created_at: st.created_at || new Date().toISOString(), updated_at: st.updated_at ?? null, ...auditOf(st)
+          })
+        }
+      }
+    }
   })
 
   restoreTx()
@@ -2011,6 +2353,9 @@ export function getNicAttachmentNames(): Set<string> {
 // Deletes all business data; users (and their ID sequence) are kept so everyone can still sign in
 export function clearAll() {
   const clearTx = db.transaction(() => {
+    db.prepare('DELETE FROM capital_settlements').run()
+    db.prepare('DELETE FROM capital_items').run()
+    db.prepare('DELETE FROM capital_entries').run()
     db.prepare('DELETE FROM supplier_payments').run()
     db.prepare('DELETE FROM purchase_items').run()
     db.prepare('DELETE FROM purchase_orders').run()

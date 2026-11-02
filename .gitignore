@@ -11,6 +11,7 @@ dist-electron/
 out/
 build/
 release/
+release-build/
 
 # Base de datos local
 database/NexoraCloud.db

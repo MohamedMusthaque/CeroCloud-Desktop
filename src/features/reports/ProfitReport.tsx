@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useTranslation } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { computeProfit, computeProductProfit, computeCashFlow, type ProfitPeriod } from '@/lib/profit'
-import type { Expense, Product, Purchase, Sale, SupplierPayment } from '@/types/database'
+import type { CapitalEntry, Expense, Product, Purchase, Sale, SupplierPayment } from '@/types/database'
 import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
 
 type PeriodPreset = 'thisMonth' | 'lastMonth' | 'thisYear' | 'all' | 'custom'
@@ -40,22 +40,23 @@ interface ProfitReportProps {
     products: Product[]
     purchases: Purchase[]
     supplierPayments: SupplierPayment[]
+    capitalEntries: CapitalEntry[]
 }
 
-export function ProfitReport({ sales, expenses, products, purchases, supplierPayments }: ProfitReportProps) {
+export function ProfitReport({ sales, expenses, products, purchases, supplierPayments, capitalEntries }: ProfitReportProps) {
     const { t, dateLocale } = useTranslation()
     const [preset, setPreset] = useState<PeriodPreset>('thisMonth')
     const [custom, setCustom] = useState<ProfitPeriod>({})
 
     const period = useMemo(() => presetPeriod(preset, custom), [preset, custom])
-    const summary = useMemo(() => computeProfit(sales, expenses, products, period), [sales, expenses, products, period])
+    const summary = useMemo(() => computeProfit(sales, expenses, products, period, capitalEntries), [sales, expenses, products, period, capitalEntries])
     const productProfit = useMemo(() => computeProductProfit(sales, products, period), [sales, products, period])
-    const cashFlow = useMemo(() => computeCashFlow(sales, expenses, purchases, supplierPayments, period), [sales, expenses, purchases, supplierPayments, period])
+    const cashFlow = useMemo(() => computeCashFlow(sales, expenses, purchases, supplierPayments, capitalEntries, period), [sales, expenses, purchases, supplierPayments, capitalEntries, period])
 
     // Last 6 months, independent of the selected period
     const trend = useMemo(() => Array.from({ length: 6 }, (_, i) => {
         const month = subMonths(new Date(), 5 - i)
-        const m = computeProfit(sales, expenses, products, { from: day(startOfMonth(month)), to: day(endOfMonth(month)) })
+        const m = computeProfit(sales, expenses, products, { from: day(startOfMonth(month)), to: day(endOfMonth(month)) }, capitalEntries)
         return {
             key: format(month, 'yyyy-MM'),
             month: format(month, 'MMM yyyy', { locale: dateLocale }),
@@ -63,7 +64,7 @@ export function ProfitReport({ sales, expenses, products, purchases, supplierPay
             costs: m.costOfGoods + m.expenses,
             netProfit: m.netProfit
         }
-    }), [sales, expenses, products, dateLocale])
+    }), [sales, expenses, products, capitalEntries, dateLocale])
 
     const topProfitable = productProfit.filter(p => p.quantity > 0).sort((a, b) => b.profit - a.profit).slice(0, 10)
     const lowMargin = productProfit.filter(p => p.quantity > 0 && p.margin < 20).sort((a, b) => a.margin - b.margin).slice(0, 10)
@@ -76,12 +77,13 @@ export function ProfitReport({ sales, expenses, products, purchases, supplierPay
         netProfit: t('profit.series.netProfit')
     }
 
-    const statement: { label: string; amount: number; kind: 'line' | 'minus' | 'total' }[] = [
+    const statement: { label: string; amount: number; kind: 'line' | 'plus' | 'minus' | 'total' }[] = [
         { label: t('profit.line.grossSales'), amount: summary.grossSales, kind: 'line' },
         { label: t('profit.line.discounts'), amount: summary.discounts, kind: 'minus' },
         { label: t('profit.line.netSales'), amount: summary.netSales, kind: 'total' },
         { label: t('profit.line.cogs'), amount: summary.costOfGoods, kind: 'minus' },
         { label: t('profit.line.grossProfit'), amount: summary.grossProfit, kind: 'total' },
+        { label: t('profit.line.otherIncome'), amount: summary.otherIncome, kind: 'plus' },
         { label: t('profit.line.expenses'), amount: summary.expenses, kind: 'minus' },
         { label: t('profit.line.netProfit'), amount: summary.netProfit, kind: 'total' }
     ]
@@ -156,7 +158,7 @@ export function ProfitReport({ sales, expenses, products, purchases, supplierPay
                                     line.kind === 'total' ? "text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-300",
                                     line.kind === 'total' && line.amount < 0 && "text-red-600 dark:text-red-400"
                                 )}>
-                                    {line.kind === 'minus' ? `− ${formatCurrency(line.amount)}` : formatCurrency(line.amount)}
+                                    {line.kind === 'minus' ? `− ${formatCurrency(line.amount)}` : line.kind === 'plus' ? `+ ${formatCurrency(line.amount)}` : formatCurrency(line.amount)}
                                 </dd>
                             </div>
                         ))}
@@ -202,6 +204,10 @@ export function ProfitReport({ sales, expenses, products, purchases, supplierPay
                     <dl className="divide-y divide-gray-100 dark:divide-gray-700/50">
                         {[
                             { label: t('profit.cash.salesCollected'), amount: cashFlow.salesCollected, sign: '+' },
+                            { label: t('profit.cash.otherIncome'), amount: cashFlow.otherIncome, sign: '+' },
+                            { label: t('profit.cash.capital'), amount: cashFlow.capitalAdded, sign: '+' },
+                            { label: t('profit.cash.loanRepayments'), amount: cashFlow.loanRepayments, sign: '−' },
+                            { label: t('profit.cash.withdrawals'), amount: cashFlow.ownerWithdrawals, sign: '−' },
                             { label: t('profit.cash.expenses'), amount: cashFlow.expensesPaid, sign: '−' },
                             { label: t('profit.cash.paidToSuppliers'), amount: cashFlow.paidToSuppliers, sign: '−' },
                             { label: t('profit.cash.refunds'), amount: cashFlow.refundsFromSuppliers, sign: '+' }

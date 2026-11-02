@@ -1,11 +1,11 @@
 import { format } from 'date-fns'
-import type { Expense, Product, Purchase, Sale, SaleItem, SupplierPayment } from '@/types/database'
+import type { CapitalEntry, Expense, Product, Purchase, Sale, SaleItem, SupplierPayment } from '@/types/database'
 
-// Profit from the bills (sales) and the recorded expenses:
+// Profit from the bills (sales), other income and the recorded expenses:
 //   net sales      = bill subtotals − discounts (tax excluded: it is owed, not earned)
 //   gross profit   = net sales − cost of the goods sold
-//   net profit     = gross profit − expenses
-// Cancelled bills are left out entirely.
+//   net profit     = gross profit + other income − expenses
+// Cancelled bills are left out entirely. Owner capital is not income, so it never counts here.
 
 // Inclusive local-day range ('YYYY-MM-DD'); an open end means no limit
 export interface ProfitPeriod {
@@ -22,6 +22,8 @@ export interface ProfitSummary {
     costOfGoods: number
     grossProfit: number
     grossMargin: number
+    // Income earned outside sales (capital entries of type 'income')
+    otherIncome: number
     expenses: number
     expensesByType: { name: string; amount: number }[]
     netProfit: number
@@ -65,7 +67,7 @@ function unitCost(item: SaleItem, productsById: Map<number, Product>): number | 
 const byId = (products: Product[]) => new Map(products.filter(p => p.id != null).map(p => [p.id!, p]))
 const percent = (part: number, whole: number) => whole > 0 ? (part / whole) * 100 : 0
 
-export function computeProfit(sales: Sale[], expenses: Expense[], products: Product[], period: ProfitPeriod = {}): ProfitSummary {
+export function computeProfit(sales: Sale[], expenses: Expense[], products: Product[], period: ProfitPeriod = {}, capitalEntries: CapitalEntry[] = []): ProfitSummary {
     const productsById = byId(products)
     let bills = 0, grossSales = 0, discounts = 0, taxCollected = 0, costOfGoods = 0, itemsWithoutCost = 0
 
@@ -91,9 +93,13 @@ export function computeProfit(sales: Sale[], expenses: Expense[], products: Prod
         byType.set(name, (byType.get(name) ?? 0) + expense.amount)
     }
 
+    const otherIncome = capitalEntries
+        .filter(c => c.type === 'income' && inPeriod(c.entry_date, period))
+        .reduce((sum, c) => sum + c.amount, 0)
+
     const netSales = grossSales - discounts
     const grossProfit = netSales - costOfGoods
-    const netProfit = grossProfit - expenseTotal
+    const netProfit = grossProfit + otherIncome - expenseTotal
 
     return {
         bills,
@@ -104,6 +110,7 @@ export function computeProfit(sales: Sale[], expenses: Expense[], products: Prod
         costOfGoods,
         grossProfit,
         grossMargin: percent(grossProfit, netSales),
+        otherIncome,
         expenses: expenseTotal,
         expensesByType: [...byType.entries()].map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount),
         netProfit,
@@ -142,6 +149,12 @@ export interface CashFlowSummary {
     salesCollected: number
     // Bills put on a client's credit: earned, but not yet received
     creditSales: number
+    otherIncome: number
+    // Money put into the business as capital: money and loans on their day, promised capital as it's paid in
+    // (capital given as goods brings no cash)
+    capitalAdded: number
+    loanRepayments: number
+    ownerWithdrawals: number
     expensesPaid: number
     paidToSuppliers: number
     refundsFromSuppliers: number
@@ -150,7 +163,7 @@ export interface CashFlowSummary {
     goodsReceived: number
 }
 
-export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: Purchase[], payments: SupplierPayment[], period: ProfitPeriod = {}): CashFlowSummary {
+export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: Purchase[], payments: SupplierPayment[], capitalEntries: CapitalEntry[], period: ProfitPeriod = {}): CashFlowSummary {
     let salesCollected = 0, creditSales = 0
     for (const sale of sales) {
         if (!isCountedSale(sale, period)) continue
@@ -164,6 +177,22 @@ export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: P
         if (payment.type === 'payment') paidToSuppliers += payment.amount
         else refundsFromSuppliers += payment.amount
     }
+    let otherIncome = 0, capitalAdded = 0, loanRepayments = 0, ownerWithdrawals = 0
+    for (const entry of capitalEntries) {
+        const onDay = inPeriod(entry.entry_date, period)
+        if (entry.type === 'income') {
+            if (onDay) otherIncome += entry.amount
+        } else if (entry.type === 'withdrawal') {
+            if (onDay) ownerWithdrawals += entry.amount
+        } else if (entry.form === 'money' || entry.form === 'loan') {
+            if (onDay) capitalAdded += entry.amount
+        }
+        for (const settlement of entry.settlements ?? []) {
+            if (!inPeriod(settlement.settlement_date, period)) continue
+            if (entry.form === 'loan') loanRepayments += settlement.amount
+            else if (entry.form === 'pledge') capitalAdded += settlement.amount
+        }
+    }
     const goodsReceived = purchases
         .filter(o => o.status === 'received' && !!o.received_date && inPeriod(o.received_date, period))
         .reduce((sum, o) => sum + o.total, 0)
@@ -171,10 +200,14 @@ export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: P
     return {
         salesCollected,
         creditSales,
+        otherIncome,
+        capitalAdded,
+        loanRepayments,
+        ownerWithdrawals,
         expensesPaid,
         paidToSuppliers,
         refundsFromSuppliers,
-        netCashFlow: salesCollected - expensesPaid - paidToSuppliers + refundsFromSuppliers,
+        netCashFlow: salesCollected + otherIncome + capitalAdded - loanRepayments - ownerWithdrawals - expensesPaid - paidToSuppliers + refundsFromSuppliers,
         goodsReceived
     }
 }
