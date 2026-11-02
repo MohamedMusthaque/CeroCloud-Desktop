@@ -13,13 +13,16 @@ import { t, useLanguageStore } from '@/i18n'
 import { sampleDataService } from '@/services/sampleDataService'
 import { useAuthStore } from '@/stores/authStore'
 import { Login } from '@/features/auth/Login'
+import { AdminSetup } from '@/features/auth/AdminSetup'
 
 export function App() {
     const language = useLanguageStore((state) => state.language)
     const user = useAuthStore((state) => state.user)
+    const needsSetup = useAuthStore((state) => state.needsSetup)
     const syncSession = useAuthStore((state) => state.syncSession)
 
     // Re-validate a stored session against the main process (permissions may have changed)
+    // and find out whether this is a fresh install that still needs the Admin Setup
     useEffect(() => {
         syncSession().catch(console.error)
     }, [syncSession])
@@ -51,7 +54,12 @@ export function App() {
     return (
         <Router>
             <QueryClientProvider client={queryClient}>
-                {user ? (
+                {needsSetup === null ? (
+                    // Waiting for the main process: avoid flashing the login screen on a fresh install
+                    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900" />
+                ) : needsSetup ? (
+                    <AdminSetup />
+                ) : user ? (
                     <>
                         <AppRoutes />
                         <CommandPalette />

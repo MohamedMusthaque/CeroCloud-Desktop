@@ -13,18 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { useTranslation } from '@/i18n'
-
-// Display symbol stored with the selected currency (unlisted codes fall back to '$')
-const currencySymbols: Record<string, string> = {
-    GTQ: 'Q',
-    USD: '$',
-    EUR: '€',
-    MXN: '$',
-    LKR: 'Rs',
-    INR: '₹',
-    MYR: 'RM',
-    SGD: 'S$'
-}
+import { currencySymbols } from '@/services/companyService'
 
 interface GeneralTabProps {
     settings: CompanySettings

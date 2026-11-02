@@ -51,5 +51,6 @@ export const usersPage = {
     'userError.SELF_DEMOTE': 'No puedes quitarte el rol de administrador',
     'userError.NOT_FOUND': 'El usuario ya no existe',
     'userError.FORBIDDEN': 'No tienes permiso para gestionar usuarios',
+    'userError.SETUP_COMPLETE': 'La configuración ya se completó. Inicia sesión.',
     'userError.UNKNOWN': 'Ocurrió un error inesperado',
 }

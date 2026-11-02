@@ -10,6 +10,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
         logout: () => ipcRenderer.invoke('auth:logout'),
         getSession: () => ipcRenderer.invoke('auth:getSession'),
     },
+    // First-run Admin Setup
+    setup: {
+        getStatus: () => ipcRenderer.invoke('setup:getStatus'),
+        createAdmin: (username: string, password: string) => ipcRenderer.invoke('setup:createAdmin', username, password),
+    },
     // Users
     users: {
         getAll: () => ipcRenderer.invoke('users:getAll'),

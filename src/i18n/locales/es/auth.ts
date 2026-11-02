@@ -16,4 +16,20 @@ export const auth = {
     'auth.tagline': 'Gestión empresarial 100% local',
     'auth.logout': 'Cerrar Sesión',
     'auth.role.admin': 'Administrador',
+
+    // First-run Admin Setup
+    'setup.title': 'Bienvenido a NexoraCloud',
+    'setup.subtitle': 'Configuremos tu negocio. Solo toma un minuto.',
+    'setup.step': 'Paso {current} de {total}',
+    'setup.business.title': 'Tu negocio',
+    'setup.business.subtitle': 'Aparece en facturas y reportes. Puedes cambiarlo luego en Configuración.',
+    'setup.business.nameRequired': 'Ingresa el nombre de tu negocio',
+    'setup.admin.title': 'Cuenta de administrador',
+    'setup.admin.subtitle': 'Esta cuenta tiene acceso total, incluida la gestión de otros usuarios. Guarda bien la contraseña.',
+    'setup.admin.usernamePlaceholder': 'ej. propietario',
+    'setup.admin.required': 'Ingresa un usuario y una contraseña',
+    'setup.next': 'Continuar',
+    'setup.back': 'Atrás',
+    'setup.finish': 'Crear cuenta y comenzar',
+    'setup.finishing': 'Configurando...',
 }

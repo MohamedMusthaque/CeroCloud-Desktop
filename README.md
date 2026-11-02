@@ -122,13 +122,12 @@ If the app fails to start with a `better-sqlite3` / `NODE_MODULE_VERSION` error,
 
 ### First sign-in
 
-On first launch the app creates a default administrator:
+On first launch the app opens the **Admin Setup** wizard instead of the login screen:
 
-| Username | Password |
-|----------|----------|
-| `admin`  | `admin`  |
+1. **Your business**: name (required), address, phone, currency and tax. These are saved to **Settings → General** and can be changed later.
+2. **Administrator account**: choose the username and password (at least 4 characters) for the first administrator.
 
-**Change this password right away** from the **Users** page.
+When you finish, you are signed in as that administrator. You can add more users from the **Users** page. No default `admin/admin` account is created. The wizard only appears while the database has no users.
 
 ### Where data is stored
 

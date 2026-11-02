@@ -472,6 +472,24 @@ export function registerIpcHandlers() {
         return currentUser()
     })
 
+    // First-run Admin Setup: only available while the database has no users
+    ipcMain.handle('setup:getStatus', () => {
+        return { needsSetup: userQueries.needsSetup() }
+    })
+
+    ipcMain.handle('setup:createAdmin', (_event, username: string, password: string) => {
+        try {
+            const user = userQueries.createInitialAdmin(String(username ?? ''), String(password ?? ''))
+            sessionUser = user
+            logger.info('Setup', `Initial administrator created: ${user.username}`)
+            return { success: true, data: user }
+        } catch (error) {
+            if (error instanceof UserError) return { success: false, error: error.code }
+            logger.error('Setup', error)
+            return { success: false, error: 'UNKNOWN' }
+        }
+    })
+
     // Users (management requires access to the Users page)
     ipcMain.handle('users:getAll', () => withUserAdmin(() => userQueries.getAll()))
     ipcMain.handle('users:create', (_event, input) => withUserAdmin(actor => userQueries.create(input ?? {}, actor)))

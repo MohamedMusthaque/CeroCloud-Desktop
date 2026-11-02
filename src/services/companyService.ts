@@ -2,6 +2,18 @@ import { CompanySettings } from '@/types/database'
 
 const STORAGE_KEY = 'nexoracloud_company_settings'
 
+// Display symbol stored with the selected currency (unlisted codes fall back to '$')
+export const currencySymbols: Record<string, string> = {
+    GTQ: 'Q',
+    USD: '$',
+    EUR: '€',
+    MXN: '$',
+    LKR: 'Rs',
+    INR: '₹',
+    MYR: 'RM',
+    SGD: 'S$'
+}
+
 const defaultSettings: CompanySettings = {
     name: 'NexoraCloud',
     address: '',

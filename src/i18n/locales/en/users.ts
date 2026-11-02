@@ -53,5 +53,6 @@ export const usersPage: Record<keyof typeof es, string> = {
     'userError.SELF_DEMOTE': 'You cannot remove your own administrator role',
     'userError.NOT_FOUND': 'The user no longer exists',
     'userError.FORBIDDEN': 'You do not have permission to manage users',
+    'userError.SETUP_COMPLETE': 'Setup has already been completed. Please sign in.',
     'userError.UNKNOWN': 'An unexpected error occurred',
 }

@@ -56,14 +56,9 @@ function verifyPassword(password: string, stored: string): boolean {
   return crypto.timingSafeEqual(actual, expected)
 }
 
-// Creates the default user (admin / admin) when no user exists
-function seedDefaultUser() {
-  const { count } = db.prepare('SELECT COUNT(*) AS count FROM users').get() as { count: number }
-  if (count === 0) {
-    db.prepare('INSERT INTO users(username, password_hash, role, permissions, created_at) VALUES(?, ?, ?, ?, ?)')
-      .run('admin', hashPassword('admin'), 'admin', DEFAULT_PERMISSIONS, new Date().toISOString())
-    console.log('Default user created: admin')
-  }
+// No default user is seeded: a fresh database stays empty until the first-run Admin Setup creates one
+function countUsers(): number {
+  return (db.prepare('SELECT COUNT(*) AS count FROM users').get() as { count: number }).count
 }
 
 export type { AuthUser }
@@ -84,7 +79,7 @@ export interface UserInput {
 
 // User-management errors; the UI translates the code
 export class UserError extends Error {
-  constructor(public code: 'USERNAME_REQUIRED' | 'USERNAME_TAKEN' | 'PASSWORD_TOO_SHORT' | 'LAST_ADMIN' | 'SELF_DELETE' | 'SELF_DEMOTE' | 'NOT_FOUND') {
+  constructor(public code: 'USERNAME_REQUIRED' | 'USERNAME_TAKEN' | 'PASSWORD_TOO_SHORT' | 'LAST_ADMIN' | 'SELF_DELETE' | 'SELF_DEMOTE' | 'NOT_FOUND' | 'SETUP_COMPLETE') {
     super(code)
   }
 }
@@ -116,7 +111,26 @@ function countAdmins(): number {
 }
 
 export const userQueries = {
-  authenticate: (username: string, password: string): AuthUser | null => {
+  // First run: true until the Admin Setup has created the first user
+  needsSetup: (): boolean => countUsers() === 0,
+
+  // Creates the first administrator; refused once any user exists so it can't be used to bypass login
+  createInitialAdmin: (usernameInput: string, password: string): ManagedUser => {
+    const username = usernameInput.trim()
+    if (!username) throw new UserError('USERNAME_REQUIRED')
+    if (!password || password.length < MIN_PASSWORD_LENGTH) throw new UserError('PASSWORD_TOO_SHORT')
+
+    const id = db.transaction(() => {
+      if (countUsers() > 0) throw new UserError('SETUP_COMPLETE')
+      const now = new Date().toISOString()
+      const info = db.prepare('INSERT INTO users(username, password_hash, role, permissions, created_at, created_by, updated_at, updated_by) VALUES(?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(username, hashPassword(password), 'admin', DEFAULT_PERMISSIONS, now, username, now, username)
+      return Number(info.lastInsertRowid)
+    })()
+    return userQueries.getById(id)!
+  },
+
+  authenticate:(username: string, password: string): AuthUser | null => {
     const row = db.prepare('SELECT * FROM users WHERE username = ?').get(username.trim()) as UserRow | undefined
     if (!row || !verifyPassword(password, row.password_hash)) return null
     return rowToUser(row)
@@ -195,7 +209,7 @@ export const userQueries = {
   }
 }
 
-// Default user: administrator with access to every page
+// First administrator (Admin Setup): access to every page
 const DEFAULT_PERMISSIONS = JSON.stringify(PAGE_IDS)
 
 // Starter expense types; the user can rename, delete or add more
@@ -340,7 +354,6 @@ function initSchema() {
         created_at TEXT
     )`)
   addColumnIfMissing('users', 'permissions', "TEXT DEFAULT '[]'")
-  seedDefaultUser()
 
   // Columns added after the first version (existing databases)
   addColumnIfMissing('clients', 'credit_limit', 'REAL DEFAULT 0')

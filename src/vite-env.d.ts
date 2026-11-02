@@ -18,6 +18,10 @@ interface ElectronAPI {
         logout: () => Promise<{ success: boolean }>
         getSession: () => Promise<import('@/lib/permissions').AuthUser | null>
     }
+    setup: {
+        getStatus: () => Promise<{ needsSetup: boolean }>
+        createAdmin: (username: string, password: string) => Promise<UserResult<import('@/lib/permissions').AuthUser>>
+    }
     users: {
         getAll: () => Promise<UserResult<any[]>>
         create: (user: any) => Promise<UserResult<any>>
