@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import type { Expense, Product, Sale, SaleItem } from '@/types/database'
+import type { Expense, Product, Purchase, Sale, SaleItem, SupplierPayment } from '@/types/database'
 
 // Profit from the bills (sales) and the recorded expenses:
 //   net sales      = bill subtotals − discounts (tax excluded: it is owed, not earned)
@@ -133,4 +133,48 @@ export function computeProductProfit(sales: Sale[], products: Product[], period:
         }
     }
     return [...result.values()]
+}
+
+// Cash in and out for the period. Separate from profit on purpose: paying a supplier turns cash into stock,
+// and that stock becomes a cost (cost of goods sold) only when it's sold, so it must not lower profit twice.
+export interface CashFlowSummary {
+    // Bills paid at the till (cash, card, transfer, cheque...), tax included
+    salesCollected: number
+    // Bills put on a client's credit: earned, but not yet received
+    creditSales: number
+    expensesPaid: number
+    paidToSuppliers: number
+    refundsFromSuppliers: number
+    netCashFlow: number
+    // Value of supplier goods that arrived in the period (stock bought)
+    goodsReceived: number
+}
+
+export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: Purchase[], payments: SupplierPayment[], period: ProfitPeriod = {}): CashFlowSummary {
+    let salesCollected = 0, creditSales = 0
+    for (const sale of sales) {
+        if (!isCountedSale(sale, period)) continue
+        if (sale.payment_method === 'credit') creditSales += sale.total
+        else salesCollected += sale.total
+    }
+    const expensesPaid = expenses.filter(e => inPeriod(e.expense_date, period)).reduce((sum, e) => sum + e.amount, 0)
+    let paidToSuppliers = 0, refundsFromSuppliers = 0
+    for (const payment of payments) {
+        if (!inPeriod(payment.payment_date, period)) continue
+        if (payment.type === 'payment') paidToSuppliers += payment.amount
+        else refundsFromSuppliers += payment.amount
+    }
+    const goodsReceived = purchases
+        .filter(o => o.status === 'received' && !!o.received_date && inPeriod(o.received_date, period))
+        .reduce((sum, o) => sum + o.total, 0)
+
+    return {
+        salesCollected,
+        creditSales,
+        expensesPaid,
+        paidToSuppliers,
+        refundsFromSuppliers,
+        netCashFlow: salesCollected - expensesPaid - paidToSuppliers + refundsFromSuppliers,
+        goodsReceived
+    }
 }

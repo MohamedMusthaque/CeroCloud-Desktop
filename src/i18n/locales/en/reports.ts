@@ -170,4 +170,43 @@ export const reports: Record<keyof typeof es, string> = {
     'profit.series.costs': 'Costs (goods + expenses)',
     'profit.series.netProfit': 'Net profit',
     'profit.col.month': 'Month',
+
+    // Purchases report
+    'rep.tab.purchases': 'Purchases',
+    'purRep.title': 'Purchases and supplier payments',
+    'purRep.subtitle': 'Goods received, payments and refunds in the period',
+    'purRep.goodsReceived': 'Goods received',
+    'purRep.ordersCount': '{count} orders received',
+    'purRep.paid': 'Paid to suppliers',
+    'purRep.paymentsCount': '{count} entries',
+    'purRep.refunds': 'Refunds from suppliers',
+    'purRep.netPaid': 'Net paid: {amount}',
+    'purRep.pending': 'Pending orders',
+    'purRep.pendingHint': 'Value {value} · advances {advances}',
+    'purRep.bySupplier': 'By supplier',
+    'purRep.col.supplier': 'Supplier',
+    'purRep.col.received': 'Received',
+    'purRep.col.paid': 'Paid',
+    'purRep.col.refunded': 'Refunded',
+    'purRep.col.netPaid': 'Net paid',
+    'purRep.col.balance': 'Balance now',
+    'purRep.payments': 'Payments in the period',
+    'purRep.noData': 'No purchases or payments in this period',
+    'purRep.balanceNote': 'The balance is as of today, whatever period is selected.',
+
+    // Cash flow (Profit tab)
+    'profit.cash.title': 'Cash flow',
+    'profit.cash.salesCollected': 'Sales collected',
+    'profit.cash.expenses': 'Expenses paid',
+    'profit.cash.paidToSuppliers': 'Paid to suppliers',
+    'profit.cash.refunds': 'Refunds from suppliers',
+    'profit.cash.net': 'Net cash flow',
+    'profit.cash.creditSales': 'Credit sales not yet collected: {amount}',
+    'profit.cash.goodsReceived': 'Goods received from suppliers: {amount}',
+    'profit.cash.note': 'Supplier payments move cash but don\'t lower profit: goods count as a cost (cost of goods sold) when they are sold.',
+
+    // Supplier payments export
+    'rep.export.supplierPaymentsTitle': 'Supplier Payments Report',
+    'rep.export.supplierPaymentsSubtitle': 'Payments and refunds',
+    'rep.export.supplierPaymentsDesc': 'Generate a report of payments to and refunds from suppliers ({range}).',
 }

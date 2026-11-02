@@ -101,7 +101,7 @@ export const pdfGenerator = {
         title: string,
         subtitle: string,
         data: any[],
-        type: 'sales' | 'expenses' | 'inventory' | 'low-stock' | 'daily-closing',
+        type: 'sales' | 'expenses' | 'supplier-payments' | 'inventory' | 'low-stock' | 'daily-closing',
         settings: CompanySettings,
         range?: string
     ) => {
@@ -122,7 +122,7 @@ export const pdfGenerator = {
         document.body.appendChild(reportContainer)
 
         // Pagination Logic
-        const ITEMS_PER_PAGE = type === 'expenses' ? 18 : 5
+        const ITEMS_PER_PAGE = type === 'expenses' || type === 'supplier-payments' ? 18 : 5
         const chunks: any[][] = []
         if (data.length === 0) {
             chunks.push([])
@@ -183,6 +183,7 @@ export const pdfGenerator = {
             const filenameMap: Record<string, string> = {
                 'sales': t('export.file.reportSales'),
                 'expenses': t('export.file.reportExpenses'),
+                'supplier-payments': t('export.file.reportSupplierPayments'),
                 'inventory': t('export.file.reportInventory'),
                 'low-stock': t('export.file.reportLowStock'),
                 'daily-closing': t('export.file.report')

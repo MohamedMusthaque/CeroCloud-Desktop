@@ -14,7 +14,9 @@ import {
     Scale,
     Wallet,
     ArrowUpDown,
-    Search
+    Search,
+    ClipboardList,
+    Banknote
 } from 'lucide-react'
 import {
     AreaChart,
@@ -34,12 +36,14 @@ import { productService } from '@/services/productService'
 import { saleService } from '@/services/saleService'
 import { pdfGenerator } from '@/services/pdfGenerator'
 import { companyService } from '@/services/companyService'
-import { Expense, Product, Sale } from '@/types/database'
+import { Expense, Product, Purchase, Sale, SupplierAccount, SupplierPayment } from '@/types/database'
 import { expenseService } from '@/services/expenseService'
 import { ProfitReport } from './ProfitReport'
+import { PurchasesReport } from './PurchasesReport'
+import { purchaseService, supplierAccountService, supplierPaymentService } from '@/services/purchaseService'
 import { format, subDays, startOfDay } from 'date-fns'
 import { ReportPeriodFilter } from './ReportPeriodFilter'
-import { filterSalesByPeriod, filterExpensesByPeriod, periodLabel, type ReportPeriod } from '@/lib/reportPeriod'
+import { filterSalesByPeriod, filterExpensesByPeriod, filterByDayPeriod, periodLabel, type ReportPeriod } from '@/lib/reportPeriod'
 import { useTranslation, paymentMethodLabel, t as translateNow } from '@/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn, getImageSrc } from '@/lib/utils'
@@ -55,8 +59,11 @@ export function Reports() {
     const [products, setProducts] = useState<Product[]>([])
     const [sales, setSales] = useState<Sale[]>([])
     const [expenses, setExpenses] = useState<Expense[]>([])
+    const [purchases, setPurchases] = useState<Purchase[]>([])
+    const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([])
+    const [supplierAccounts, setSupplierAccounts] = useState<SupplierAccount[]>([])
     const [loading, setLoading] = useState(true)
-    const [activeTab, setActiveTab] = useState<'sales' | 'profit' | 'inventory' | 'export' | 'transactions'>('sales')
+    const [activeTab, setActiveTab] = useState<'sales' | 'profit' | 'purchases' | 'inventory' | 'export' | 'transactions'>('sales')
     const [settings] = useState(companyService.getSettings())
     const { t, dateLocale, locale } = useTranslation()
 
@@ -158,14 +165,20 @@ export function Reports() {
     const loadData = async () => {
         try {
             setLoading(true)
-            const [productsData, salesData, expensesData] = await Promise.all([
+            const [productsData, salesData, expensesData, purchasesData, paymentsData, accountsData] = await Promise.all([
                 productService.getAll(),
                 saleService.getAll(),
-                expenseService.getAll()
+                expenseService.getAll(),
+                purchaseService.getAll(),
+                supplierPaymentService.getAll(),
+                supplierAccountService.getAll()
             ])
             setProducts(productsData)
             setSales(salesData)
             setExpenses(expensesData)
+            setPurchases(purchasesData)
+            setSupplierPayments(paymentsData)
+            setSupplierAccounts(accountsData)
         } catch (error) {
             console.error('Error loading data:', error)
             // Non-reactive translate keeps the load function free of hook dependencies
@@ -275,6 +288,7 @@ export function Reports() {
     const tabs = [
         { id: 'sales', label: t('rep.tab.sales'), icon: DollarSign },
         { id: 'profit', label: t('rep.tab.profit'), icon: Scale },
+        { id: 'purchases', label: t('rep.tab.purchases'), icon: ClipboardList },
         { id: 'inventory', label: t('rep.tab.inventory'), icon: Package },
         { id: 'transactions', label: t('rep.tab.transactions'), icon: Calendar },
         { id: 'export', label: t('rep.tab.export'), icon: Download },
@@ -294,7 +308,7 @@ export function Reports() {
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as 'sales' | 'profit' | 'inventory' | 'transactions' | 'export')}
+                            onClick={() => setActiveTab(tab.id as 'sales' | 'profit' | 'purchases' | 'inventory' | 'transactions' | 'export')}
                             className={cn(
                                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                                 activeTab === tab.id
@@ -457,7 +471,11 @@ export function Reports() {
                     )}
 
                     {activeTab === 'profit' && (
-                        <ProfitReport sales={sales} expenses={expenses} products={products} />
+                        <ProfitReport sales={sales} expenses={expenses} products={products} purchases={purchases} supplierPayments={supplierPayments} />
+                    )}
+
+                    {activeTab === 'purchases' && (
+                        <PurchasesReport purchases={purchases} payments={supplierPayments} accounts={supplierAccounts} />
                     )}
 
                     {activeTab === 'inventory' && (
@@ -718,7 +736,7 @@ export function Reports() {
                     )}
 
                     {activeTab === 'export' && (
-                        <ExportSection sales={sales} expenses={expenses} products={products} settings={settings} />
+                        <ExportSection sales={sales} expenses={expenses} supplierPayments={supplierPayments} products={products} settings={settings} />
                     )}
 
                     {activeTab === 'transactions' && (
@@ -929,13 +947,14 @@ function MetricCard({ title, value, subtitle, icon: Icon, color }: any) {
     )
 }
 
-function ExportSection({ sales, expenses, products, settings }: { sales: Sale[]; expenses: Expense[]; products: Product[]; settings: any }) {
+function ExportSection({ sales, expenses, supplierPayments, products, settings }: { sales: Sale[]; expenses: Expense[]; supplierPayments: SupplierPayment[]; products: Product[]; settings: any }) {
     const { t, locale, dateLocale } = useTranslation()
     const [period, setPeriod] = useState<ReportPeriod>({ range: 'today' })
     const timeRange = period.range
 
     const filteredSales = filterSalesByPeriod(sales, period, dateLocale)
     const filteredExpenses = filterExpensesByPeriod(expenses, period, dateLocale)
+    const filteredSupplierPayments = filterByDayPeriod(supplierPayments, p => p.payment_date, period, dateLocale)
     // Products don't usually filter by date unless it's "created_at", but for inventory snapshots we usually want current state.
     // However, for "Low Stock" we just filter by logic. Used products remains full list usually.
 
@@ -943,10 +962,11 @@ function ExportSection({ sales, expenses, products, settings }: { sales: Sale[];
 
     const rangeLabel = periodLabel(period, t, locale)
 
-    const handleExport = (type: 'sales' | 'expenses' | 'inventory' | 'low-stock' | 'daily-closing') => {
+    const handleExport = (type: 'sales' | 'expenses' | 'supplier-payments' | 'inventory' | 'low-stock' | 'daily-closing') => {
         const titleMap = {
             'sales': t('rep.export.salesTitle'),
             'expenses': t('rep.export.expensesTitle'),
+            'supplier-payments': t('rep.export.supplierPaymentsTitle'),
             'inventory': t('rep.export.inventoryTitle'),
             'low-stock': t('rep.export.lowStockTitle'),
             'daily-closing': t('rep.export.closingTitle')
@@ -954,6 +974,7 @@ function ExportSection({ sales, expenses, products, settings }: { sales: Sale[];
         const subtitleMap = {
             'sales': t('rep.export.salesSubtitle'),
             'expenses': t('rep.export.expensesSubtitle'),
+            'supplier-payments': t('rep.export.supplierPaymentsSubtitle'),
             'inventory': t('rep.export.inventorySubtitle'),
             'low-stock': t('rep.export.lowStockSubtitle'),
             'daily-closing': t('rep.export.closingSubtitle')
@@ -964,6 +985,7 @@ function ExportSection({ sales, expenses, products, settings }: { sales: Sale[];
 
         if (type === 'sales') dataToExport = filteredSales
         if (type === 'expenses') dataToExport = filteredExpenses
+        if (type === 'supplier-payments') dataToExport = filteredSupplierPayments
         if (type === 'daily-closing') {
             // Daily closing is specifically Today regardless of filter, or we can respect filter if user selects "Today" specifically? 
             // Usually Daily Closing implies Today. Let's force filter to today for this button or use current filter if it makes sense.
@@ -1038,6 +1060,24 @@ function ExportSection({ sales, expenses, products, settings }: { sales: Sale[];
                     ))}
                 />
 
+                {/* Supplier Payments Card (follows the period); total = net paid */}
+                <NewExportCard
+                    title={t('rep.export.supplierPaymentsTitle')}
+                    description={t('rep.export.supplierPaymentsDesc', { range: timeRange === 'today' ? t('rep.export.descToday') : timeRange === 'all' ? t('rep.export.descAll') : rangeLabel })}
+                    count={filteredSupplierPayments.length}
+                    total={filteredSupplierPayments.reduce((s, p) => s + (p.type === 'payment' ? p.amount : -p.amount), 0)}
+                    currencySymbol={settings.currencySymbol}
+                    icon={Banknote}
+                    color="indigo"
+                    onClick={() => handleExport('supplier-payments')}
+                    previewData={filteredSupplierPayments.slice(0, 3).map(p => (
+                        <div key={p.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
+                            <span className="truncate max-w-[150px] text-gray-500">{p.supplier_name}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{p.type === 'payment' ? '-' : '+'}{settings.currencySymbol}{p.amount.toFixed(2)}</span>
+                        </div>
+                    ))}
+                />
+
                 {/* Inventory Card (Static snapshot) */}
                 <NewExportCard
                     title={t('rep.export.inventoryTitle')}
@@ -1105,6 +1145,7 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
         purple: "text-purple-600 bg-purple-50 dark:bg-purple-900/20 border-purple-100 dark:border-purple-800",
         red: "text-red-600 bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800",
         orange: "text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800",
+        indigo: "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800",
     }
 
     const solidColors = {
@@ -1113,6 +1154,7 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
         purple: "bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/30",
         red: "bg-red-600 hover:bg-red-700 text-white shadow-red-500/30",
         orange: "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-500/30",
+        indigo: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/30",
     }
 
     // Fallback for color indexing

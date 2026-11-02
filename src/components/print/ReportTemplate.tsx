@@ -2,7 +2,7 @@
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { forwardRef } from 'react'
-import { Sale, CompanySettings, Product, Expense } from '@/types/database'
+import { Sale, CompanySettings, Product, Expense, SupplierPayment } from '@/types/database'
 import { format, parseISO } from 'date-fns'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 
@@ -12,7 +12,7 @@ interface ReportTemplateProps {
     data: any[]
     allData?: any[] // For calculating totals across pages
     pageInfo?: { current: number, total: number }
-    type: 'sales' | 'expenses' | 'inventory' | 'low-stock' | 'daily-closing'
+    type: 'sales' | 'expenses' | 'supplier-payments' | 'inventory' | 'low-stock' | 'daily-closing'
     settings: CompanySettings
     range?: string
 }
@@ -139,6 +139,37 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
         </table>
     )
 
+    const renderSupplierPaymentsTable = () => (
+        <table className="w-full text-sm">
+            <thead>
+                <tr className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
+                    <th className="py-3 px-4 text-left">{t('print.col.date')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.supplier')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.type')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.order')}</th>
+                    <th className="py-3 px-4 text-center">{t('print.col.payment')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.notes')}</th>
+                    <th className="py-3 px-4 text-right">{t('print.col.amount')}</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+                {data.map((payment: SupplierPayment, i) => (
+                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="py-2 px-4 whitespace-nowrap">{format(parseISO(payment.payment_date), 'dd/MM/yy')}</td>
+                        <td className="py-2 px-4 font-medium">{payment.supplier_name}</td>
+                        <td className="py-2 px-4">{t(`print.type.${payment.type}`)}</td>
+                        <td className="py-2 px-4 font-mono text-gray-500">{payment.purchase_id ? `#${payment.purchase_id}` : '-'}</td>
+                        <td className="py-2 px-4 text-center">{paymentMethodLabel(payment.payment_method)}</td>
+                        <td className="py-2 px-4 text-gray-600 truncate max-w-[200px]">{payment.notes || '-'}</td>
+                        <td className={`py-2 px-4 text-right font-bold ${payment.type === 'payment' ? 'text-red-600' : 'text-green-600'}`}>
+                            {payment.type === 'payment' ? '-' : '+'}{settings.currencySymbol}{payment.amount.toFixed(2)}
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    )
+
     // --- SUMMARY STATISTICS ---
     // Use allData if available for correct totals across pages
     const sourceData = allData || data
@@ -156,6 +187,11 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
             for (const e of sourceData) byType.set(e.expense_type_name ?? '', (byType.get(e.expense_type_name ?? '') ?? 0) + e.amount)
             const topType = [...byType.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
             return { total, count: sourceData.length, topType }
+        }
+        if (type === 'supplier-payments') {
+            const paid = sourceData.filter(p => p.type === 'payment').reduce((sum, p) => sum + p.amount, 0)
+            const refunds = sourceData.filter(p => p.type === 'refund').reduce((sum, p) => sum + p.amount, 0)
+            return { count: sourceData.length, paid, refunds }
         }
         if (type === 'inventory' || type === 'low-stock') {
             const totalValue = sourceData.reduce((sum, p) => sum + (p.price * p.stock), 0)
@@ -229,6 +265,23 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                     </>
                 )}
 
+                {type === 'supplier-payments' && (
+                    <>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.supplierPaymentsCount')}</p>
+                            <p className="text-3xl font-black text-gray-900">{stats.count}</p>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalPaidSuppliers')}</p>
+                            <p className="text-3xl font-black text-red-600">{settings.currencySymbol}{stats.paid?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalRefunds')}</p>
+                            <p className="text-3xl font-black text-green-600">{settings.currencySymbol}{stats.refunds?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                    </>
+                )}
+
                 {(type === 'inventory' || type === 'low-stock') && (
                     <>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -245,7 +298,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
 
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-8 shadow-sm">
-                {(type === 'sales' || type === 'daily-closing') ? renderSalesTable() : type === 'expenses' ? renderExpensesTable() : renderInventoryTable()}
+                {(type === 'sales' || type === 'daily-closing') ? renderSalesTable() : type === 'expenses' ? renderExpensesTable() : type === 'supplier-payments' ? renderSupplierPaymentsTable() : renderInventoryTable()}
             </div>
 
             {/* Footer */}

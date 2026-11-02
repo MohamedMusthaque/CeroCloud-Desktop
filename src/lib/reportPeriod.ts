@@ -34,20 +34,30 @@ export function filterSalesByPeriod(sales: Sale[], period: ReportPeriod, dateLoc
     })
 }
 
-// Expenses carry a day ('YYYY-MM-DD') that may be in the future, so week / month are bounded on both ends
-export function filterExpensesByPeriod(expenses: Expense[], period: ReportPeriod, dateLocale: Locale): Expense[] {
+// Inclusive day bounds ('YYYY-MM-DD') of a period; records that carry a day may be in the future, so week / month are bounded on both ends
+export function periodDayBounds(period: ReportPeriod, dateLocale: Locale): { from?: string; to?: string } {
     const now = new Date()
     const day = (date: Date) => format(date, 'yyyy-MM-dd')
-    const [from, to] = ((): [string?, string?] => {
-        switch (period.range) {
-            case 'today': return [day(now), day(now)]
-            case 'week': return [day(startOfWeek(now, { locale: dateLocale })), day(endOfWeek(now, { locale: dateLocale }))]
-            case 'month': return [day(startOfMonth(now)), day(endOfMonth(now))]
-            case 'custom': return [period.from, period.to]
-            default: return []
-        }
-    })()
-    return expenses.filter(e => (!from || e.expense_date >= from) && (!to || e.expense_date <= to))
+    switch (period.range) {
+        case 'today': return { from: day(now), to: day(now) }
+        case 'week': return { from: day(startOfWeek(now, { locale: dateLocale })), to: day(endOfWeek(now, { locale: dateLocale })) }
+        case 'month': return { from: day(startOfMonth(now)), to: day(endOfMonth(now)) }
+        case 'custom': return { from: period.from, to: period.to }
+        default: return {}
+    }
+}
+
+// Records dated by a local day (expenses, supplier payments, received orders...)
+export function filterByDayPeriod<T>(items: T[], getDay: (item: T) => string | null | undefined, period: ReportPeriod, dateLocale: Locale): T[] {
+    const { from, to } = periodDayBounds(period, dateLocale)
+    return items.filter(item => {
+        const day = getDay(item)
+        return !!day && (!from || day >= from) && (!to || day <= to)
+    })
+}
+
+export function filterExpensesByPeriod(expenses: Expense[], period: ReportPeriod, dateLocale: Locale): Expense[] {
+    return filterByDayPeriod(expenses, e => e.expense_date, period, dateLocale)
 }
 
 // Human label of the period ("This Week", "01/10/2026 – 15/10/2026", ...), used in descriptions and PDFs

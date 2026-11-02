@@ -168,4 +168,43 @@ export const reports = {
     'profit.series.costs': 'Costos (productos + gastos)',
     'profit.series.netProfit': 'Ganancia neta',
     'profit.col.month': 'Mes',
+
+    // Purchases report
+    'rep.tab.purchases': 'Compras',
+    'purRep.title': 'Compras y pagos a proveedores',
+    'purRep.subtitle': 'Mercadería recibida, pagos y reembolsos en el período',
+    'purRep.goodsReceived': 'Mercadería recibida',
+    'purRep.ordersCount': '{count} pedidos recibidos',
+    'purRep.paid': 'Pagado a proveedores',
+    'purRep.paymentsCount': '{count} movimientos',
+    'purRep.refunds': 'Reembolsos de proveedores',
+    'purRep.netPaid': 'Pago neto: {amount}',
+    'purRep.pending': 'Pedidos pendientes',
+    'purRep.pendingHint': 'Valor {value} · anticipos {advances}',
+    'purRep.bySupplier': 'Por proveedor',
+    'purRep.col.supplier': 'Proveedor',
+    'purRep.col.received': 'Recibido',
+    'purRep.col.paid': 'Pagado',
+    'purRep.col.refunded': 'Reembolsado',
+    'purRep.col.netPaid': 'Pago neto',
+    'purRep.col.balance': 'Saldo actual',
+    'purRep.payments': 'Pagos del período',
+    'purRep.noData': 'No hay compras ni pagos en este período',
+    'purRep.balanceNote': 'El saldo actual es el de hoy, sin importar el período elegido.',
+
+    // Cash flow (Profit tab)
+    'profit.cash.title': 'Flujo de caja',
+    'profit.cash.salesCollected': 'Ventas cobradas',
+    'profit.cash.expenses': 'Gastos pagados',
+    'profit.cash.paidToSuppliers': 'Pagado a proveedores',
+    'profit.cash.refunds': 'Reembolsos de proveedores',
+    'profit.cash.net': 'Flujo de caja neto',
+    'profit.cash.creditSales': 'Ventas a crédito aún por cobrar: {amount}',
+    'profit.cash.goodsReceived': 'Mercadería recibida de proveedores: {amount}',
+    'profit.cash.note': 'Los pagos a proveedores mueven dinero, pero no reducen la ganancia: la mercadería se cuenta como costo (costo de ventas) cuando se vende.',
+
+    // Supplier payments export
+    'rep.export.supplierPaymentsTitle': 'Reporte de Pagos a Proveedores',
+    'rep.export.supplierPaymentsSubtitle': 'Pagos y reembolsos',
+    'rep.export.supplierPaymentsDesc': 'Generar un reporte de pagos y reembolsos de proveedores ({range}).',
 }

@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear } from 'date-fns'
-import { TrendingUp, TrendingDown, Wallet, ShoppingBag, Scale, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, ShoppingBag, Scale, AlertTriangle, CheckCircle2, Banknote, Info } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { useTranslation } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
-import { computeProfit, computeProductProfit, type ProfitPeriod } from '@/lib/profit'
-import type { Expense, Product, Sale } from '@/types/database'
+import { computeProfit, computeProductProfit, computeCashFlow, type ProfitPeriod } from '@/lib/profit'
+import type { Expense, Product, Purchase, Sale, SupplierPayment } from '@/types/database'
 import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
 
 type PeriodPreset = 'thisMonth' | 'lastMonth' | 'thisYear' | 'all' | 'custom'
@@ -38,9 +38,11 @@ interface ProfitReportProps {
     sales: Sale[]
     expenses: Expense[]
     products: Product[]
+    purchases: Purchase[]
+    supplierPayments: SupplierPayment[]
 }
 
-export function ProfitReport({ sales, expenses, products }: ProfitReportProps) {
+export function ProfitReport({ sales, expenses, products, purchases, supplierPayments }: ProfitReportProps) {
     const { t, dateLocale } = useTranslation()
     const [preset, setPreset] = useState<PeriodPreset>('thisMonth')
     const [custom, setCustom] = useState<ProfitPeriod>({})
@@ -48,6 +50,7 @@ export function ProfitReport({ sales, expenses, products }: ProfitReportProps) {
     const period = useMemo(() => presetPeriod(preset, custom), [preset, custom])
     const summary = useMemo(() => computeProfit(sales, expenses, products, period), [sales, expenses, products, period])
     const productProfit = useMemo(() => computeProductProfit(sales, products, period), [sales, products, period])
+    const cashFlow = useMemo(() => computeCashFlow(sales, expenses, purchases, supplierPayments, period), [sales, expenses, purchases, supplierPayments, period])
 
     // Last 6 months, independent of the selected period
     const trend = useMemo(() => Array.from({ length: 6 }, (_, i) => {
@@ -186,6 +189,45 @@ export function ProfitReport({ sales, expenses, products }: ProfitReportProps) {
                             })}
                         </ul>
                     )}
+                </div>
+            </div>
+
+            {/* Cash flow: money in and out, including supplier payments (they don't change profit) */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-300 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-4">
+                    <Banknote className="w-5 h-5 text-gray-400" />
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('profit.cash.title')}</h3>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <dl className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                        {[
+                            { label: t('profit.cash.salesCollected'), amount: cashFlow.salesCollected, sign: '+' },
+                            { label: t('profit.cash.expenses'), amount: cashFlow.expensesPaid, sign: '−' },
+                            { label: t('profit.cash.paidToSuppliers'), amount: cashFlow.paidToSuppliers, sign: '−' },
+                            { label: t('profit.cash.refunds'), amount: cashFlow.refundsFromSuppliers, sign: '+' }
+                        ].map(line => (
+                            <div key={line.label} className="flex items-center justify-between py-2.5">
+                                <dt className="text-sm text-gray-500 dark:text-gray-400 pl-4">{line.label}</dt>
+                                <dd className="text-sm tabular-nums text-gray-600 dark:text-gray-300">{line.sign} {formatCurrency(line.amount)}</dd>
+                            </div>
+                        ))}
+                        <div className="flex items-center justify-between py-2.5 font-bold">
+                            <dt className="text-sm text-gray-900 dark:text-white">{t('profit.cash.net')}</dt>
+                            <dd className={cn("text-sm tabular-nums", cashFlow.netCashFlow < 0 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white")}>
+                                {formatCurrency(cashFlow.netCashFlow)}
+                            </dd>
+                        </div>
+                    </dl>
+                    <div className="space-y-3 text-sm">
+                        <p className="text-gray-600 dark:text-gray-300">{t('profit.cash.goodsReceived', { amount: formatCurrency(cashFlow.goodsReceived) })}</p>
+                        {cashFlow.creditSales > 0 && (
+                            <p className="text-gray-600 dark:text-gray-300">{t('profit.cash.creditSales', { amount: formatCurrency(cashFlow.creditSales) })}</p>
+                        )}
+                        <p className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 text-xs leading-relaxed">
+                            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                            {t('profit.cash.note')}
+                        </p>
+                    </div>
                 </div>
             </div>
 
