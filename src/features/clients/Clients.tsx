@@ -83,7 +83,7 @@ export function Clients() {
     const totalClients = clients.length
     const withTaxId = clients.filter(c => c.tax_id).length
     const withEmail = clients.filter(c => c.email).length
-    const withCredit = clients.filter(c => (c.credit_limit ?? 0) > 0).length
+    const withCredit = clients.filter(c => !c.credit_limit_enabled || (c.credit_limit ?? 0) > 0).length
 
     return (
         <div className="space-y-6 pb-20 p-2">
@@ -321,10 +321,12 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
                                 {client.tax_id}
                             </p>
                         )}
-                        {(client.credit_limit ?? 0) > 0 && (
+                        {(!client.credit_limit_enabled || (client.credit_limit ?? 0) > 0) && (
                             <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md w-fit">
                                 <CreditCard className="w-3 h-3" />
-                                {t('cli.creditLimit', { amount: `${currencySymbol}${client.credit_limit!.toFixed(2)}` })}
+                                {client.credit_limit_enabled
+                                    ? t('cli.creditLimit', { amount: `${currencySymbol}${client.credit_limit!.toFixed(2)}` })
+                                    : t('cli.creditUnlimited')}
                             </p>
                         )}
                     </div>

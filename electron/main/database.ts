@@ -276,6 +276,7 @@ function initSchema() {
         email TEXT,
         notes TEXT,
         credit_limit REAL DEFAULT 0,
+        credit_limit_enabled INTEGER DEFAULT 0,
         created_at TEXT,
         updated_at TEXT
     )`)
@@ -357,6 +358,10 @@ function initSchema() {
 
   // Columns added after the first version (existing databases)
   addColumnIfMissing('clients', 'credit_limit', 'REAL DEFAULT 0')
+  if (addColumnIfMissing('clients', 'credit_limit_enabled', 'INTEGER DEFAULT 0')) {
+    // Existing clients were always limit-checked: keep enforcing it for them
+    db.exec('UPDATE clients SET credit_limit_enabled = 1')
+  }
   addColumnIfMissing('sales', 'client_id', 'INTEGER')
   addColumnIfMissing('sales', 'cheque_number', 'TEXT')
   addColumnIfMissing('sales', 'cheque_bank', 'TEXT')
@@ -720,8 +725,8 @@ export const clientQueries = {
 
   create: (client: Omit<Client, 'id'> & { id?: number }, actor: Actor = null): Client => {
     const stmt = db.prepare(`
-            INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, nic_attachment, created_at, created_by, updated_at, updated_by)
-            VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @nic_attachment, @created_at, @created_by, @updated_at, @updated_by)
+            INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, credit_limit_enabled, nic_attachment, created_at, created_by, updated_at, updated_by)
+            VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @credit_limit_enabled, @nic_attachment, @created_at, @created_by, @updated_at, @updated_by)
         `)
 
     const audit = {
@@ -739,6 +744,7 @@ export const clientQueries = {
       email: client.email || null,
       notes: client.notes || '',
       credit_limit: client.credit_limit || 0,
+      credit_limit_enabled: client.credit_limit_enabled ? 1 : 0,
       nic_attachment: client.nic_attachment || null,
       ...audit
     })
@@ -1248,8 +1254,8 @@ export function restoreDatabase(data: any) {
     // 6. Restore clients
     if (data.clients) {
       const insertClient = db.prepare(`
-        INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, nic_attachment, created_at, created_by, updated_at, updated_by)
-        VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @nic_attachment, @created_at, @created_by, @updated_at, @updated_by)
+        INSERT INTO clients(id, name, tax_id, address, phone, email, notes, credit_limit, credit_limit_enabled, nic_attachment, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @name, @tax_id, @address, @phone, @email, @notes, @credit_limit, @credit_limit_enabled, @nic_attachment, @created_at, @created_by, @updated_at, @updated_by)
       `)
 
       for (const c of data.clients) {
@@ -1257,6 +1263,8 @@ export function restoreDatabase(data: any) {
           id: c.id, name: c.name, tax_id: c.tax_id || null, address: c.address || null,
           phone: c.phone || null, email: c.email || null, notes: c.notes || '',
           credit_limit: c.credit_limit || 0,
+          // Backups made before the flag existed always enforced the limit
+          credit_limit_enabled: c.credit_limit_enabled === undefined ? 1 : (c.credit_limit_enabled ? 1 : 0),
           nic_attachment: c.nic_attachment || null,
           created_at: c.created_at || new Date().toISOString(),
           updated_at: c.updated_at || new Date().toISOString(),

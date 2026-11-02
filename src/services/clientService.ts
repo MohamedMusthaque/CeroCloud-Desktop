@@ -9,6 +9,7 @@ export interface Client extends AuditFields {
     email?: string
     notes?: string
     credit_limit?: number
+    credit_limit_enabled?: number // 1 = sales on credit are capped by credit_limit, 0 = no limit check
     nic_attachment?: string | null // NIC scan file name (<data folder>/attachments/nic)
 }
 

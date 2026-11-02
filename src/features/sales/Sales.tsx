@@ -98,7 +98,7 @@ export function Sales() {
     const clientInputRef = useRef<HTMLInputElement>(null)
 
     // Credit info of the selected registered client
-    const [clientCredit, setClientCredit] = useState<{ limit: number; balance: number } | null>(null)
+    const [clientCredit, setClientCredit] = useState<{ limit: number; limitEnabled: boolean; balance: number } | null>(null)
     useEffect(() => {
         const clientId = activeTab.clientId
         setClientCredit(null)
@@ -106,7 +106,7 @@ export function Sales() {
         let stale = false
         Promise.all([clientService.getById(clientId), clientService.getCreditBalance(clientId)])
             .then(([client, balance]) => {
-                if (!stale) setClientCredit({ limit: client?.credit_limit || 0, balance })
+                if (!stale) setClientCredit({ limit: client?.credit_limit || 0, limitEnabled: !!client?.credit_limit_enabled, balance })
             })
             .catch(console.error)
         return () => { stale = true }
@@ -311,7 +311,7 @@ export function Sales() {
     const change = Math.max(0, amountReceivedNum - total)
     const isPaymentSufficient = activeTab.paymentMethod !== 'cash' || amountReceivedNum >= total
 
-    // Credit: only for a registered client, capped by credit limit minus outstanding balance
+    // Credit: only for a registered client; capped by credit limit minus outstanding balance when the client has the limit enabled
     const isCredit = activeTab.paymentMethod === 'credit'
     const isCheque = activeTab.paymentMethod === 'cheque'
     const chequeError = isCheque && !chequeNumber.trim() ? t('pos.chequeNumberRequired') : null
@@ -319,9 +319,10 @@ export function Sales() {
     const creditError = !isCredit ? null
         : !activeTab.clientId ? t('pos.creditNeedsClient')
             : !clientCredit ? null // still loading
-                : clientCredit.limit <= 0 ? t('pos.creditNoLimit')
-                    : total > availableCredit ? t('pos.creditExceeded', { amount: `${settings.currencySymbol}${availableCredit.toFixed(2)}` })
-                        : null
+                : !clientCredit.limitEnabled ? null
+                    : clientCredit.limit <= 0 ? t('pos.creditNoLimit')
+                        : total > availableCredit ? t('pos.creditExceeded', { amount: `${settings.currencySymbol}${availableCredit.toFixed(2)}` })
+                            : null
     const canConfirmCredit = !isCredit || (!!clientCredit && !creditError)
 
     const processSale = useCallback(async () => {
@@ -720,7 +721,9 @@ export function Sales() {
                             </div>
                             {isCredit && clientCredit && (
                                 <p className={cn("text-xs font-medium px-1", creditError ? "text-red-500" : "text-gray-500 dark:text-gray-400")}>
-                                    {creditError ?? t('pos.creditAvailable', { amount: `${settings.currencySymbol}${availableCredit.toFixed(2)}` })}
+                                    {creditError ?? (clientCredit.limitEnabled
+                                        ? t('pos.creditAvailable', { amount: `${settings.currencySymbol}${availableCredit.toFixed(2)}` })
+                                        : t('pos.creditUnlimited'))}
                                 </p>
                             )}
                         </div>
@@ -851,18 +854,22 @@ export function Sales() {
                                         <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 space-y-2 text-sm">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-500">{t('pos.creditLimit')}</span>
-                                                <span className="font-bold text-gray-900 dark:text-white">{settings.currencySymbol}{(clientCredit?.limit ?? 0).toFixed(2)}</span>
+                                                <span className="font-bold text-gray-900 dark:text-white">
+                                                    {clientCredit && !clientCredit.limitEnabled ? t('pos.creditNoLimitValue') : `${settings.currencySymbol}${(clientCredit?.limit ?? 0).toFixed(2)}`}
+                                                </span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-500">{t('pos.creditBalance')}</span>
                                                 <span className="font-bold text-gray-900 dark:text-white">{settings.currencySymbol}{(clientCredit?.balance ?? 0).toFixed(2)}</span>
                                             </div>
-                                            <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                                                <span className="text-gray-500">{t('pos.creditAfterSale')}</span>
-                                                <span className={cn("font-black", creditError ? "text-red-600" : "text-green-600")}>
-                                                    {settings.currencySymbol}{(availableCredit - total).toFixed(2)}
-                                                </span>
-                                            </div>
+                                            {clientCredit?.limitEnabled !== false && (
+                                                <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                                                    <span className="text-gray-500">{t('pos.creditAfterSale')}</span>
+                                                    <span className={cn("font-black", creditError ? "text-red-600" : "text-green-600")}>
+                                                        {settings.currencySymbol}{(availableCredit - total).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                         <p className={cn("text-xs text-center font-medium", creditError ? "text-red-500" : "text-gray-500")}>
                                             {creditError ?? t('pos.creditOnAccount', { name: activeTab.customerName })}

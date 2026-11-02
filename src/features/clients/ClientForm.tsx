@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Save, Loader2 } from 'lucide-react'
+import { Save, Loader2, Check } from 'lucide-react'
 import { clientService, type Client } from '@/services/clientService'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -28,6 +28,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
         address: '',
         notes: '',
         credit_limit: 0,
+        credit_limit_enabled: 0,
         nic_attachment: null
     })
 
@@ -42,6 +43,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                     address: clientToEdit.address || '',
                     notes: clientToEdit.notes || '',
                     credit_limit: clientToEdit.credit_limit || 0,
+                    credit_limit_enabled: clientToEdit.credit_limit_enabled ? 1 : 0,
                     nic_attachment: clientToEdit.nic_attachment ?? null
                 })
             } else {
@@ -53,6 +55,7 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                     address: '',
                     notes: '',
                     credit_limit: 0,
+                    credit_limit_enabled: 0,
                     nic_attachment: null
                 })
             }
@@ -192,19 +195,39 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                     </div>
 
                                     {/* Credit limit */}
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
-                                            {t('cliForm.creditLimit')} ({companyService.getSettings().currencySymbol})
+                                    <div className="col-span-2 space-y-3">
+                                        <label className="flex items-center gap-2 cursor-pointer group w-fit">
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm ${formData.credit_limit_enabled
+                                                ? 'bg-indigo-600 border-indigo-600 text-white'
+                                                : 'bg-white dark:bg-gray-700 border-slate-300 dark:border-gray-600 group-hover:border-indigo-400'}`}>
+                                                {!!formData.credit_limit_enabled && <Check className="w-3.5 h-3.5" />}
+                                                <input
+                                                    type="checkbox"
+                                                    className="hidden"
+                                                    checked={!!formData.credit_limit_enabled}
+                                                    onChange={(e) => setFormData({ ...formData, credit_limit_enabled: e.target.checked ? 1 : 0 })}
+                                                />
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-700 dark:text-gray-300">{t('cliForm.creditLimitEnabled')}</span>
                                         </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            value={formData.credit_limit ?? 0}
-                                            onChange={(e) => setFormData({ ...formData, credit_limit: Math.max(0, Number(e.target.value) || 0) })}
-                                            className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                        />
-                                        <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{t('cliForm.creditLimitHint')}</p>
+                                        {formData.credit_limit_enabled ? (
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                                                    {t('cliForm.creditLimit')} ({companyService.getSettings().currencySymbol})
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={formData.credit_limit ?? 0}
+                                                    onChange={(e) => setFormData({ ...formData, credit_limit: Math.max(0, Number(e.target.value) || 0) })}
+                                                    className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                                />
+                                                <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{t('cliForm.creditLimitHint')}</p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-500 dark:text-gray-400">{t('cliForm.creditLimitDisabledHint')}</p>
+                                        )}
                                     </div>
 
                                     {/* Notes */}

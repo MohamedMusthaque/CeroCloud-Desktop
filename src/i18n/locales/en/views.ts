@@ -75,6 +75,7 @@ export const views: Record<keyof typeof es, string> = {
     'view.client.creditUsed': 'Credit used',
     'view.client.creditAvailable': 'Available: {amount}',
     'view.client.noCredit': 'No credit',
+    'view.client.noLimit': 'No limit',
 
     'view.expense.subtitle': '{type} · {date}',
     'view.expense.typeTotal': 'Type total',

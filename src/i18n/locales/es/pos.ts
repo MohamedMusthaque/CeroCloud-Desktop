@@ -52,6 +52,8 @@ export const pos = {
     'pos.creditExceeded': 'La venta supera el crédito disponible ({amount})',
     'pos.creditAvailable': 'Crédito disponible: {amount}',
     'pos.creditLimit': 'Límite de crédito',
+    'pos.creditNoLimitValue': 'Sin límite',
+    'pos.creditUnlimited': 'Este cliente no tiene límite de crédito',
     'pos.creditBalance': 'Saldo pendiente',
     'pos.creditAfterSale': 'Disponible después de la venta',
     'pos.creditOnAccount': 'La venta se cargará a la cuenta de {name}.',

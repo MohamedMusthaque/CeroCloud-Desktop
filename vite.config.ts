@@ -53,7 +53,8 @@ export default defineConfig({
         }
     },
     server: {
-        port: 5173,
+        // Not 5173: Windows (Hyper-V/WinNAT) can reserve that range, which fails with EACCES
+        port: 3000,
         strictPort: true
     },
     build: {

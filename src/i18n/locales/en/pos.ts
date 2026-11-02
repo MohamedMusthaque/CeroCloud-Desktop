@@ -54,6 +54,8 @@ export const pos: Record<keyof typeof es, string> = {
     'pos.creditExceeded': 'The sale exceeds the available credit ({amount})',
     'pos.creditAvailable': 'Available credit: {amount}',
     'pos.creditLimit': 'Credit limit',
+    'pos.creditNoLimitValue': 'No limit',
+    'pos.creditUnlimited': 'No credit limit for this client',
     'pos.creditBalance': 'Outstanding balance',
     'pos.creditAfterSale': 'Available after this sale',
     'pos.creditOnAccount': 'The sale will be charged to {name}\'s account.',

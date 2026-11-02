@@ -73,6 +73,7 @@ export const views = {
     'view.client.creditUsed': 'Crédito usado',
     'view.client.creditAvailable': 'Disponible: {amount}',
     'view.client.noCredit': 'Sin crédito',
+    'view.client.noLimit': 'Sin límite',
 
     'view.expense.subtitle': '{type} · {date}',
     'view.expense.typeTotal': 'Total del tipo',

@@ -49,7 +49,8 @@ export function ClientView() {
     const totalSpent = completed.reduce((sum, s) => sum + s.total, 0)
     const lastPurchase = completed[0]?.created_at
     const creditLimit = client.credit_limit ?? 0
-    const hasCredit = creditLimit > 0
+    const limitEnabled = !!client.credit_limit_enabled
+    const hasCredit = limitEnabled && creditLimit > 0
 
     return (
         <div className="space-y-6 pb-20 p-2">
@@ -61,6 +62,7 @@ export function ClientView() {
                 subtitle={client.tax_id ? <span className="inline-flex items-center gap-1.5"><FileText className="w-4 h-4" />{client.tax_id}</span> : undefined}
                 badges={<>
                     {hasCredit && <ViewBadge tone="green" icon={CreditCard}>{t('cli.creditLimit', { amount: formatCurrency(creditLimit) })}</ViewBadge>}
+                    {!limitEnabled && <ViewBadge tone="green" icon={CreditCard}>{t('cli.creditUnlimited')}</ViewBadge>}
                     {client.nic_attachment && <ViewBadge tone="green" icon={Contact}>{t('nic.attached')}</ViewBadge>}
                 </>}
                 onEdit={() => setEditing(true)}
@@ -73,7 +75,7 @@ export function ClientView() {
                 <ViewStat
                     label={t('view.client.creditUsed')}
                     value={formatCurrency(creditUsed)}
-                    hint={hasCredit ? t('view.client.creditAvailable', { amount: formatCurrency(Math.max(creditLimit - creditUsed, 0)) }) : t('view.client.noCredit')}
+                    hint={!limitEnabled ? t('view.client.noLimit') : hasCredit ? t('view.client.creditAvailable', { amount: formatCurrency(Math.max(creditLimit - creditUsed, 0)) }) : t('view.client.noCredit')}
                     icon={CreditCard}
                     color={hasCredit && creditUsed >= creditLimit ? 'bg-red-500' : 'bg-orange-500'}
                 />
@@ -87,7 +89,7 @@ export function ClientView() {
                         <ViewField label={t('view.phone')} value={client.phone && <a href={`tel:${client.phone}`} className={viewLinkClass}>{client.phone}</a>} icon={Phone} />
                         <ViewField label={t('view.email')} value={client.email && <a href={`mailto:${client.email}`} className={viewLinkClass}>{client.email}</a>} icon={Mail} />
                         <ViewField label={t('view.address')} value={client.address} icon={MapPin} wide />
-                        <ViewField label={t('cliForm.creditLimit')} value={hasCredit ? formatCurrency(creditLimit) : t('view.client.noCredit')} icon={CreditCard} />
+                        <ViewField label={t('cliForm.creditLimit')} value={!limitEnabled ? t('view.client.noLimit') : hasCredit ? formatCurrency(creditLimit) : t('view.client.noCredit')} icon={CreditCard} />
                         <ViewField label={t('nic.label')} value={<ViewNic filename={client.nic_attachment} />} icon={Contact} />
                         <ViewField label={t('view.notes')} value={client.notes} icon={StickyNote} wide />
                     </ViewFields>

@@ -10,7 +10,7 @@ npm run dev
 
 This command:
 - Compiles the Electron files (main.ts and preload.ts)
-- Starts the Vite server at http://localhost:5173
+- Starts the Vite server at http://localhost:3000
 - Opens the Electron window automatically
 - Enables hot reload for code changes
 
@@ -169,7 +169,8 @@ Use VS Code with the Debugger for Chrome/Edge extension.
 ### The application doesn't open
 
 1. Make sure no other instance is running
-2. Check that port 5173 is free: `netstat -ano | findstr :5173`
+2. Check that port 3000 is free: `netstat -ano | findstr :3000`
+   - `listen EACCES: permission denied` means Windows reserved the port (Hyper-V/WSL/Docker). Check with `netsh interface ipv4 show excludedportrange protocol=tcp` and change `server.port` in `vite.config.ts` to a port outside those ranges
 3. Delete `dist-electron/` and `dist/` and run it again
 
 ### Hot reload doesn't work
