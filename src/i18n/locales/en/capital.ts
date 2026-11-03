@@ -146,7 +146,7 @@ export const capital: Record<keyof typeof es, string> = {
     'capError.SUPPLIER_REQUIRED': 'Select a supplier',
     'capError.ITEMS_REQUIRED': 'Add at least one product',
     'capError.PRODUCT_REQUIRED': 'Select a product on every line',
-    'capError.QUANTITY_INVALID': 'Quantities must be whole numbers above zero',
+    'capError.QUANTITY_INVALID': 'Quantities must be numbers above zero',
     'capError.COST_INVALID': 'Cost cannot be negative',
     'capError.NOT_EDITABLE': "The type and form can't be changed",
     'capError.NOT_SETTLEABLE': 'Only loans and promised capital have payments',

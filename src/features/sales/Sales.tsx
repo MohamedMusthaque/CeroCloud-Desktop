@@ -26,7 +26,7 @@ import { pdfGenerator } from '@/services/pdfGenerator'
 import { Product, CartItem, Sale, SaleItem } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
-import { cn, getImageSrc } from '@/lib/utils'
+import { cn, getImageSrc, roundQuantity } from '@/lib/utils'
 import { useCartStore, PAYMENT_METHODS } from '@/stores/cartStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { clientService, type Client } from '@/services/clientService'
@@ -289,7 +289,7 @@ export function Sales() {
         const item = cart.find(i => i.product.id === productId)
         if (!item) return
 
-        let target = Math.max(0, Math.floor(quantity))
+        let target = Math.max(0, roundQuantity(quantity))
         if (!settings.pos?.allowNegativeStock && target > item.product.stock) {
             toast.error(t('pos.insufficientStock', { count: item.product.stock }))
             target = item.product.stock
@@ -301,7 +301,7 @@ export function Sales() {
     }
 
     // Totals Calculation
-    const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+    const subtotal = cart.reduce((sum, item) => sum + lineTotal(item.product.price, item.quantity), 0)
     const discountAmount = subtotal * (activeTab.discount / 100)
     const taxRate = settings.enableTax ? (settings.taxRate / 100) : 0
     const tax = (subtotal - discountAmount) * taxRate
@@ -348,7 +348,7 @@ export function Sales() {
                 product_name: item.product.name,
                 quantity: item.quantity,
                 unit_price: item.product.price,
-                subtotal: item.product.price * item.quantity,
+                subtotal: lineTotal(item.product.price, item.quantity),
             }))
 
             const sale: Omit<Sale, 'id'> = {
@@ -1006,7 +1006,7 @@ function CartItemRow({ item, onUpdate, onSetQuantity, onRemove, currencySymbol }
             </div>
             <div className="text-right min-w-[60px]">
                 <div className="font-bold text-sm text-gray-900 dark:text-white">
-                    {currencySymbol}{(item.product.price * item.quantity).toFixed(2)}
+                    {currencySymbol}{lineTotal(item.product.price, item.quantity).toFixed(2)}
                 </div>
                 <button onClick={() => onRemove(item.product.id!)} className="p-1 text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
                     <Trash2 className="w-3 h-3" />
@@ -1015,6 +1015,9 @@ function CartItemRow({ item, onUpdate, onSetQuantity, onRemove, currencySymbol }
         </motion.div>
     )
 }
+
+// Price of a bill line, to the cent (quantities can be decimal, e.g. 0.333 kg)
+const lineTotal = (price: number, quantity: number) => Math.round(price * quantity * 100) / 100
 
 // Editable cart quantity: applied on Enter or blur, Escape restores the current value
 function QuantityInput({ value, onCommit }: { value: number; onCommit: (quantity: number) => void }) {
@@ -1031,7 +1034,7 @@ function QuantityInput({ value, onCommit }: { value: number; onCommit: (quantity
             setDraft(String(value))
             return
         }
-        const quantity = parseInt(draft, 10)
+        const quantity = parseFloat(draft)
         if (!Number.isNaN(quantity) && quantity !== value) onCommit(quantity)
         // Show the stored value again; if it changed, the effect above updates it
         setDraft(String(value))
@@ -1041,8 +1044,8 @@ function QuantityInput({ value, onCommit }: { value: number; onCommit: (quantity
         <input
             type="number"
             min={0}
-            step={1}
-            inputMode="numeric"
+            step="any"
+            inputMode="decimal"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onFocus={(e) => e.target.select()}
@@ -1057,7 +1060,7 @@ function QuantityInput({ value, onCommit }: { value: number; onCommit: (quantity
                     e.currentTarget.blur()
                 }
             }}
-            className="w-10 h-7 font-semibold text-sm text-center rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="w-14 h-7 font-semibold text-sm text-center rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
     )
 }

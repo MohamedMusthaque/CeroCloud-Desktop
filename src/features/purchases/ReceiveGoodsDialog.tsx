@@ -181,7 +181,8 @@ export function ReceiveGoodsDialog({ purchaseId, onClose, onReceived }: ReceiveG
                                                         <input
                                                             type="number"
                                                             min="0"
-                                                            step="1"
+                                                            step="any"
+                                                            inputMode="decimal"
                                                             required
                                                             aria-label={t('purRecv.received')}
                                                             value={item.received}

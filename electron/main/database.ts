@@ -1036,7 +1036,7 @@ export const saleQueries = {
          COALESCE(@unit_cost, (SELECT cost FROM products WHERE id = @product_id)), @subtotal)
             `)
 
-      const updateStock = db.prepare(`UPDATE products SET stock = stock - @qty WHERE id = @id`)
+      const updateStock = db.prepare(`UPDATE products SET stock = ROUND(stock - @qty, 3) WHERE id = @id`)
 
       // A restore first brings back the products with their stock from the backup, then the sales.
       // That stock already reflects those sales, so deducting it again would count them twice.
@@ -1050,7 +1050,7 @@ export const saleQueries = {
           product_id: item.product_id,
           product_code: item.product_code,
           product_name: item.product_name,
-          quantity: item.quantity,
+          quantity: roundQuantity(item.quantity),
           unit_price: item.unit_price,
           // Only a restore brings its own cost; a new sale always uses the product's current cost
           unit_cost: isRestore ? item.unit_cost ?? null : null,
@@ -1059,7 +1059,7 @@ export const saleQueries = {
 
         if (!isRestore) {
           // Update stock
-          updateStock.run({ qty: item.quantity, id: item.product_id })
+          updateStock.run({ qty: roundQuantity(item.quantity), id: item.product_id })
         }
       }
 
@@ -1126,7 +1126,7 @@ export const cancelSale = (id: number, actor: Actor = null): Sale | null => {
       .run(new Date().toISOString(), actor, id)
 
     const items = db.prepare('SELECT * FROM sale_items WHERE sale_id = ?').all(id) as SaleItem[]
-    const updateStock = db.prepare('UPDATE products SET stock = stock + @qty WHERE id = @id')
+    const updateStock = db.prepare('UPDATE products SET stock = ROUND(stock + @qty, 3) WHERE id = @id')
 
     for (const item of items) {
 
@@ -1330,6 +1330,10 @@ function withRoundedTotals(account: SavingsAccount): SavingsAccount {
     total_withdrawals: roundMoney(account.total_withdrawals ?? 0)
   }
 }
+
+// Quantities can be decimal (kg, litres...): kept to 3 decimals so sums don't drift (0.1 + 0.2)
+const roundQuantity = (value: number) => Math.round(value * 1000) / 1000 + 0
+const isQuantity = (value: number, allowZero = false) => Number.isFinite(value) && (allowZero ? value >= 0 : value > 0)
 
 // Validates and normalizes account fields; `existing` supplies values not sent when editing
 function normalizeSavingsAccount(input: SavingsAccountInput, id?: number, existing?: SavingsAccount) {
@@ -1538,8 +1542,8 @@ function normalizeCapitalItems(items: CapitalEntryInput['items']) {
   return items.map(item => {
     const product = getProduct.get(Number(item.product_id)) as { id: number; code: string; name: string } | undefined
     if (!product) throw new CapitalError('PRODUCT_REQUIRED')
-    const quantity = Number(item.quantity)
-    if (!Number.isInteger(quantity) || quantity <= 0) throw new CapitalError('QUANTITY_INVALID')
+    const quantity = roundQuantity(Number(item.quantity))
+    if (!isQuantity(quantity)) throw new CapitalError('QUANTITY_INVALID')
     const unitCost = roundMoney(Number(item.unit_cost))
     if (!Number.isFinite(unitCost) || unitCost < 0) throw new CapitalError('COST_INVALID')
     return { product_id: product.id, product_code: product.code, product_name: product.name, quantity, unit_cost: unitCost }
@@ -1612,7 +1616,7 @@ export const capitalQueries = {
         INSERT INTO capital_items(entry_id, product_id, product_code, product_name, quantity, unit_cost)
         VALUES(@entry_id, @product_id, @product_code, @product_name, @quantity, @unit_cost)
       `)
-      const addStock = db.prepare('UPDATE products SET stock = stock + @qty, updated_at = @now, updated_by = @actor WHERE id = @id')
+      const addStock = db.prepare('UPDATE products SET stock = ROUND(stock + @qty, 3), updated_at = @now, updated_by = @actor WHERE id = @id')
       const updateCost = db.prepare('UPDATE products SET cost = @cost WHERE id = @id')
       for (const item of items) {
         insertItem.run({ ...item, entry_id: entryId })
@@ -1685,7 +1689,7 @@ export const capitalQueries = {
     }
 
     db.transaction(() => {
-      const removeStock = db.prepare('UPDATE products SET stock = stock - @qty WHERE id = @id')
+      const removeStock = db.prepare('UPDATE products SET stock = ROUND(stock - @qty, 3) WHERE id = @id')
       for (const item of existing.items ?? []) removeStock.run({ id: item.product_id, qty: item.quantity })
       if (existing.purchase_id) {
         db.prepare('DELETE FROM purchase_items WHERE purchase_id = ?').run(existing.purchase_id)
@@ -1834,8 +1838,8 @@ function normalizePurchaseItems(items: PurchaseItemInput[] | undefined) {
   return items.map(item => {
     const product = getProduct.get(Number(item.product_id)) as { id: number; code: string; name: string } | undefined
     if (!product) throw new PurchaseError('PRODUCT_REQUIRED')
-    const quantity = Number(item.quantity)
-    if (!Number.isInteger(quantity) || quantity <= 0) throw new PurchaseError('QUANTITY_INVALID')
+    const quantity = roundQuantity(Number(item.quantity))
+    if (!isQuantity(quantity)) throw new PurchaseError('QUANTITY_INVALID')
     const unitCost = roundMoney(Number(item.unit_cost))
     if (!Number.isFinite(unitCost) || unitCost < 0) throw new PurchaseError('COST_INVALID')
     return { product_id: product.id, product_code: product.code, product_name: product.name, ordered_quantity: quantity, unit_cost: unitCost }
@@ -1941,8 +1945,8 @@ export const purchaseQueries = {
     const changes = new Map((input.items ?? []).map(item => [Number(item.id), item]))
     const items = (order.items ?? []).map(item => {
       const change = changes.get(item.id!)
-      const quantity = Number(change?.received_quantity ?? item.ordered_quantity)
-      if (!Number.isInteger(quantity) || quantity < 0) throw new PurchaseError('QUANTITY_INVALID')
+      const quantity = roundQuantity(Number(change?.received_quantity ?? item.ordered_quantity))
+      if (!isQuantity(quantity, true)) throw new PurchaseError('QUANTITY_INVALID')
       const unitCost = roundMoney(Number(change?.unit_cost ?? item.unit_cost))
       if (!Number.isFinite(unitCost) || unitCost < 0) throw new PurchaseError('COST_INVALID')
       return { ...item, received_quantity: quantity, unit_cost: unitCost }
@@ -1964,7 +1968,7 @@ export const purchaseQueries = {
 
     db.transaction(() => {
       const updateItem = db.prepare('UPDATE purchase_items SET received_quantity = @received_quantity, unit_cost = @unit_cost WHERE id = @id')
-      const addStock = db.prepare('UPDATE products SET stock = stock + @qty, updated_at = @now, updated_by = @actor WHERE id = @id')
+      const addStock = db.prepare('UPDATE products SET stock = ROUND(stock + @qty, 3), updated_at = @now, updated_by = @actor WHERE id = @id')
       const updateCost = db.prepare('UPDATE products SET cost = @cost WHERE id = @id')
       const now = new Date().toISOString()
       for (const item of items) {

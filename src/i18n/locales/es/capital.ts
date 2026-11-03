@@ -144,7 +144,7 @@ export const capital = {
     'capError.SUPPLIER_REQUIRED': 'Selecciona un proveedor',
     'capError.ITEMS_REQUIRED': 'Agrega al menos un producto',
     'capError.PRODUCT_REQUIRED': 'Selecciona un producto en cada línea',
-    'capError.QUANTITY_INVALID': 'Las cantidades deben ser números enteros mayores que cero',
+    'capError.QUANTITY_INVALID': 'Las cantidades deben ser números mayores que cero',
     'capError.COST_INVALID': 'El costo no puede ser negativo',
     'capError.NOT_EDITABLE': 'El tipo y la forma no se pueden cambiar',
     'capError.NOT_SETTLEABLE': 'Solo los préstamos y el capital prometido tienen pagos',

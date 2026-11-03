@@ -162,7 +162,7 @@ export const purchases: Record<keyof typeof es, string> = {
     'purError.SUPPLIER_REQUIRED': 'Select a supplier',
     'purError.ITEMS_REQUIRED': 'Add at least one item',
     'purError.PRODUCT_REQUIRED': 'Select a product on every item',
-    'purError.QUANTITY_INVALID': 'Quantities must be whole numbers, and at least one item must arrive',
+    'purError.QUANTITY_INVALID': 'Quantities must be numbers above zero, and at least one item must arrive',
     'purError.COST_INVALID': 'Cost cannot be negative',
     'purError.DATE_INVALID': 'The date is not valid',
     'purError.AMOUNT_INVALID': 'Amount must be greater than zero',

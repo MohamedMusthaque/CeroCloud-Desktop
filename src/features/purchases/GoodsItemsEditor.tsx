@@ -69,8 +69,9 @@ export function GoodsItemsEditor({ rows, onChange, products, supplierId, totalLa
                         </select>
                         <input
                             type="number"
-                            min="1"
-                            step="1"
+                            min="0.001"
+                            step="any"
+                            inputMode="decimal"
                             required
                             aria-label={t('purForm.quantity')}
                             value={row.quantity}

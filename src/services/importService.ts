@@ -117,8 +117,8 @@ export const importService = {
                 category: String(row.categoria || row.category || row.Categoria || row.Category || '').trim(),
                 price: parseFloat(row.precio || row.price || row.Precio || row.Price || 0),
                 cost: parseFloat(row.costo || row.cost || row.Costo || row.Cost || 0),
-                stock: parseInt(row.stock || row.Stock || row.existencia || row.Existencia || 0),
-                min_stock: parseInt(row.stock_minimo || row.min_stock || row.StockMinimo || row.MinStock || row.stock_min || 5),
+                stock: parseFloat(row.stock || row.Stock || row.existencia || row.Existencia || 0),
+                min_stock: parseFloat(row.stock_minimo || row.min_stock || row.StockMinimo || row.MinStock || row.stock_min || 5),
                 unit: String(row.unidad || row.unit || row.Unidad || row.Unit || 'unidad').trim(),
             }
 

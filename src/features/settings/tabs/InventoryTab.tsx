@@ -50,6 +50,8 @@ export function InventoryTab({ settings, setSettings }: InventoryTabProps) {
                                 <input
                                     type="number"
                                     min="0"
+                                    step="any"
+                                    inputMode="decimal"
                                     value={settings.inventory?.lowStockThreshold ?? 5}
                                     onChange={(e) => setSettings({
                                         ...settings,

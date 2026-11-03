@@ -10,8 +10,9 @@ export const productSchema = z.object({
     image: z.string().optional(),
     price: z.coerce.number().min(0, 'validation.priceNegative'),
     cost: z.coerce.number().min(0, 'validation.costNegative').optional().default(0),
-    stock: z.coerce.number().int().min(0, 'validation.stockNegative'),
-    min_stock: z.coerce.number().int().min(0, 'validation.minStockNegative').default(0),
+    // Decimal for products sold by weight or volume (kg, l, m...)
+    stock: z.coerce.number().min(0, 'validation.stockNegative'),
+    min_stock: z.coerce.number().min(0, 'validation.minStockNegative').default(0),
     unit: z.enum(['unidad', 'ton', 'kg', 'g', 'l', 'ml', 'm', 'caja', 'paquete']).default('unidad'),
     supplier_id: z.coerce.number().optional(),
 })

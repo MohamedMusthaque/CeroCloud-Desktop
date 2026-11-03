@@ -16,6 +16,11 @@ export function getImageSrc(imagePath?: string) {
 }
 
 // Uses the currency symbol configured in Settings, like the rest of the UI
+// Quantities can be decimal (kg, litres...): kept to 3 decimals so sums don't drift (0.1 + 0.2)
+export function roundQuantity(value: number) {
+    return Math.round(value * 1000) / 1000 + 0
+}
+
 export function formatCurrency(amount: number) {
     const { currencySymbol } = companyService.getSettings()
     const formatted = Math.abs(amount).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

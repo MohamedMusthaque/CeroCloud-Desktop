@@ -160,7 +160,7 @@ export const purchases = {
     'purError.SUPPLIER_REQUIRED': 'Selecciona un proveedor',
     'purError.ITEMS_REQUIRED': 'Agrega al menos un artículo',
     'purError.PRODUCT_REQUIRED': 'Selecciona un producto en cada artículo',
-    'purError.QUANTITY_INVALID': 'Las cantidades deben ser números enteros, y al menos un artículo debe llegar',
+    'purError.QUANTITY_INVALID': 'Las cantidades deben ser números mayores que cero, y al menos un artículo debe llegar',
     'purError.COST_INVALID': 'El costo no puede ser negativo',
     'purError.DATE_INVALID': 'La fecha no es válida',
     'purError.AMOUNT_INVALID': 'El monto debe ser mayor que cero',

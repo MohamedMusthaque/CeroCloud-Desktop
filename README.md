@@ -4,7 +4,7 @@
 
 **Offline-first desktop Point of Sale and Inventory Management**
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](changelog.md)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](changelog.md)
 [![License: MIT + Commons Clause](https://img.shields.io/badge/License-MIT%20%2B%20Commons%20Clause-orange.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 [![Electron](https://img.shields.io/badge/Electron-28-47848F?logo=electron)](https://www.electronjs.org/)
