@@ -1,7 +1,7 @@
 import { ipcMain, app, dialog, shell, BrowserWindow } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, purchaseQueries, supplierPaymentQueries, supplierAccountQueries, supplierHasPurchases, PurchaseError, capitalQueries, CapitalError, type AuthUser, type Actor } from './database'
+import { productQueries, nextInternalBarcode, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, purchaseQueries, supplierPaymentQueries, supplierAccountQueries, supplierHasPurchases, PurchaseError, capitalQueries, CapitalError, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
 import { AttachmentError, saveNicAttachment, openNicAttachment, deleteNicAttachment, readNicAttachment, restoreNicAttachment, sweepNicAttachments } from './attachments'
@@ -229,6 +229,8 @@ export function registerIpcHandlers() {
             throw error
         }
     })
+
+    ipcMain.handle('products:generateBarcode', () => nextInternalBarcode())
 
     ipcMain.handle('products:createOrUpdate', (_event, product) => {
         return productQueries.createOrUpdate(product, actorName())

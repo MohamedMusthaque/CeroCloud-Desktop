@@ -13,6 +13,11 @@ export const productService = {
         return await window.electronAPI.products.search(term)
     },
 
+    // Next unused in-store EAN-13 barcode (starts with "20")
+    async generateBarcode(): Promise<string> {
+        return await window.electronAPI.products.generateBarcode()
+    },
+
     async create(product: Omit<Product, 'id'>): Promise<Product> {
         return await window.electronAPI.products.create(product)
     },

@@ -648,6 +648,30 @@ function initializeDemoData() {
 // ==========================================
 
 // Internal log helper REMOVED
+// In-store barcodes are EAN-13 codes starting with "20": that prefix is reserved for internal use,
+// so a generated code never clashes with a manufacturer's barcode
+const INTERNAL_BARCODE_PREFIX = '20'
+
+// EAN-13 check digit for the first 12 digits (weights 1, 3, 1, 3...)
+function ean13CheckDigit(first12: string): number {
+  const sum = [...first12].reduce((total, digit, i) => total + Number(digit) * (i % 2 === 0 ? 1 : 3), 0)
+  return (10 - (sum % 10)) % 10
+}
+
+// Next unused in-store barcode, numbered after the highest one generated so far
+export function nextInternalBarcode(): string {
+  const pattern = INTERNAL_BARCODE_PREFIX + '[0-9]'.repeat(11)
+  const codes = db.prepare('SELECT code FROM products WHERE code GLOB ?').all(pattern) as { code: string }[]
+  let serial = codes.reduce((max, { code }) => Math.max(max, Number(code.slice(2, 12))), 0) + 1
+  const exists = db.prepare('SELECT 1 FROM products WHERE code = ?')
+  for (;;) {
+    const first12 = INTERNAL_BARCODE_PREFIX + String(serial).padStart(10, '0')
+    const code = first12 + ean13CheckDigit(first12)
+    if (!exists.get(code)) return code
+    serial++
+  }
+}
+
 export const productQueries = {
   getAll: (): Product[] => {
     return db.prepare('SELECT * FROM products ORDER BY name ASC').all() as Product[]

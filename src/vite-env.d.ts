@@ -33,6 +33,7 @@ interface ElectronAPI {
         getById: (id: number) => Promise<any>
         search: (term: string) => Promise<any[]>
         create: (product: any) => Promise<any>
+        generateBarcode: () => Promise<string>
         createOrUpdate: (product: any) => Promise<{ product: any; isNew: boolean }>
         update: (id: number, product: any) => Promise<any>
         delete: (id: number) => Promise<{ success: boolean }>

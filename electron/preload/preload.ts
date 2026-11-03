@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         getById: (id: number) => ipcRenderer.invoke('products:getById', id),
         search: (term: string) => ipcRenderer.invoke('products:search', term),
         create: (product: any) => ipcRenderer.invoke('products:create', product),
+        generateBarcode: () => ipcRenderer.invoke('products:generateBarcode'),
         createOrUpdate: (product: any) => ipcRenderer.invoke('products:createOrUpdate', product),
         update: (id: number, product: any) => ipcRenderer.invoke('products:update', id, product),
         delete: (id: number) => ipcRenderer.invoke('products:delete', id),

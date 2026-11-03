@@ -433,6 +433,17 @@ export function Sales() {
                             placeholder={t('pos.searchPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyDown={(e) => {
+                                // Barcode scanners type the code and press Enter: add the product with that exact barcode
+                                if (e.key !== 'Enter' || e.ctrlKey) return
+                                const code = searchTerm.trim().toLowerCase()
+                                const match = code && products.find(p => String(p.code).toLowerCase() === code)
+                                if (match) {
+                                    e.preventDefault()
+                                    handleAddToCart(match)
+                                    setSearchTerm('')
+                                }
+                            }}
                             className="w-full pl-12 pr-4 py-3 text-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white border-none rounded-xl focus:ring-2 focus:ring-primary shadow-inner placeholder:text-gray-400"
                         />
                         {searchTerm && (
