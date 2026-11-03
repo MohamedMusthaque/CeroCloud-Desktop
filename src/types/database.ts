@@ -170,6 +170,31 @@ export interface CapitalEntry extends AuditFields {
     settled?: number
 }
 
+// Goods Received Note: goods bought from a client (the reverse of a bill)
+export interface GoodsReceiptItem {
+    id?: number
+    receipt_id?: number
+    product_id: number
+    product_code?: string
+    product_name?: string
+    quantity: number
+    unit_cost: number
+    subtotal: number
+}
+
+export interface GoodsReceipt extends AuditFields {
+    id?: number
+    // Registered client, or null for a walk-in seller (name only)
+    client_id?: number | null
+    client_name: string
+    receipt_date: string // Local day 'YYYY-MM-DD'
+    total: number
+    payment_method: string
+    status: 'completed' | 'cancelled'
+    notes?: string
+    items?: GoodsReceiptItem[]
+}
+
 export type PurchaseStatus = 'ordered' | 'received' | 'cancelled'
 
 export interface PurchaseItem {

@@ -37,11 +37,11 @@ import { productService } from '@/services/productService'
 import { saleService } from '@/services/saleService'
 import { pdfGenerator } from '@/services/pdfGenerator'
 import { companyService } from '@/services/companyService'
-import { CapitalEntry, Expense, Product, Purchase, Sale, SupplierAccount, SupplierPayment } from '@/types/database'
+import { CapitalEntry, Expense, GoodsReceipt, Product, Purchase, Sale, SupplierAccount, SupplierPayment } from '@/types/database'
 import { expenseService } from '@/services/expenseService'
 import { ProfitReport } from './ProfitReport'
 import { PurchasesReport } from './PurchasesReport'
-import { purchaseService, supplierAccountService, supplierPaymentService } from '@/services/purchaseService'
+import { goodsReceiptService, purchaseService, supplierAccountService, supplierPaymentService } from '@/services/purchaseService'
 import { capitalService } from '@/services/capitalService'
 import { format, subDays, startOfDay } from 'date-fns'
 import { ReportPeriodFilter } from './ReportPeriodFilter'
@@ -65,6 +65,7 @@ export function Reports() {
     const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([])
     const [supplierAccounts, setSupplierAccounts] = useState<SupplierAccount[]>([])
     const [capitalEntries, setCapitalEntries] = useState<CapitalEntry[]>([])
+    const [goodsReceipts, setGoodsReceipts] = useState<GoodsReceipt[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'sales' | 'profit' | 'purchases' | 'inventory' | 'export' | 'transactions'>('sales')
     const [settings] = useState(companyService.getSettings())
@@ -168,14 +169,15 @@ export function Reports() {
     const loadData = async () => {
         try {
             setLoading(true)
-            const [productsData, salesData, expensesData, purchasesData, paymentsData, accountsData, capitalData] = await Promise.all([
+            const [productsData, salesData, expensesData, purchasesData, paymentsData, accountsData, capitalData, receiptsData] = await Promise.all([
                 productService.getAll(),
                 saleService.getAll(),
                 expenseService.getAll(),
                 purchaseService.getAll(),
                 supplierPaymentService.getAll(),
                 supplierAccountService.getAll(),
-                capitalService.getAll()
+                capitalService.getAll(),
+                goodsReceiptService.getAll()
             ])
             setProducts(productsData)
             setSales(salesData)
@@ -184,6 +186,7 @@ export function Reports() {
             setSupplierPayments(paymentsData)
             setSupplierAccounts(accountsData)
             setCapitalEntries(capitalData)
+            setGoodsReceipts(receiptsData)
         } catch (error) {
             console.error('Error loading data:', error)
             // Non-reactive translate keeps the load function free of hook dependencies
@@ -476,7 +479,7 @@ export function Reports() {
                     )}
 
                     {activeTab === 'profit' && (
-                        <ProfitReport sales={sales} expenses={expenses} products={products} purchases={purchases} supplierPayments={supplierPayments} capitalEntries={capitalEntries} />
+                        <ProfitReport sales={sales} expenses={expenses} products={products} purchases={purchases} supplierPayments={supplierPayments} capitalEntries={capitalEntries} goodsReceipts={goodsReceipts} />
                     )}
 
                     {activeTab === 'purchases' && (

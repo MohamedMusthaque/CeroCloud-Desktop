@@ -104,6 +104,12 @@ interface ElectronAPI {
         cancel: (id: number) => Promise<UserResult<any>>
         delete: (id: number) => Promise<UserResult<void>>
     }
+    goodsReceipts: {
+        getAll: () => Promise<any[]>
+        getById: (id: number) => Promise<any>
+        create: (receipt: any) => Promise<UserResult<any>>
+        cancel: (id: number) => Promise<UserResult<any>>
+    }
     supplierPayments: {
         getAll: () => Promise<any[]>
         create: (payment: any) => Promise<UserResult<any>>

@@ -1,7 +1,7 @@
 import { ipcMain, app, dialog, shell, BrowserWindow } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, nextInternalBarcode, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, purchaseQueries, supplierPaymentQueries, supplierAccountQueries, supplierHasPurchases, PurchaseError, capitalQueries, CapitalError, type AuthUser, type Actor } from './database'
+import { productQueries, nextInternalBarcode, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, purchaseQueries, supplierPaymentQueries, supplierAccountQueries, supplierHasPurchases, goodsReceiptQueries, PurchaseError, capitalQueries, CapitalError, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
 import { AttachmentError, saveNicAttachment, openNicAttachment, deleteNicAttachment, readNicAttachment, restoreNicAttachment, sweepNicAttachments } from './attachments'
@@ -519,6 +519,14 @@ export function registerIpcHandlers() {
         withPurchaseAccess(actor => purchaseQueries.cancel(id, actor.username)))
     ipcMain.handle('purchases:delete', (_event, id: number) =>
         withPurchaseAccess(() => purchaseQueries.delete(id)))
+
+    // Goods Received Notes (goods bought from clients)
+    ipcMain.handle('goodsReceipts:getAll', () => goodsReceiptQueries.getAll())
+    ipcMain.handle('goodsReceipts:getById', (_event, id: number) => goodsReceiptQueries.getById(id) ?? null)
+    ipcMain.handle('goodsReceipts:create', (_event, input) =>
+        withPurchaseAccess(actor => goodsReceiptQueries.create(input ?? {}, actor.username)))
+    ipcMain.handle('goodsReceipts:cancel', (_event, id: number) =>
+        withPurchaseAccess(actor => goodsReceiptQueries.cancel(id, actor.username)))
 
     // Supplier payments and accounts
     ipcMain.handle('supplierPayments:getAll', () => supplierPaymentQueries.getAll())

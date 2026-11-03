@@ -2,36 +2,43 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { parseISO } from 'date-fns'
 import { motion } from 'framer-motion'
-import { Plus, Search, Eye, Edit2, Trash2, PackageCheck, ClipboardList, Wallet, Users, Clock, HandCoins, TrendingDown, Banknote, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
+import { Plus, Search, Eye, Edit2, Trash2, PackageCheck, ClipboardList, Wallet, Users, Clock, HandCoins, TrendingDown, Banknote, ArrowUpCircle, ArrowDownCircle, PackagePlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
 import { ViewModeToggle, type ViewMode } from '@/components/ui/ViewModeToggle'
-import { purchaseService, supplierAccountService, supplierPaymentService } from '@/services/purchaseService'
+import { goodsReceiptService, purchaseService, supplierAccountService, supplierPaymentService } from '@/services/purchaseService'
 import { supplierService } from '@/services/supplierService'
 import { productService } from '@/services/productService'
+import { clientService } from '@/services/clientService'
+import { companyService } from '@/services/companyService'
+import { pdfGenerator } from '@/services/pdfGenerator'
 import { cn, formatCurrency } from '@/lib/utils'
-import type { Product, Purchase, PurchaseStatus, Supplier, SupplierAccount, SupplierPayment, SupplierPaymentType } from '@/types/database'
+import type { Client, GoodsReceipt, Product, Purchase, PurchaseStatus, Supplier, SupplierAccount, SupplierPayment, SupplierPaymentType } from '@/types/database'
 import { PurchaseForm } from './PurchaseForm'
 import { ReceiveGoodsDialog } from './ReceiveGoodsDialog'
 import { SupplierPaymentForm, type SupplierPaymentPreset } from './SupplierPaymentForm'
+import { GoodsReceiptForm } from './GoodsReceiptForm'
+import { GoodsReceiptsList } from './GoodsReceiptsList'
 import { purchaseErrorMessage } from './purchaseErrors'
-import { STATUS_STYLES, statusLabel } from './purchaseUi'
+import { STATUS_STYLES, grnId, statusLabel } from './purchaseUi'
 
-type Section = 'orders' | 'payments' | 'accounts'
+type Section = 'orders' | 'grn' | 'payments' | 'accounts'
 
 export function Purchases() {
     const { t, locale } = useTranslation()
     const [section, setSection] = useState<Section>('orders')
     // Each tab remembers its own layout
-    const [views, setViews] = useState<Record<Section, ViewMode>>({ orders: 'list', payments: 'list', accounts: 'list' })
+    const [views, setViews] = useState<Record<Section, ViewMode>>({ orders: 'list', grn: 'list', payments: 'list', accounts: 'list' })
     const [orders, setOrders] = useState<Purchase[]>([])
     const [payments, setPayments] = useState<SupplierPayment[]>([])
     const [accounts, setAccounts] = useState<SupplierAccount[]>([])
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
     const [products, setProducts] = useState<Product[]>([])
+    const [receipts, setReceipts] = useState<GoodsReceipt[]>([])
+    const [clients, setClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(true)
 
     // Filters
@@ -49,21 +56,25 @@ export function Purchases() {
     const [paymentOpen, setPaymentOpen] = useState(false)
     const [paymentPreset, setPaymentPreset] = useState<SupplierPaymentPreset>({})
     const [toCancel, setToCancel] = useState<Purchase | null>(null)
+    const [grnFormOpen, setGrnFormOpen] = useState(false)
+    const [receiptToCancel, setReceiptToCancel] = useState<GoodsReceipt | null>(null)
     const [toDelete, setToDelete] = useState<Purchase | null>(null)
     const [paymentToDelete, setPaymentToDelete] = useState<SupplierPayment | null>(null)
 
     const loadData = useCallback(async () => {
         try {
             setLoading(true)
-            const [orderData, paymentData, accountData, supplierData, productData] = await Promise.all([
+            const [orderData, paymentData, accountData, supplierData, productData, receiptData, clientData] = await Promise.all([
                 purchaseService.getAll(), supplierPaymentService.getAll(), supplierAccountService.getAll(),
-                supplierService.getAll(), productService.getAll()
+                supplierService.getAll(), productService.getAll(), goodsReceiptService.getAll(), clientService.getAll()
             ])
             setOrders(orderData)
             setPayments(paymentData)
             setAccounts(accountData)
             setSuppliers(supplierData)
             setProducts(productData)
+            setReceipts(receiptData)
+            setClients(clientData)
         } catch (error) {
             console.error('Error loading purchases:', error)
             toast.error(t('pur.loadError'))
@@ -111,6 +122,18 @@ export function Purchases() {
         (!term || supplierName(a.supplier_id).toLowerCase().includes(term))
     ), [accounts, supplierFilter, term, supplierName])
 
+    const filteredReceipts = useMemo(() => receipts.filter(r =>
+        (!fromDate || r.receipt_date >= fromDate) && (!toDate || r.receipt_date <= toDate) &&
+        (!term || `grn-${grnId(r.id)}`.includes(term) || `#${r.id}`.includes(term) || r.client_name.toLowerCase().includes(term) ||
+            r.notes?.toLowerCase().includes(term) || r.items?.some(i => i.product_name?.toLowerCase().includes(term)))
+    ), [receipts, fromDate, toDate, term])
+
+    const printReceipt = (receipt: GoodsReceipt) => {
+        toast.promise(pdfGenerator.generateGoodsReceipt(receipt, companyService.getSettings()), {
+            loading: t('rep.export.generating'), success: t('rep.export.success'), error: t('rep.export.error')
+        })
+    }
+
     const hasFilters = !!(term || supplierFilter !== 'all' || statusFilter !== 'all' || typeFilter !== 'all' || fromDate || toDate)
     const clearFilters = () => {
         setSearchTerm('')
@@ -152,6 +175,13 @@ export function Purchases() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <button
+                        onClick={() => setGrnFormOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all font-medium"
+                    >
+                        <PackagePlus className="w-5 h-5" />
+                        {t('pur.newGrn')}
+                    </button>
+                    <button
                         onClick={() => openPayment()}
                         className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all font-medium"
                     >
@@ -180,6 +210,7 @@ export function Purchases() {
             <div className="flex flex-wrap p-1 bg-gray-100 dark:bg-gray-800 rounded-xl w-fit">
                 {([
                     { id: 'orders', label: t('pur.section.orders'), icon: ClipboardList },
+                    { id: 'grn', label: t('pur.section.grn'), icon: PackagePlus },
                     { id: 'payments', label: t('pur.section.payments'), icon: Banknote },
                     { id: 'accounts', label: t('pur.section.accounts'), icon: Users }
                 ] as const).map(tab => (
@@ -205,16 +236,18 @@ export function Purchases() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                         type="text"
-                        placeholder={section === 'orders' ? t('pur.searchOrders') : t('pur.searchPayments')}
+                        placeholder={section === 'orders' ? t('pur.searchOrders') : section === 'grn' ? t('grn.searchPlaceholder') : t('pur.searchPayments')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className={cn(filterInputClass, "w-full pl-10 pr-4 placeholder-gray-500")}
                     />
                 </div>
-                <select value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)} aria-label={t('pur.col.supplier')} className={filterInputClass}>
-                    <option value="all">{t('pur.allSuppliers')}</option>
-                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                {section !== 'grn' && (
+                    <select value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)} aria-label={t('pur.col.supplier')} className={filterInputClass}>
+                        <option value="all">{t('pur.allSuppliers')}</option>
+                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                )}
                 {section === 'orders' && (
                     <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | PurchaseStatus)} aria-label={t('pur.col.status')} className={filterInputClass}>
                         <option value="all">{t('pur.allStatuses')}</option>
@@ -338,6 +371,18 @@ export function Purchases() {
                         </tbody>
                     </TableCard>
                 )
+            ) : section === 'grn' ? (
+                filteredReceipts.length === 0 ? (
+                    <EmptyState icon={PackagePlus} title={receipts.length === 0 ? t('grn.empty') : t('grn.noResults')} description={receipts.length === 0 ? t('grn.emptyDesc') : undefined} />
+                ) : (
+                    <GoodsReceiptsList
+                        receipts={filteredReceipts}
+                        viewMode={views.grn}
+                        formatDay={formatDay}
+                        onPrint={printReceipt}
+                        onCancel={setReceiptToCancel}
+                    />
+                )
             ) : section === 'payments' ? (
                 filteredPayments.length === 0 ? (
                     <EmptyState icon={Banknote} title={payments.length === 0 ? t('pur.emptyPayments') : t('pur.noPaymentResults')} description={payments.length === 0 ? t('pur.emptyPaymentsDesc') : undefined} />
@@ -429,6 +474,24 @@ export function Purchases() {
                     </tbody>
                 </TableCard>
             )}
+
+            <GoodsReceiptForm
+                isOpen={grnFormOpen}
+                clients={clients}
+                products={products}
+                onClose={() => setGrnFormOpen(false)}
+                onSaved={() => { setSection('grn'); loadData() }}
+            />
+
+            <ConfirmDialog
+                isOpen={!!receiptToCancel}
+                title={t('grn.cancelTitle')}
+                description={t('grn.cancelDesc', { number: t('grn.number', { id: grnId(receiptToCancel?.id) }) })}
+                confirmText={t('grn.cancelConfirm')}
+                variant="danger"
+                onConfirm={() => { const id = receiptToCancel!.id!; setReceiptToCancel(null); runAction(() => goodsReceiptService.cancel(id), t('grn.cancelled')) }}
+                onCancel={() => setReceiptToCancel(null)}
+            />
 
             <PurchaseForm
                 isOpen={formOpen}

@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import type { CapitalEntry, Expense, Product, Purchase, Sale, SaleItem, SupplierPayment } from '@/types/database'
+import type { CapitalEntry, Expense, GoodsReceipt, Product, Purchase, Sale, SaleItem, SupplierPayment } from '@/types/database'
 
 // Profit from the bills (sales), other income and the recorded expenses:
 //   net sales      = bill subtotals − discounts (tax excluded: it is owed, not earned)
@@ -158,12 +158,14 @@ export interface CashFlowSummary {
     expensesPaid: number
     paidToSuppliers: number
     refundsFromSuppliers: number
+    // Goods bought from clients (Goods Received Notes)
+    paidToClients: number
     netCashFlow: number
     // Value of supplier goods that arrived in the period (stock bought)
     goodsReceived: number
 }
 
-export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: Purchase[], payments: SupplierPayment[], capitalEntries: CapitalEntry[], period: ProfitPeriod = {}): CashFlowSummary {
+export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: Purchase[], payments: SupplierPayment[], capitalEntries: CapitalEntry[], goodsReceipts: GoodsReceipt[], period: ProfitPeriod = {}): CashFlowSummary {
     let salesCollected = 0, creditSales = 0
     for (const sale of sales) {
         if (!isCountedSale(sale, period)) continue
@@ -193,6 +195,9 @@ export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: P
             else if (entry.form === 'pledge') capitalAdded += settlement.amount
         }
     }
+    const paidToClients = goodsReceipts
+        .filter(r => r.status === 'completed' && inPeriod(r.receipt_date, period))
+        .reduce((sum, r) => sum + r.total, 0)
     const goodsReceived = purchases
         .filter(o => o.status === 'received' && !!o.received_date && inPeriod(o.received_date, period))
         .reduce((sum, o) => sum + o.total, 0)
@@ -207,7 +212,8 @@ export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: P
         expensesPaid,
         paidToSuppliers,
         refundsFromSuppliers,
-        netCashFlow: salesCollected + otherIncome + capitalAdded - loanRepayments - ownerWithdrawals - expensesPaid - paidToSuppliers + refundsFromSuppliers,
+        paidToClients,
+        netCashFlow: salesCollected + otherIncome + capitalAdded - loanRepayments - ownerWithdrawals - expensesPaid - paidToSuppliers + refundsFromSuppliers - paidToClients,
         goodsReceived
     }
 }

@@ -205,6 +205,7 @@ export const reports: Record<keyof typeof es, string> = {
     'profit.cash.expenses': 'Expenses paid',
     'profit.cash.paidToSuppliers': 'Paid to suppliers',
     'profit.cash.refunds': 'Refunds from suppliers',
+    'profit.cash.paidToClients': 'Paid to clients for goods',
     'profit.cash.net': 'Net cash flow',
     'profit.cash.creditSales': 'Credit sales not yet collected: {amount}',
     'profit.cash.goodsReceived': 'Goods received from suppliers: {amount}',

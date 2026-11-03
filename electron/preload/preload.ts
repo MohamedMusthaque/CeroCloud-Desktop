@@ -116,6 +116,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
         delete: (id: number) => ipcRenderer.invoke('purchases:delete', id),
     },
 
+    // Goods Received Notes (goods bought from clients)
+    goodsReceipts: {
+        getAll: () => ipcRenderer.invoke('goodsReceipts:getAll'),
+        getById: (id: number) => ipcRenderer.invoke('goodsReceipts:getById', id),
+        create: (receipt: any) => ipcRenderer.invoke('goodsReceipts:create', receipt),
+        cancel: (id: number) => ipcRenderer.invoke('goodsReceipts:cancel', id),
+    },
+
     // Supplier payments and running accounts
     supplierPayments: {
         getAll: () => ipcRenderer.invoke('supplierPayments:getAll'),

@@ -12,6 +12,9 @@ export const statusLabel = (status: PurchaseStatus, t: (key: TranslationKey) => 
 
 export const roundMoney = (value: number) => Math.round(value * 100) / 100 + 0
 
+// GRN numbers are zero-padded like bill numbers (GRN-000012)
+export const grnId = (id?: number) => String(id ?? '').padStart(6, '0')
+
 // What happens when goods worth `goodsValue` arrive for an order (same rule as the main process):
 // the order's own advance plus any free credit with the supplier pays for them first
 export function settlementFor(advance: number, account: SupplierAccount | null, goodsValue: number) {

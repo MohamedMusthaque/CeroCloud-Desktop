@@ -48,6 +48,7 @@ export const exportTexts = {
     'export.file.reportExpenses': 'Gastos',
     'export.file.reportSupplierPayments': 'Pagos_Proveedores',
     'export.file.reportCapital': 'Capital_Ingresos',
+    'export.file.grn': 'Nota_Recepcion',
     'export.file.report': 'Reporte',
 
     // Invoice PDF

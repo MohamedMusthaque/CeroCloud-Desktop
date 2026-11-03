@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useTranslation } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { computeProfit, computeProductProfit, computeCashFlow, type ProfitPeriod } from '@/lib/profit'
-import type { CapitalEntry, Expense, Product, Purchase, Sale, SupplierPayment } from '@/types/database'
+import type { CapitalEntry, Expense, GoodsReceipt, Product, Purchase, Sale, SupplierPayment } from '@/types/database'
 import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
 
 type PeriodPreset = 'thisMonth' | 'lastMonth' | 'thisYear' | 'all' | 'custom'
@@ -41,9 +41,10 @@ interface ProfitReportProps {
     purchases: Purchase[]
     supplierPayments: SupplierPayment[]
     capitalEntries: CapitalEntry[]
+    goodsReceipts: GoodsReceipt[]
 }
 
-export function ProfitReport({ sales, expenses, products, purchases, supplierPayments, capitalEntries }: ProfitReportProps) {
+export function ProfitReport({ sales, expenses, products, purchases, supplierPayments, capitalEntries, goodsReceipts }: ProfitReportProps) {
     const { t, dateLocale } = useTranslation()
     const [preset, setPreset] = useState<PeriodPreset>('thisMonth')
     const [custom, setCustom] = useState<ProfitPeriod>({})
@@ -51,7 +52,7 @@ export function ProfitReport({ sales, expenses, products, purchases, supplierPay
     const period = useMemo(() => presetPeriod(preset, custom), [preset, custom])
     const summary = useMemo(() => computeProfit(sales, expenses, products, period, capitalEntries), [sales, expenses, products, period, capitalEntries])
     const productProfit = useMemo(() => computeProductProfit(sales, products, period), [sales, products, period])
-    const cashFlow = useMemo(() => computeCashFlow(sales, expenses, purchases, supplierPayments, capitalEntries, period), [sales, expenses, purchases, supplierPayments, capitalEntries, period])
+    const cashFlow = useMemo(() => computeCashFlow(sales, expenses, purchases, supplierPayments, capitalEntries, goodsReceipts, period), [sales, expenses, purchases, supplierPayments, capitalEntries, goodsReceipts, period])
 
     // Last 6 months, independent of the selected period
     const trend = useMemo(() => Array.from({ length: 6 }, (_, i) => {
@@ -210,7 +211,8 @@ export function ProfitReport({ sales, expenses, products, purchases, supplierPay
                             { label: t('profit.cash.withdrawals'), amount: cashFlow.ownerWithdrawals, sign: '−' },
                             { label: t('profit.cash.expenses'), amount: cashFlow.expensesPaid, sign: '−' },
                             { label: t('profit.cash.paidToSuppliers'), amount: cashFlow.paidToSuppliers, sign: '−' },
-                            { label: t('profit.cash.refunds'), amount: cashFlow.refundsFromSuppliers, sign: '+' }
+                            { label: t('profit.cash.refunds'), amount: cashFlow.refundsFromSuppliers, sign: '+' },
+                            { label: t('profit.cash.paidToClients'), amount: cashFlow.paidToClients, sign: '−' }
                         ].map(line => (
                             <div key={line.label} className="flex items-center justify-between py-2.5">
                                 <dt className="text-sm text-gray-500 dark:text-gray-400 pl-4">{line.label}</dt>

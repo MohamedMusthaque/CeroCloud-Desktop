@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createRoot } from 'react-dom/client'
-import { Sale, CompanySettings } from '@/types/database'
+import { Sale, CompanySettings, GoodsReceipt } from '@/types/database'
 import { InvoiceTemplate } from '@/components/print/InvoiceTemplate'
+import { GoodsReceiptTemplate } from '@/components/print/GoodsReceiptTemplate'
 import { ReportTemplate } from '@/components/print/ReportTemplate'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -93,6 +94,54 @@ export const pdfGenerator = {
             if (document.body.contains(container)) {
                 document.body.removeChild(container)
             }
+        }
+    },
+
+    // Goods Received Note (goods bought from a client), same paper size as the bill
+    generateGoodsReceipt: async (receipt: GoodsReceipt, settings: CompanySettings) => {
+        let client: any
+        if (receipt.client_id) {
+            try {
+                client = await clientService.getById(receipt.client_id)
+            } catch (error) {
+                console.warn('Error fetching client details:', error)
+            }
+        }
+
+        const container = document.createElement('div')
+        container.style.position = 'absolute'
+        container.style.left = '-9999px'
+        container.style.top = '0'
+        document.body.appendChild(container)
+
+        const root = createRoot(container)
+        try {
+            await new Promise<void>((resolve) => {
+                root.render(
+                    <div className="pdf-container">
+                        <GoodsReceiptTemplate receipt={receipt} settings={settings} client={client} />
+                    </div>
+                )
+                // Give it a moment to paint and load images
+                setTimeout(resolve, 800)
+            })
+
+            const element = container.querySelector('#grn-template') as HTMLElement
+            if (!element) throw new Error('Template element not found')
+
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+            const isTicket = settings.invoice?.paperSize === 'ticket80mm'
+            const pdfWidth = isTicket ? 80 : 210
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: isTicket ? [pdfWidth, pdfHeight] : 'a4' })
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight)
+            pdf.save(`${t('export.file.grn')}_${receipt.id}_${receipt.receipt_date}.pdf`)
+        } catch (error) {
+            console.error('Error generating GRN PDF:', error)
+            throw error
+        } finally {
+            root.unmount()
+            if (document.body.contains(container)) document.body.removeChild(container)
         }
     },
 

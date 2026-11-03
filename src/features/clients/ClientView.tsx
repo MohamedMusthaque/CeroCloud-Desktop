@@ -1,17 +1,19 @@
 import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Info, ShoppingBag, DollarSign, CalendarDays, CreditCard, FileText, Phone, Mail, MapPin, Contact, Receipt, StickyNote } from 'lucide-react'
+import { Info, ShoppingBag, DollarSign, CalendarDays, CreditCard, FileText, Phone, Mail, MapPin, Contact, Receipt, StickyNote, PackagePlus } from 'lucide-react'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { clientService, type Client } from '@/services/clientService'
 import { saleService } from '@/services/saleService'
-import type { Sale } from '@/types/database'
+import { goodsReceiptService } from '@/services/purchaseService'
+import type { GoodsReceipt, Sale } from '@/types/database'
 import {
     ViewHeader, ViewAvatar, ViewBadge, ViewSection, ViewFields, ViewField, ViewAudit, ViewStat,
-    ViewTable, ViewSaleStatus, ViewNic, ViewLoading, ViewNotFound, viewCellClass, viewLinkClass
+    ViewTable, ViewLink, ViewSaleStatus, ViewNic, ViewLoading, ViewNotFound, viewCellClass, viewLinkClass
 } from '@/components/view/ViewPage'
 import { useRecord, parseId } from '@/components/view/useRecord'
 import { ClientForm } from './ClientForm'
+import { grnId } from '@/features/purchases/purchaseUi'
 
 // Most recent purchases listed on the page; the stats still cover every purchase
 const SALES_SHOWN = 50
@@ -20,6 +22,8 @@ interface ClientRecord {
     client: Client
     sales: Sale[]
     creditUsed: number
+    // Goods Received Notes: goods this client sold to the business
+    receipts: GoodsReceipt[]
 }
 
 export function ClientView() {
@@ -32,11 +36,12 @@ export function ClientView() {
         const client = await clientService.getById(clientId)
         if (!client) return null
         // Same source as the purchase history on the clients list (sales under the client's name)
-        const [sales, creditUsed] = await Promise.all([
+        const [sales, creditUsed, receipts] = await Promise.all([
             saleService.getByCustomerName(client.name),
-            clientService.getCreditBalance(clientId)
+            clientService.getCreditBalance(clientId),
+            goodsReceiptService.getAll()
         ])
-        return { client, sales, creditUsed }
+        return { client, sales, creditUsed, receipts: receipts.filter(r => r.client_id === clientId) }
     }, [clientId])
     const { data, loading, reload } = useRecord(load)
 
@@ -44,7 +49,7 @@ export function ClientView() {
     if (loading) return <ViewLoading />
     if (!data) return <ViewNotFound backTo="/clients" backLabel={backLabel} />
 
-    const { client, sales, creditUsed } = data
+    const { client, sales, creditUsed, receipts } = data
     const completed = sales.filter(s => s.status === 'completed')
     const totalSpent = completed.reduce((sum, s) => sum + s.total, 0)
     const lastPurchase = completed[0]?.created_at
@@ -119,6 +124,31 @@ export function ClientView() {
                             <td className={cn(viewCellClass, "whitespace-nowrap")}>{paymentMethodLabel(sale.payment_method)}</td>
                             <td className={cn(viewCellClass, "text-right font-bold text-gray-900 dark:text-white")}>{formatCurrency(sale.total)}</td>
                             <td className={viewCellClass}><ViewSaleStatus status={sale.status} /></td>
+                        </tr>
+                    ))}
+                </ViewTable>
+            </ViewSection>
+
+            <ViewSection title={t('grnView.clientSection')} icon={PackagePlus}>
+                <ViewTable
+                    columns={[
+                        { label: t('grn.col.number') }, { label: t('grn.col.date') }, { label: t('grn.col.items') },
+                        { label: t('grn.col.payment') }, { label: t('grn.col.total'), align: 'right' }, { label: t('grn.col.status') }
+                    ]}
+                    empty={receipts.length === 0 ? t('grnView.clientNone') : undefined}
+                >
+                    {receipts.map(receipt => (
+                        <tr key={receipt.id} className={cn(receipt.status === 'cancelled' && "opacity-60")}>
+                            <td className={cn(viewCellClass, "font-mono whitespace-nowrap")}>
+                                <ViewLink to={`/purchases/grn/${receipt.id}`} page="purchases">{t('grn.number', { id: grnId(receipt.id) })}</ViewLink>
+                            </td>
+                            <td className={cn(viewCellClass, "whitespace-nowrap")}>{new Date(`${receipt.receipt_date}T00:00:00`).toLocaleDateString(locale)}</td>
+                            <td className={cn(viewCellClass, "max-w-xs truncate")} title={receipt.items?.map(i => `${i.quantity} × ${i.product_name}`).join(', ')}>
+                                {receipt.items?.map(i => `${i.quantity} × ${i.product_name}`).join(', ')}
+                            </td>
+                            <td className={cn(viewCellClass, "whitespace-nowrap")}>{paymentMethodLabel(receipt.payment_method)}</td>
+                            <td className={cn(viewCellClass, "text-right font-bold text-gray-900 dark:text-white")}>{formatCurrency(receipt.total)}</td>
+                            <td className={viewCellClass}>{t(`grn.status.${receipt.status}`)}</td>
                         </tr>
                     ))}
                 </ViewTable>

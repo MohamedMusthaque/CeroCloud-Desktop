@@ -17,6 +17,7 @@ export const backupService = {
             const purchases = await Promise.all((await window.electronAPI.purchases.getAll()).map(p => window.electronAPI.purchases.getById(p.id)))
             const supplierPayments = await window.electronAPI.supplierPayments.getAll()
             const capitalEntries = await window.electronAPI.capital.getAll()
+            const goodsReceipts = await window.electronAPI.goodsReceipts.getAll()
 
             const backupData = {
                 version: '1.0',
@@ -33,6 +34,7 @@ export const backupService = {
                     purchases,
                     supplierPayments,
                     capitalEntries,
+                    goodsReceipts,
                 }
             }
 

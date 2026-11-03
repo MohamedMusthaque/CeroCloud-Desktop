@@ -203,6 +203,7 @@ export const reports = {
     'profit.cash.expenses': 'Gastos pagados',
     'profit.cash.paidToSuppliers': 'Pagado a proveedores',
     'profit.cash.refunds': 'Reembolsos de proveedores',
+    'profit.cash.paidToClients': 'Pagado a clientes por mercadería',
     'profit.cash.net': 'Flujo de caja neto',
     'profit.cash.creditSales': 'Ventas a crédito aún por cobrar: {amount}',
     'profit.cash.goodsReceived': 'Mercadería recibida de proveedores: {amount}',

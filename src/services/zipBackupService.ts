@@ -1,7 +1,7 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import { secureEncryptionService, arrayToBase64, base64ToArray } from './secureEncryptionService'
-import { Product, Category, Sale, Supplier, CompanySettings, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, Purchase, SupplierPayment, CapitalEntry } from '@/types/database'
+import { Product, Category, Sale, Supplier, CompanySettings, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, Purchase, SupplierPayment, CapitalEntry, GoodsReceipt } from '@/types/database'
 import { t } from '@/i18n'
 
 interface BackupMetadata {
@@ -34,6 +34,8 @@ interface BackupData {
     supplierPayments?: SupplierPayment[]
     // Absent in backups made before capital existed
     capitalEntries?: CapitalEntry[]
+    // Absent in backups made before Goods Received Notes existed
+    goodsReceipts?: GoodsReceipt[]
 }
 
 export const zipBackupService = {
@@ -64,6 +66,7 @@ export const zipBackupService = {
             const purchases = await Promise.all(purchaseList.map(p => window.electronAPI.purchases.getById(p.id!))) as Purchase[]
             const supplierPayments = await window.electronAPI.supplierPayments.getAll() as SupplierPayment[]
             const capitalEntries = await window.electronAPI.capital.getAll() as CapitalEntry[]
+            const goodsReceipts = await window.electronAPI.goodsReceipts.getAll() as GoodsReceipt[]
 
             // Get the settings 
             const settingsStr = localStorage.getItem('companySettings')
@@ -102,7 +105,8 @@ export const zipBackupService = {
                 savingsTransactions,
                 purchases,
                 supplierPayments,
-                capitalEntries
+                capitalEntries,
+                goodsReceipts
             }
             const databaseJson = JSON.stringify(databaseData, null, 2)
             const databaseContent = password

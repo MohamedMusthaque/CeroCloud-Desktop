@@ -3,7 +3,7 @@ import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
 import crypto from 'crypto'
-import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES, Purchase, PurchaseItem, SupplierPayment, SupplierAccount, CapitalEntry, CapitalItem, CapitalSettlement, CAPITAL_ENTRY_TYPES, CAPITAL_FORMS } from '../../src/types/database'
+import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES, Purchase, PurchaseItem, SupplierPayment, SupplierAccount, CapitalEntry, CapitalItem, CapitalSettlement, CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, GoodsReceipt, GoodsReceiptItem } from '../../src/types/database'
 import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
 // Database setup: opened by initializeDatabase() once the data folder is known (see dataLocation.ts)
@@ -473,6 +473,37 @@ function initSchema() {
         FOREIGN KEY (entry_id) REFERENCES capital_entries(id) ON DELETE CASCADE
     )`)
 
+  // Table: Goods Received Notes (goods bought from clients)
+  // (client_id has no foreign key: a restore can replace clients while keeping these)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS goods_receipts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER,
+        client_name TEXT NOT NULL,
+        receipt_date TEXT NOT NULL,
+        total REAL NOT NULL DEFAULT 0,
+        payment_method TEXT,
+        status TEXT NOT NULL DEFAULT 'completed',
+        notes TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT
+    )`)
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS goods_receipt_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        receipt_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        product_code TEXT,
+        product_name TEXT,
+        quantity REAL NOT NULL,
+        unit_cost REAL NOT NULL,
+        subtotal REAL NOT NULL,
+        FOREIGN KEY (receipt_id) REFERENCES goods_receipts(id) ON DELETE CASCADE
+    )`)
+
   // Table: users (local login)
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -532,6 +563,8 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_capital_entries_date ON capital_entries(entry_date);
     CREATE INDEX IF NOT EXISTS idx_capital_items_entry_id ON capital_items(entry_id);
     CREATE INDEX IF NOT EXISTS idx_capital_settlements_entry_id ON capital_settlements(entry_id);
+    CREATE INDEX IF NOT EXISTS idx_goods_receipts_client_id ON goods_receipts(client_id);
+    CREATE INDEX IF NOT EXISTS idx_goods_receipt_items_receipt_id ON goods_receipt_items(receipt_id);
   `)
 
   console.log('SQLite schema initialized.')
@@ -1758,7 +1791,7 @@ export const capitalQueries = {
 
 // Purchase errors; the UI translates the code
 export class PurchaseError extends Error {
-  constructor(public code: 'SUPPLIER_REQUIRED' | 'ITEMS_REQUIRED' | 'PRODUCT_REQUIRED' | 'QUANTITY_INVALID' | 'COST_INVALID' | 'DATE_INVALID' | 'AMOUNT_INVALID' | 'TYPE_INVALID' | 'NOT_EDITABLE' | 'HAS_PAYMENTS' | 'ORDER_INVALID' | 'REFUND_TOO_HIGH' | 'NOT_FOUND') {
+  constructor(public code: 'SUPPLIER_REQUIRED' | 'ITEMS_REQUIRED' | 'PRODUCT_REQUIRED' | 'QUANTITY_INVALID' | 'COST_INVALID' | 'DATE_INVALID' | 'AMOUNT_INVALID' | 'TYPE_INVALID' | 'NOT_EDITABLE' | 'HAS_PAYMENTS' | 'ORDER_INVALID' | 'REFUND_TOO_HIGH' | 'CLIENT_REQUIRED' | 'STOCK_USED' | 'NOT_FOUND') {
     super(code)
   }
 }
@@ -2030,6 +2063,103 @@ export const purchaseQueries = {
   }
 }
 
+// ==========================================
+// Goods Received Notes: goods bought from clients
+// ==========================================
+
+export interface GoodsReceiptInput {
+  // A registered client, or a walk-in seller's name
+  client_id?: number | null
+  client_name?: string
+  receipt_date?: string
+  payment_method?: string
+  notes?: string
+  items?: PurchaseItemInput[]
+  // Store the price paid as the product's cost
+  update_costs?: boolean
+}
+
+export const goodsReceiptQueries = {
+  // Newest first, each with its items
+  getAll: (): GoodsReceipt[] => {
+    const receipts = db.prepare('SELECT * FROM goods_receipts ORDER BY receipt_date DESC, id DESC').all() as GoodsReceipt[]
+    const items = db.prepare('SELECT * FROM goods_receipt_items ORDER BY id ASC').all() as GoodsReceiptItem[]
+    return receipts.map(receipt => ({ ...receipt, items: items.filter(i => i.receipt_id === receipt.id) }))
+  },
+
+  getById: (id: number): GoodsReceipt | undefined => {
+    const receipt = db.prepare('SELECT * FROM goods_receipts WHERE id = ?').get(id) as GoodsReceipt | undefined
+    if (!receipt) return undefined
+    return { ...receipt, items: db.prepare('SELECT * FROM goods_receipt_items WHERE receipt_id = ? ORDER BY id ASC').all(id) as GoodsReceiptItem[] }
+  },
+
+  // Goods arrive now: stock goes up and the client is paid
+  create: (input: GoodsReceiptInput, actor: Actor = null): GoodsReceipt => {
+    let clientId: number | null = null
+    let clientName = String(input.client_name ?? '').trim()
+    if (input.client_id) {
+      const client = db.prepare('SELECT id, name FROM clients WHERE id = ?').get(Number(input.client_id)) as { id: number; name: string } | undefined
+      if (!client) throw new PurchaseError('CLIENT_REQUIRED')
+      clientId = client.id
+      clientName = client.name
+    }
+    if (!clientName) throw new PurchaseError('CLIENT_REQUIRED')
+
+    const receiptDate = requireDay(input.receipt_date)
+    const items = normalizePurchaseItems(input.items).map(item => ({
+      product_id: item.product_id, product_code: item.product_code, product_name: item.product_name,
+      quantity: item.ordered_quantity, unit_cost: item.unit_cost,
+      subtotal: roundMoney(item.ordered_quantity * item.unit_cost)
+    }))
+    const total = roundMoney(items.reduce((sum, item) => sum + item.subtotal, 0))
+    if (total <= 0) throw new PurchaseError('AMOUNT_INVALID')
+    const now = new Date().toISOString()
+
+    const id = db.transaction(() => {
+      const info = db.prepare(`
+        INSERT INTO goods_receipts(client_id, client_name, receipt_date, total, payment_method, status, notes, created_at, created_by, updated_at, updated_by)
+        VALUES(@client_id, @client_name, @receipt_date, @total, @payment_method, 'completed', @notes, @now, @actor, @now, @actor)
+      `).run({
+        client_id: clientId, client_name: clientName, receipt_date: receiptDate, total,
+        payment_method: String(input.payment_method || 'cash'), notes: String(input.notes ?? '').trim(), now, actor
+      })
+      const receiptId = Number(info.lastInsertRowid)
+      const insertItem = db.prepare(`
+        INSERT INTO goods_receipt_items(receipt_id, product_id, product_code, product_name, quantity, unit_cost, subtotal)
+        VALUES(@receipt_id, @product_id, @product_code, @product_name, @quantity, @unit_cost, @subtotal)
+      `)
+      const addStock = db.prepare('UPDATE products SET stock = ROUND(stock + @qty, 3), updated_at = @now, updated_by = @actor WHERE id = @id')
+      const updateCost = db.prepare('UPDATE products SET cost = @cost WHERE id = @id')
+      for (const item of items) {
+        insertItem.run({ ...item, receipt_id: receiptId })
+        addStock.run({ id: item.product_id, qty: item.quantity, now, actor })
+        if (input.update_costs) updateCost.run({ id: item.product_id, cost: item.unit_cost })
+      }
+      return receiptId
+    })()
+    return goodsReceiptQueries.getById(id)!
+  },
+
+  // Like a bill, a GRN is cancelled rather than deleted; its goods leave stock again (refused once sold)
+  cancel: (id: number, actor: Actor = null): GoodsReceipt => {
+    const receipt = goodsReceiptQueries.getById(id)
+    if (!receipt) throw new PurchaseError('NOT_FOUND')
+    if (receipt.status !== 'completed') throw new PurchaseError('NOT_EDITABLE')
+    const getStock = db.prepare('SELECT stock FROM products WHERE id = ?')
+    for (const item of receipt.items ?? []) {
+      const product = getStock.get(item.product_id) as { stock: number } | undefined
+      if (product && product.stock < item.quantity) throw new PurchaseError('STOCK_USED')
+    }
+    const now = new Date().toISOString()
+    db.transaction(() => {
+      const removeStock = db.prepare('UPDATE products SET stock = ROUND(stock - @qty, 3), updated_at = @now, updated_by = @actor WHERE id = @id')
+      for (const item of receipt.items ?? []) removeStock.run({ id: item.product_id, qty: item.quantity, now, actor })
+      db.prepare("UPDATE goods_receipts SET status = 'cancelled', updated_at = ?, updated_by = ? WHERE id = ?").run(now, actor, id)
+    })()
+    return goodsReceiptQueries.getById(id)!
+  }
+}
+
 const SUPPLIER_PAYMENT_SELECT = `
   SELECT p.*, s.name AS supplier_name
   FROM supplier_payments p
@@ -2097,7 +2227,9 @@ export function restoreDatabase(data: any) {
       ...(hasCapital ? [] : ['capital_entries', 'capital_items', 'capital_settlements'])
     ]
 
-    // 1. Clear everything (purchases reference suppliers and products, which are always replaced)
+    // 1. Clear everything (purchases and GRNs reference suppliers, clients and products, which are always replaced)
+    db.prepare('DELETE FROM goods_receipt_items').run()
+    db.prepare('DELETE FROM goods_receipts').run()
     db.prepare('DELETE FROM supplier_payments').run()
     db.prepare('DELETE FROM purchase_items').run()
     db.prepare('DELETE FROM purchase_orders').run()
@@ -2262,6 +2394,31 @@ export function restoreDatabase(data: any) {
       }
     }
 
+    // 8a. Restore Goods Received Notes (stock already reflects them)
+    if (Array.isArray(data.goodsReceipts)) {
+      const insertReceipt = db.prepare(`
+        INSERT INTO goods_receipts(id, client_id, client_name, receipt_date, total, payment_method, status, notes, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @client_id, @client_name, @receipt_date, @total, @payment_method, @status, @notes, @created_at, @created_by, @updated_at, @updated_by)
+      `)
+      const insertReceiptItem = db.prepare(`
+        INSERT INTO goods_receipt_items(id, receipt_id, product_id, product_code, product_name, quantity, unit_cost, subtotal)
+        VALUES(@id, @receipt_id, @product_id, @product_code, @product_name, @quantity, @unit_cost, @subtotal)
+      `)
+      for (const r of data.goodsReceipts) {
+        insertReceipt.run({
+          id: r.id, client_id: r.client_id ?? null, client_name: r.client_name || '', receipt_date: r.receipt_date,
+          total: r.total || 0, payment_method: r.payment_method || 'cash', status: r.status || 'completed', notes: r.notes || '',
+          created_at: r.created_at || new Date().toISOString(), updated_at: r.updated_at ?? null, ...auditOf(r)
+        })
+        for (const i of r.items ?? []) {
+          insertReceiptItem.run({
+            id: i.id ?? null, receipt_id: r.id, product_id: i.product_id, product_code: i.product_code || '', product_name: i.product_name || '',
+            quantity: i.quantity, unit_cost: i.unit_cost || 0, subtotal: i.subtotal ?? roundMoney(i.quantity * (i.unit_cost || 0))
+          })
+        }
+      }
+    }
+
     // 8. Restore purchases and supplier payments (stock already reflects received goods)
     if (Array.isArray(data.purchases)) {
       const insertPurchase = db.prepare(`
@@ -2381,6 +2538,8 @@ export function getNicAttachmentNames(): Set<string> {
 // Deletes all business data; users (and their ID sequence) are kept so everyone can still sign in
 export function clearAll() {
   const clearTx = db.transaction(() => {
+    db.prepare('DELETE FROM goods_receipt_items').run()
+    db.prepare('DELETE FROM goods_receipts').run()
     db.prepare('DELETE FROM capital_settlements').run()
     db.prepare('DELETE FROM capital_items').run()
     db.prepare('DELETE FROM capital_entries').run()

@@ -1,4 +1,4 @@
-import type { Purchase, SupplierAccount, SupplierPayment, SupplierPaymentType } from '@/types/database'
+import type { GoodsReceipt, Purchase, SupplierAccount, SupplierPayment, SupplierPaymentType } from '@/types/database'
 
 // Errors carry the main-process code (e.g. 'REFUND_TOO_HIGH'); the UI translates it via `purError.<code>`
 export class PurchaseServiceError extends Error {
@@ -54,6 +54,27 @@ export const purchaseService = {
     cancel: (id: number): Promise<Purchase> => unwrap(window.electronAPI.purchases.cancel(id)),
     // Only orders without payments that haven't been received
     delete: (id: number): Promise<void> => unwrap(window.electronAPI.purchases.delete(id))
+}
+
+export interface GoodsReceiptInput {
+    client_id?: number | null
+    // Walk-in seller when there's no registered client
+    client_name?: string
+    receipt_date: string
+    payment_method: string
+    notes?: string
+    items: { product_id: number; quantity: number; unit_cost: number }[]
+    update_costs: boolean
+}
+
+// Goods Received Notes: goods bought from clients
+export const goodsReceiptService = {
+    // Newest first, with `items`
+    getAll: (): Promise<GoodsReceipt[]> => window.electronAPI.goodsReceipts.getAll(),
+    getById: (id: number): Promise<GoodsReceipt | null> => window.electronAPI.goodsReceipts.getById(id),
+    create: (input: GoodsReceiptInput): Promise<GoodsReceipt> => unwrap(window.electronAPI.goodsReceipts.create(input)),
+    // Takes the goods back out of stock; fails with STOCK_USED once they were sold
+    cancel: (id: number): Promise<GoodsReceipt> => unwrap(window.electronAPI.goodsReceipts.cancel(id))
 }
 
 export const supplierPaymentService = {
