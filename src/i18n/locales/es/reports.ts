@@ -219,4 +219,7 @@ export const reports = {
     'rep.export.grnTitle': 'Reporte de notas de recepción',
     'rep.export.grnSubtitle': 'Mercadería comprada a clientes',
     'rep.export.grnDesc': 'Generar un reporte de la mercadería comprada a clientes ({range}).',
+    'rep.export.stockTitle': 'Reporte de movimientos de stock',
+    'rep.export.stockSubtitle': 'Entradas y salidas de inventario',
+    'rep.export.stockDesc': 'Generar un reporte de cada cambio de stock: ventas, notas de recepción, mercadería de proveedores, capital y ajustes ({range}).',
 }

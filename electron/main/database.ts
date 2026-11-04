@@ -3,7 +3,7 @@ import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
 import crypto from 'crypto'
-import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES, Purchase, PurchaseItem, SupplierPayment, SupplierAccount, CapitalEntry, CapitalItem, CapitalSettlement, CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, GoodsReceipt, GoodsReceiptItem } from '../../src/types/database'
+import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES, Purchase, PurchaseItem, SupplierPayment, SupplierAccount, CapitalEntry, CapitalItem, CapitalSettlement, CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, GoodsReceipt, GoodsReceiptItem, InventoryLog } from '../../src/types/database'
 import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
 // Database setup: opened by initializeDatabase() once the data folder is known (see dataLocation.ts)
@@ -504,6 +504,28 @@ function initSchema() {
         FOREIGN KEY (receipt_id) REFERENCES goods_receipts(id) ON DELETE CASCADE
     )`)
 
+  // Table: inventory log (stock card): one row per stock change, with the stock before and after
+  // (product_id has no foreign key: the history stays when a product is deleted)
+  const hadInventoryLog = !!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'inventory_logs'").get()
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS inventory_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_id INTEGER NOT NULL,
+        product_code TEXT,
+        product_name TEXT,
+        movement_type TEXT NOT NULL,
+        quantity REAL NOT NULL,
+        stock_before REAL NOT NULL,
+        stock_after REAL NOT NULL,
+        reference_type TEXT,
+        reference_id INTEGER,
+        notes TEXT,
+        user TEXT,
+        created_at TEXT NOT NULL
+    )`)
+  // First run with the log: each product's card starts from its current stock
+  if (!hadInventoryLog) recordOpeningStock()
+
   // Table: users (local login)
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -565,6 +587,9 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_capital_settlements_entry_id ON capital_settlements(entry_id);
     CREATE INDEX IF NOT EXISTS idx_goods_receipts_client_id ON goods_receipts(client_id);
     CREATE INDEX IF NOT EXISTS idx_goods_receipt_items_receipt_id ON goods_receipt_items(receipt_id);
+    CREATE INDEX IF NOT EXISTS idx_inventory_logs_product_id ON inventory_logs(product_id);
+    CREATE INDEX IF NOT EXISTS idx_inventory_logs_created_at ON inventory_logs(created_at);
+    CREATE INDEX IF NOT EXISTS idx_inventory_logs_reference ON inventory_logs(reference_type, reference_id);
   `)
 
   console.log('SQLite schema initialized.')
@@ -749,6 +774,9 @@ export const productQueries = {
 
     const newId = Number(info.lastInsertRowid)
 
+    // A new product's stock is its first movement (an explicit ID is a restore, which brings its own history)
+    if (!product.id) logStockChange({ id: newId, code: product.code, name: product.name, stock: 0 }, Number(product.stock), 'initial', actor, audit.created_at)
+
     return { ...product, ...audit, id: newId }
   },
 
@@ -783,7 +811,8 @@ export const productQueries = {
         ...audit
       })
 
-      // Update log REMOVED
+      // Imports set the stock directly: the difference goes on the stock card
+      logStockChange(existing, Number(product.stock), 'import', actor, audit.updated_at)
 
       return {
         product: { ...existing, ...product, ...audit, id: existing.id },
@@ -806,15 +835,18 @@ export const productQueries = {
 
     const setClause = fields.map(field => `${field} = @${field} `).join(', ')
     const stmt = db.prepare(`UPDATE products SET ${setClause}, updated_at = @updated_at, updated_by = @updated_by WHERE id = @id`)
+    const before = fields.includes('stock') ? productQueries.getById(id) : undefined
+    const now = new Date().toISOString()
 
     stmt.run({
       ...productData,
       id,
-      updated_at: new Date().toISOString(),
+      updated_at: now,
       updated_by: actor
     })
 
-    // Stock adjustment log REMOVED
+    // A stock edited by hand is an adjustment on the stock card
+    if (before) logStockChange(before, Number(productData.stock), 'adjustment', actor, now)
 
     return productQueries.getById(id) || null
   },
@@ -1093,8 +1125,6 @@ export const saleQueries = {
          COALESCE(@unit_cost, (SELECT cost FROM products WHERE id = @product_id)), @subtotal)
             `)
 
-      const updateStock = db.prepare(`UPDATE products SET stock = ROUND(stock - @qty, 3) WHERE id = @id`)
-
       // A restore first brings back the products with their stock from the backup, then the sales.
       // That stock already reflects those sales, so deducting it again would count them twice.
       // So: a sale with an 'id' is a restore and leaves stock alone; only NEW sales (no id) deduct stock.
@@ -1115,8 +1145,7 @@ export const saleQueries = {
         })
 
         if (!isRestore) {
-          // Update stock
-          updateStock.run({ qty: roundQuantity(item.quantity), id: item.product_id })
+          moveStock({ productId: item.product_id, quantity: -item.quantity, type: 'sale', referenceId: saleId, notes: sale.customer_name || '', actor, now: createdAt })
         }
       }
 
@@ -1183,13 +1212,9 @@ export const cancelSale = (id: number, actor: Actor = null): Sale | null => {
       .run(new Date().toISOString(), actor, id)
 
     const items = db.prepare('SELECT * FROM sale_items WHERE sale_id = ?').all(id) as SaleItem[]
-    const updateStock = db.prepare('UPDATE products SET stock = ROUND(stock + @qty, 3) WHERE id = @id')
-
     for (const item of items) {
-
-
       // Restore stock
-      updateStock.run({ qty: item.quantity, id: item.product_id })
+      moveStock({ productId: item.product_id, quantity: item.quantity, type: 'sale_cancel', referenceId: id, notes: sale.customer_name || '', actor })
     }
 
     return db.prepare('SELECT * FROM sales WHERE id = ?').get(id) as Sale
@@ -1673,11 +1698,10 @@ export const capitalQueries = {
         INSERT INTO capital_items(entry_id, product_id, product_code, product_name, quantity, unit_cost)
         VALUES(@entry_id, @product_id, @product_code, @product_name, @quantity, @unit_cost)
       `)
-      const addStock = db.prepare('UPDATE products SET stock = ROUND(stock + @qty, 3), updated_at = @now, updated_by = @actor WHERE id = @id')
       const updateCost = db.prepare('UPDATE products SET cost = @cost WHERE id = @id')
       for (const item of items) {
         insertItem.run({ ...item, entry_id: entryId })
-        addStock.run({ id: item.product_id, qty: item.quantity, now, actor })
+        moveStock({ productId: item.product_id, quantity: item.quantity, type: 'capital', referenceId: entryId, notes: values.source, actor, now, touch: true })
         if (input.update_costs) updateCost.run({ id: item.product_id, cost: item.unit_cost })
       }
 
@@ -1732,7 +1756,7 @@ export const capitalQueries = {
   },
 
   // Goods are taken back out of stock; refused when they were already sold or the supplier was paid
-  delete: (id: number): void => {
+  delete: (id: number, actor: Actor = null): void => {
     const existing = capitalQueries.getById(id)
     if (!existing) throw new CapitalError('NOT_FOUND')
     if (existing.settlements?.length) throw new CapitalError('HAS_SETTLEMENTS')
@@ -1746,8 +1770,9 @@ export const capitalQueries = {
     }
 
     db.transaction(() => {
-      const removeStock = db.prepare('UPDATE products SET stock = ROUND(stock - @qty, 3) WHERE id = @id')
-      for (const item of existing.items ?? []) removeStock.run({ id: item.product_id, qty: item.quantity })
+      for (const item of existing.items ?? []) {
+        moveStock({ productId: item.product_id, quantity: -item.quantity, type: 'capital_delete', referenceId: id, notes: existing.source ?? '', actor })
+      }
       if (existing.purchase_id) {
         db.prepare('DELETE FROM purchase_items WHERE purchase_id = ?').run(existing.purchase_id)
         db.prepare('DELETE FROM purchase_orders WHERE id = ?').run(existing.purchase_id)
@@ -2025,13 +2050,12 @@ export const purchaseQueries = {
 
     db.transaction(() => {
       const updateItem = db.prepare('UPDATE purchase_items SET received_quantity = @received_quantity, unit_cost = @unit_cost WHERE id = @id')
-      const addStock = db.prepare('UPDATE products SET stock = ROUND(stock + @qty, 3), updated_at = @now, updated_by = @actor WHERE id = @id')
       const updateCost = db.prepare('UPDATE products SET cost = @cost WHERE id = @id')
       const now = new Date().toISOString()
       for (const item of items) {
         updateItem.run({ id: item.id, received_quantity: item.received_quantity, unit_cost: item.unit_cost })
         if (item.received_quantity > 0) {
-          addStock.run({ id: item.product_id, qty: item.received_quantity, now, actor })
+          moveStock({ productId: item.product_id, quantity: item.received_quantity, type: 'purchase', referenceId: id, notes: order.supplier_name ?? '', actor, now, touch: true })
           if (input.update_costs) updateCost.run({ id: item.product_id, cost: item.unit_cost })
         }
       }
@@ -2128,11 +2152,10 @@ export const goodsReceiptQueries = {
         INSERT INTO goods_receipt_items(receipt_id, product_id, product_code, product_name, quantity, unit_cost, subtotal)
         VALUES(@receipt_id, @product_id, @product_code, @product_name, @quantity, @unit_cost, @subtotal)
       `)
-      const addStock = db.prepare('UPDATE products SET stock = ROUND(stock + @qty, 3), updated_at = @now, updated_by = @actor WHERE id = @id')
       const updateCost = db.prepare('UPDATE products SET cost = @cost WHERE id = @id')
       for (const item of items) {
         insertItem.run({ ...item, receipt_id: receiptId })
-        addStock.run({ id: item.product_id, qty: item.quantity, now, actor })
+        moveStock({ productId: item.product_id, quantity: item.quantity, type: 'grn', referenceId: receiptId, notes: clientName, actor, now, touch: true })
         if (input.update_costs) updateCost.run({ id: item.product_id, cost: item.unit_cost })
       }
       return receiptId
@@ -2152,8 +2175,9 @@ export const goodsReceiptQueries = {
     }
     const now = new Date().toISOString()
     db.transaction(() => {
-      const removeStock = db.prepare('UPDATE products SET stock = ROUND(stock - @qty, 3), updated_at = @now, updated_by = @actor WHERE id = @id')
-      for (const item of receipt.items ?? []) removeStock.run({ id: item.product_id, qty: item.quantity, now, actor })
+      for (const item of receipt.items ?? []) {
+        moveStock({ productId: item.product_id, quantity: -item.quantity, type: 'grn_cancel', referenceId: id, notes: receipt.client_name, actor, now, touch: true })
+      }
       db.prepare("UPDATE goods_receipts SET status = 'cancelled', updated_at = ?, updated_by = ? WHERE id = ?").run(now, actor, id)
     })()
     return goodsReceiptQueries.getById(id)!
@@ -2210,7 +2234,102 @@ export const supplierPaymentQueries = {
 // Inventory logs (stock card / traceability)
 // ==========================================
 
-// Inventory logs REMOVED
+export type StockMovementType =
+  | 'opening' | 'initial' | 'adjustment' | 'import'
+  | 'sale' | 'sale_cancel' | 'purchase' | 'grn' | 'grn_cancel' | 'capital' | 'capital_delete'
+
+// The record each movement points to
+const MOVEMENT_REFERENCE: Record<StockMovementType, string> = {
+  opening: 'product', initial: 'product', adjustment: 'product', import: 'product',
+  sale: 'sale', sale_cancel: 'sale', purchase: 'purchase', grn: 'grn', grn_cancel: 'grn',
+  capital: 'capital', capital_delete: 'capital'
+}
+
+interface StockMove {
+  productId: number
+  // Positive = stock in, negative = stock out
+  quantity: number
+  type: StockMovementType
+  referenceId?: number | null
+  notes?: string
+  actor?: Actor
+  now?: string
+  // Also stamp the product as updated
+  touch?: boolean
+}
+
+type StockProduct = { id?: number; code?: string; name?: string; stock: number }
+
+function insertStockLog(product: StockProduct, before: number, after: number, move: Omit<StockMove, 'productId' | 'quantity'>) {
+  db.prepare(`
+    INSERT INTO inventory_logs(product_id, product_code, product_name, movement_type, quantity, stock_before, stock_after, reference_type, reference_id, notes, user, created_at)
+    VALUES(@product_id, @product_code, @product_name, @movement_type, @quantity, @stock_before, @stock_after, @reference_type, @reference_id, @notes, @user, @created_at)
+  `).run({
+    product_id: product.id, product_code: product.code ?? '', product_name: product.name ?? '',
+    movement_type: move.type, quantity: roundQuantity(after - before), stock_before: before, stock_after: after,
+    reference_type: MOVEMENT_REFERENCE[move.type], reference_id: move.referenceId ?? product.id ?? null,
+    notes: move.notes ?? '', user: move.actor ?? null, created_at: move.now ?? new Date().toISOString()
+  })
+}
+
+// Changes a product's stock and records the movement on its stock card
+function moveStock(move: StockMove): void {
+  const quantity = roundQuantity(move.quantity)
+  if (quantity === 0) return
+  const product = db.prepare('SELECT id, code, name, stock FROM products WHERE id = ?').get(move.productId) as StockProduct | undefined
+  if (!product) return
+  const before = roundQuantity(Number(product.stock) || 0)
+  const after = roundQuantity(before + quantity)
+  const now = move.now ?? new Date().toISOString()
+  if (move.touch) {
+    db.prepare('UPDATE products SET stock = @after, updated_at = @now, updated_by = @actor WHERE id = @id').run({ id: product.id, after, now, actor: move.actor ?? null })
+  } else {
+    db.prepare('UPDATE products SET stock = @after WHERE id = @id').run({ id: product.id, after })
+  }
+  insertStockLog(product, before, after, { ...move, now })
+}
+
+// Records a stock that was set directly (product form, import) when it differs from the old one
+function logStockChange(product: StockProduct, newStock: number, type: StockMovementType, actor: Actor, now: string) {
+  if (!Number.isFinite(newStock)) return
+  const before = roundQuantity(Number(product.stock) || 0)
+  const after = roundQuantity(newStock)
+  if (before === after) return
+  insertStockLog(product, before, after, { type, referenceId: product.id, actor, now })
+}
+
+// Starts every product's stock card from its current stock (first run, or a restore of an older backup)
+function recordOpeningStock() {
+  db.prepare(`
+    INSERT INTO inventory_logs(product_id, product_code, product_name, movement_type, quantity, stock_before, stock_after, reference_type, reference_id, notes, user, created_at)
+    SELECT id, code, name, 'opening', stock, 0, stock, 'product', id, '', NULL, ? FROM products WHERE stock != 0
+  `).run(new Date().toISOString())
+}
+
+export const inventoryLogQueries = {
+  // Newest first
+  getAll: (): InventoryLog[] =>
+    db.prepare('SELECT * FROM inventory_logs ORDER BY created_at DESC, id DESC').all() as InventoryLog[],
+
+  getByProductId: (productId: number): InventoryLog[] =>
+    db.prepare('SELECT * FROM inventory_logs WHERE product_id = ? ORDER BY created_at DESC, id DESC').all(productId) as InventoryLog[],
+
+  getByMovementType: (type: string): InventoryLog[] =>
+    db.prepare('SELECT * FROM inventory_logs WHERE movement_type = ? ORDER BY created_at DESC, id DESC').all(type) as InventoryLog[],
+
+  // The movements a sale, order, GRN or capital entry caused
+  getByReference: (referenceType: string, referenceId: number): InventoryLog[] =>
+    db.prepare('SELECT * FROM inventory_logs WHERE reference_type = ? AND reference_id = ? ORDER BY id ASC').all(referenceType, referenceId) as InventoryLog[],
+
+  // ISO timestamps, both ends included
+  getByDateRange: (startDate: string, endDate: string): InventoryLog[] =>
+    db.prepare('SELECT * FROM inventory_logs WHERE created_at >= ? AND created_at <= ? ORDER BY created_at DESC, id DESC').all(startDate, endDate) as InventoryLog[],
+
+  getRecent: (limit: number = 50): InventoryLog[] =>
+    db.prepare('SELECT * FROM inventory_logs ORDER BY created_at DESC, id DESC LIMIT ?').all(limit) as InventoryLog[],
+
+  count: (): number => (db.prepare('SELECT COUNT(*) AS count FROM inventory_logs').get() as { count: number }).count
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function restoreDatabase(data: any) {
@@ -2228,6 +2347,7 @@ export function restoreDatabase(data: any) {
     ]
 
     // 1. Clear everything (purchases and GRNs reference suppliers, clients and products, which are always replaced)
+    db.prepare('DELETE FROM inventory_logs').run()
     db.prepare('DELETE FROM goods_receipt_items').run()
     db.prepare('DELETE FROM goods_receipts').run()
     db.prepare('DELETE FROM supplier_payments').run()
@@ -2520,6 +2640,24 @@ export function restoreDatabase(data: any) {
         }
       }
     }
+
+    // 10. Restore the stock cards; backups made before the log existed start them from the restored stock
+    if (Array.isArray(data.inventoryLogs)) {
+      const insertLog = db.prepare(`
+        INSERT INTO inventory_logs(id, product_id, product_code, product_name, movement_type, quantity, stock_before, stock_after, reference_type, reference_id, notes, user, created_at)
+        VALUES(@id, @product_id, @product_code, @product_name, @movement_type, @quantity, @stock_before, @stock_after, @reference_type, @reference_id, @notes, @user, @created_at)
+      `)
+      for (const l of data.inventoryLogs) {
+        insertLog.run({
+          id: l.id ?? null, product_id: l.product_id, product_code: l.product_code || '', product_name: l.product_name || '',
+          movement_type: l.movement_type, quantity: l.quantity, stock_before: l.stock_before, stock_after: l.stock_after,
+          reference_type: l.reference_type ?? null, reference_id: l.reference_id ?? null, notes: l.notes || '',
+          user: l.user ?? null, created_at: l.created_at || new Date().toISOString()
+        })
+      }
+    } else {
+      recordOpeningStock()
+    }
   })
 
   restoreTx()
@@ -2538,6 +2676,7 @@ export function getNicAttachmentNames(): Set<string> {
 // Deletes all business data; users (and their ID sequence) are kept so everyone can still sign in
 export function clearAll() {
   const clearTx = db.transaction(() => {
+    db.prepare('DELETE FROM inventory_logs').run()
     db.prepare('DELETE FROM goods_receipt_items').run()
     db.prepare('DELETE FROM goods_receipts').run()
     db.prepare('DELETE FROM capital_settlements').run()

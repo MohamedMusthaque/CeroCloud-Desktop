@@ -102,4 +102,5 @@ export const exportTexts = {
     'zipBackup.readFileError': 'Error al leer el archivo: {error}',
     'zipBackup.readBackupError': 'Error al leer el archivo de respaldo',
     'export.file.reportGrn': 'Reporte_Notas_Recepcion',
+    'export.file.reportStock': 'Movimientos_Stock',
 }

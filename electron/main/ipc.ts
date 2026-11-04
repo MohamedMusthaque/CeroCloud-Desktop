@@ -1,7 +1,7 @@
 import { ipcMain, app, dialog, shell, BrowserWindow } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { productQueries, nextInternalBarcode, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, purchaseQueries, supplierPaymentQueries, supplierAccountQueries, supplierHasPurchases, goodsReceiptQueries, PurchaseError, capitalQueries, CapitalError, type AuthUser, type Actor } from './database'
+import { productQueries, nextInternalBarcode, categoryQueries, CategoryError, saleQueries, supplierQueries, clientQueries, userQueries, UserError, cancelSale, clearAll, restoreDatabase, backupDatabaseTo, closeDatabase, getNicAttachmentNames, expenseQueries, expenseTypeQueries, ExpenseError, savingsAccountQueries, savingsTransactionQueries, SavingsError, purchaseQueries, supplierPaymentQueries, supplierAccountQueries, supplierHasPurchases, goodsReceiptQueries, inventoryLogQueries, PurchaseError, capitalQueries, CapitalError, type AuthUser, type Actor } from './database'
 import { canAccessPage } from '../../src/lib/permissions'
 import { logger } from './logger'
 import { AttachmentError, saveNicAttachment, openNicAttachment, deleteNicAttachment, readNicAttachment, restoreNicAttachment, sweepNicAttachments } from './attachments'
@@ -500,7 +500,7 @@ export function registerIpcHandlers() {
     ipcMain.handle('capital:update', (_event, id: number, input) =>
         withCapitalAccess(actor => capitalQueries.update(id, input ?? {}, actor.username)))
     ipcMain.handle('capital:delete', (_event, id: number) =>
-        withCapitalAccess(() => capitalQueries.delete(id)))
+        withCapitalAccess(actor => capitalQueries.delete(id, actor.username)))
     ipcMain.handle('capital:settle', (_event, id: number, input) =>
         withCapitalAccess(actor => capitalQueries.settle(id, input ?? {}, actor.username)))
     ipcMain.handle('capital:deleteSettlement', (_event, id: number) =>
@@ -519,6 +519,15 @@ export function registerIpcHandlers() {
         withPurchaseAccess(actor => purchaseQueries.cancel(id, actor.username)))
     ipcMain.handle('purchases:delete', (_event, id: number) =>
         withPurchaseAccess(() => purchaseQueries.delete(id)))
+
+    // Inventory log (stock card): written by the stock changes themselves, read-only here
+    ipcMain.handle('inventory-logs:getAll', () => inventoryLogQueries.getAll())
+    ipcMain.handle('inventory-logs:getByProductId', (_event, productId: number) => inventoryLogQueries.getByProductId(productId))
+    ipcMain.handle('inventory-logs:getByMovementType', (_event, type: string) => inventoryLogQueries.getByMovementType(type))
+    ipcMain.handle('inventory-logs:getByReference', (_event, referenceType: string, referenceId: number) => inventoryLogQueries.getByReference(referenceType, referenceId))
+    ipcMain.handle('inventory-logs:getByDateRange', (_event, startDate: string, endDate: string) => inventoryLogQueries.getByDateRange(startDate, endDate))
+    ipcMain.handle('inventory-logs:getRecent', (_event, limit: number) => inventoryLogQueries.getRecent(limit))
+    ipcMain.handle('inventory-logs:count', () => inventoryLogQueries.count())
 
     // Goods Received Notes (goods bought from clients)
     ipcMain.handle('goodsReceipts:getAll', () => goodsReceiptQueries.getAll())

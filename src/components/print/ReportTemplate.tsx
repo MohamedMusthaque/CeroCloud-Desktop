@@ -2,8 +2,9 @@
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Fragment, forwardRef } from 'react'
-import { Sale, CompanySettings, Product, Expense, SupplierPayment, CapitalEntry, GoodsReceipt } from '@/types/database'
+import { Sale, CompanySettings, Product, Expense, SupplierPayment, CapitalEntry, GoodsReceipt, InventoryLog } from '@/types/database'
 import { grnId } from '@/features/purchases/purchaseUi'
+import { movementLabel, movementReference, movementTotals } from '@/lib/stockMovements'
 import { format, parseISO } from 'date-fns'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 
@@ -13,7 +14,7 @@ interface ReportTemplateProps {
     data: any[]
     allData?: any[] // For calculating totals across pages
     pageInfo?: { current: number, total: number }
-    type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'goods-receipts' | 'inventory' | 'low-stock' | 'daily-closing'
+    type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'goods-receipts' | 'stock-movements' | 'inventory' | 'low-stock' | 'daily-closing'
     settings: CompanySettings
     range?: string
 }
@@ -237,6 +238,35 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
         </table>
     )
 
+    const renderStockMovementsTable = () => (
+        <table className="w-full text-sm">
+            <thead>
+                <tr className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
+                    <th className="py-3 px-4 text-left">{t('print.col.date')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.product')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.movement')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.reference')}</th>
+                    <th className="py-3 px-4 text-right">{t('print.col.quantity')}</th>
+                    <th className="py-3 px-4 text-right">{t('print.col.stockChange')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.recordedBy')}</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+                {data.map((log: InventoryLog, i) => (
+                    <tr key={log.id ?? i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="py-2 px-4 whitespace-nowrap">{log.created_at ? format(new Date(log.created_at), 'dd/MM/yy HH:mm') : '-'}</td>
+                        <td className="py-2 px-4 font-medium">{log.product_name}</td>
+                        <td className="py-2 px-4">{movementLabel(log, t)}</td>
+                        <td className="py-2 px-4 font-mono text-gray-500">{movementReference(log, t).label}</td>
+                        <td className={`py-2 px-4 text-right font-bold ${log.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>{log.quantity > 0 ? '+' : ''}{log.quantity}</td>
+                        <td className="py-2 px-4 text-right whitespace-nowrap">{log.stock_before} → <span className="font-bold">{log.stock_after}</span></td>
+                        <td className="py-2 px-4 text-gray-600">{log.user || '-'}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    )
+
     // --- SUMMARY STATISTICS ---
     // Use allData if available for correct totals across pages
     const sourceData = allData || data
@@ -267,6 +297,10 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
             const paid = sourceData.filter(p => p.type === 'payment').reduce((sum, p) => sum + p.amount, 0)
             const refunds = sourceData.filter(p => p.type === 'refund').reduce((sum, p) => sum + p.amount, 0)
             return { count: sourceData.length, paid, refunds }
+        }
+        if (type === 'stock-movements') {
+            const moved = movementTotals(sourceData)
+            return { count: sourceData.length, unitsIn: moved.in, unitsOut: moved.out }
         }
         if (type === 'goods-receipts') {
             const done = sourceData.filter(r => r.status === 'completed')
@@ -378,6 +412,23 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                     </>
                 )}
 
+                {type === 'stock-movements' && (
+                    <>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.movementsCount')}</p>
+                            <p className="text-3xl font-black text-gray-900">{stats.count}</p>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.unitsIn')}</p>
+                            <p className="text-3xl font-black text-green-600">+{stats.unitsIn}</p>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.unitsOut')}</p>
+                            <p className="text-3xl font-black text-red-600">-{stats.unitsOut}</p>
+                        </div>
+                    </>
+                )}
+
                 {type === 'goods-receipts' && (
                     <>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -411,7 +462,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
 
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-8 shadow-sm">
-                {(type === 'sales' || type === 'daily-closing') ? renderSalesTable() : type === 'expenses' ? renderExpensesTable() : type === 'supplier-payments' ? renderSupplierPaymentsTable() : type === 'capital' ? renderCapitalTable() : type === 'goods-receipts' ? renderGoodsReceiptsTable() : renderInventoryTable()}
+                {(type === 'sales' || type === 'daily-closing') ? renderSalesTable() : type === 'expenses' ? renderExpensesTable() : type === 'supplier-payments' ? renderSupplierPaymentsTable() : type === 'capital' ? renderCapitalTable() : type === 'goods-receipts' ? renderGoodsReceiptsTable() : type === 'stock-movements' ? renderStockMovementsTable() : renderInventoryTable()}
             </div>
 
             {/* Footer */}

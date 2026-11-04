@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Package, Info, DollarSign, Boxes, ShoppingCart, TrendingUp, AlertTriangle, CheckCircle2, Receipt, CalendarClock, PackagePlus } from 'lucide-react'
+import { Package, Info, DollarSign, Boxes, ShoppingCart, TrendingUp, AlertTriangle, CheckCircle2, Receipt, CalendarClock, PackagePlus, History } from 'lucide-react'
 import { useTranslation, unitLabel } from '@/i18n'
 import { cn, formatCurrency, getImageSrc } from '@/lib/utils'
 import { productService } from '@/services/productService'
@@ -9,7 +9,10 @@ import { categoryService } from '@/services/categoryService'
 import { supplierService } from '@/services/supplierService'
 import { companyService } from '@/services/companyService'
 import { goodsReceiptService } from '@/services/purchaseService'
-import type { Category, GoodsReceipt, Product, Sale, Supplier } from '@/types/database'
+import { inventoryLogService } from '@/services/inventoryLogService'
+import { StockMovementsTable } from '@/components/view/StockMovementsTable'
+import { movementTotals } from '@/lib/stockMovements'
+import type { Category, GoodsReceipt, InventoryLog, Product, Sale, Supplier } from '@/types/database'
 import { LazyImage } from '@/components/ui/LazyImage'
 import {
     ViewHeader, ViewAvatar, ViewBadge, ViewSection, ViewFields, ViewField, ViewAudit, ViewStat,
@@ -29,6 +32,8 @@ interface ProductRecord {
     supplier: Supplier | null
     // Goods Received Notes that brought this product in from clients
     receipts: GoodsReceipt[]
+    // Stock card, newest first
+    movements: InventoryLog[]
 }
 
 export function ProductView() {
@@ -40,14 +45,15 @@ export function ProductView() {
         if (!productId) return null
         const product = await productService.getById(productId)
         if (!product) return null
-        const [sales, categories, supplier, receipts] = await Promise.all([
+        const [sales, categories, supplier, receipts, movements] = await Promise.all([
             saleService.getByProductId(productId),
             categoryService.getAll(),
             product.supplier_id ? supplierService.getById(product.supplier_id) : Promise.resolve(null),
-            goodsReceiptService.getAll()
+            goodsReceiptService.getAll(),
+            inventoryLogService.getByProductId(productId)
         ])
         // Products store the category by name
-        return { product, sales, category: categories.find(c => c.name === product.category) ?? null, supplier: supplier ?? null, receipts: receipts.filter(r => r.items?.some(i => i.product_id === productId)) }
+        return { product, sales, category: categories.find(c => c.name === product.category) ?? null, supplier: supplier ?? null, receipts: receipts.filter(r => r.items?.some(i => i.product_id === productId)), movements }
     }, [productId])
     const { data, loading, reload } = useRecord(load)
 
@@ -55,7 +61,7 @@ export function ProductView() {
     if (loading) return <ViewLoading />
     if (!data) return <ViewNotFound backTo="/inventory" backLabel={backLabel} />
 
-    const { product, sales, category, supplier, receipts } = data
+    const { product, sales, category, supplier, receipts, movements } = data
     const settings = companyService.getSettings()
     // Same rule as the inventory list
     const isLowStock = product.stock <= (settings.inventory?.lowStockThreshold ?? product.min_stock)
@@ -76,6 +82,7 @@ export function ProductView() {
     const receivedLines = receiptLines.filter(line => line.receipt.status === 'completed')
     const unitsReceived = Math.round(receivedLines.reduce((sum, line) => sum + line.item.quantity, 0) * 1000) / 1000
     const paidForReceived = receivedLines.reduce((sum, line) => sum + line.item.subtotal, 0)
+    const moved = movementTotals(movements)
 
     return (
         <div className="space-y-6 pb-20 p-2">
@@ -220,6 +227,19 @@ export function ProductView() {
                         </tr>
                     ))}
                 </ViewTable>
+            </ViewSection>
+
+            <ViewSection
+                title={t('stock.productTitle')}
+                icon={History}
+                actions={movements.length > 0 && (
+                    <span className="text-xs text-gray-500">
+                        {t('stock.summary', { in: `${moved.in} ${unit}`, out: `${moved.out} ${unit}` })}
+                        {movements.length > SALES_SHOWN && ` · ${t('view.showingLatest', { shown: SALES_SHOWN, total: movements.length })}`}
+                    </span>
+                )}
+            >
+                <StockMovementsTable logs={movements.slice(0, SALES_SHOWN)} />
             </ViewSection>
 
             {editing && (

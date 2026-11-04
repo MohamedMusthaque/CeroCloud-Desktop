@@ -146,12 +146,12 @@ interface ElectronAPI {
         moveLocation: (directory: string, mode: 'copy' | 'useExisting') => Promise<UserResult<void>>
     }
     inventoryLogs: {
-        getAll: () => Promise<any[]>
-        getByProductId: (productId: number) => Promise<any[]>
-        getByMovementType: (type: string) => Promise<any[]>
-        getByDateRange: (startDate: string, endDate: string) => Promise<any[]>
-        getRecent: (limit: number) => Promise<any[]>
-        create: (log: any) => Promise<any>
+        getAll: () => Promise<import('@/types/database').InventoryLog[]>
+        getByProductId: (productId: number) => Promise<import('@/types/database').InventoryLog[]>
+        getByMovementType: (type: string) => Promise<import('@/types/database').InventoryLog[]>
+        getByReference: (referenceType: string, referenceId: number) => Promise<import('@/types/database').InventoryLog[]>
+        getByDateRange: (startDate: string, endDate: string) => Promise<import('@/types/database').InventoryLog[]>
+        getRecent: (limit: number) => Promise<import('@/types/database').InventoryLog[]>
         count: () => Promise<number>
     }
     backup: {

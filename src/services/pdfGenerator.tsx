@@ -150,7 +150,7 @@ export const pdfGenerator = {
         title: string,
         subtitle: string,
         data: any[],
-        type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'goods-receipts' | 'inventory' | 'low-stock' | 'daily-closing',
+        type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'goods-receipts' | 'stock-movements' | 'inventory' | 'low-stock' | 'daily-closing',
         settings: CompanySettings,
         range?: string
     ) => {
@@ -171,7 +171,7 @@ export const pdfGenerator = {
         document.body.appendChild(reportContainer)
 
         // Pagination Logic
-        const ITEMS_PER_PAGE = type === 'expenses' || type === 'supplier-payments' || type === 'capital' ? 18 : type === 'goods-receipts' ? 8 : 5
+        const ITEMS_PER_PAGE = type === 'expenses' || type === 'supplier-payments' || type === 'capital' || type === 'stock-movements' ? 18 : type === 'goods-receipts' ? 8 : 5
         const chunks: any[][] = []
         if (data.length === 0) {
             chunks.push([])
@@ -235,6 +235,7 @@ export const pdfGenerator = {
                 'supplier-payments': t('export.file.reportSupplierPayments'),
                 'capital': t('export.file.reportCapital'),
                 'goods-receipts': t('export.file.reportGrn'),
+                'stock-movements': t('export.file.reportStock'),
                 'inventory': t('export.file.reportInventory'),
                 'low-stock': t('export.file.reportLowStock'),
                 'daily-closing': t('export.file.report')

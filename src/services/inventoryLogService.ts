@@ -5,6 +5,7 @@ const isMockMode = !window.electronAPI
 
 const mockLogs: InventoryLog[] = []
 
+// The stock card: the main process writes a row with every stock change, so it's read-only here
 export const inventoryLogService = {
     // Get all logs
     async getAll(): Promise<InventoryLog[]> {
@@ -24,6 +25,12 @@ export const inventoryLogService = {
         return window.electronAPI.inventoryLogs.getByMovementType(movementType)
     },
 
+    // The movements one record caused (e.g. a GRN's goods coming in)
+    async getByReference(referenceType: NonNullable<InventoryLog['reference_type']>, referenceId: number): Promise<InventoryLog[]> {
+        if (isMockMode) return mockLogs.filter(log => log.reference_type === referenceType && log.reference_id === referenceId)
+        return window.electronAPI.inventoryLogs.getByReference(referenceType, referenceId)
+    },
+
     // Get logs within a date range
     async getByDateRange(startDate: string, endDate: string): Promise<InventoryLog[]> {
         if (isMockMode) {
@@ -40,15 +47,6 @@ export const inventoryLogService = {
         return window.electronAPI.inventoryLogs.getRecent(limit)
     },
 
-    // Create a log manually (for manual adjustments from the UI)
-    async create(log: Omit<InventoryLog, 'id'>): Promise<InventoryLog> {
-        if (isMockMode) {
-            const newLog: InventoryLog = { ...log, id: mockLogs.length + 1 }
-            mockLogs.push(newLog)
-            return newLog
-        }
-        return window.electronAPI.inventoryLogs.create(log)
-    },
     async getCount(): Promise<number> {
         if (isMockMode) return mockLogs.length
         return window.electronAPI.inventoryLogs.count()

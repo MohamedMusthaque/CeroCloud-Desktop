@@ -221,4 +221,7 @@ export const reports: Record<keyof typeof es, string> = {
     'rep.export.grnTitle': 'Goods Received Notes Report',
     'rep.export.grnSubtitle': 'Goods bought from clients',
     'rep.export.grnDesc': 'Generate a report of goods bought from clients ({range}).',
+    'rep.export.stockTitle': 'Stock Movements Report',
+    'rep.export.stockSubtitle': 'Inventory in and out',
+    'rep.export.stockDesc': 'Generate a report of every stock change: sales, GRNs, supplier goods, capital and adjustments ({range}).',
 }

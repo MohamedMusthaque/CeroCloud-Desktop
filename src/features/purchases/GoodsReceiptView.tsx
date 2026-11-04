@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { parseISO } from 'date-fns'
 import { useParams } from 'react-router-dom'
-import { PackagePlus, Info, Package, Printer, Ban, User, CalendarDays, CreditCard, StickyNote, PackageCheck } from 'lucide-react'
+import { PackagePlus, Info, Package, Printer, Ban, User, CalendarDays, CreditCard, StickyNote, PackageCheck, History } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
@@ -9,6 +9,8 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { goodsReceiptService } from '@/services/purchaseService'
 import { companyService } from '@/services/companyService'
 import { pdfGenerator } from '@/services/pdfGenerator'
+import { inventoryLogService } from '@/services/inventoryLogService'
+import { StockMovementsTable } from '@/components/view/StockMovementsTable'
 import {
     ViewHeader, ViewAvatar, ViewSection, ViewFields, ViewField, ViewAudit,
     ViewTable, ViewLink, ViewLoading, ViewNotFound, viewCellClass
@@ -22,8 +24,18 @@ export function GoodsReceiptView() {
     const receiptId = parseId(useParams().id)
     const [confirmCancel, setConfirmCancel] = useState(false)
 
-    const load = useCallback(async () => receiptId ? goodsReceiptService.getById(receiptId) : null, [receiptId])
-    const { data: receipt, loading, reload } = useRecord(load)
+    // The note, plus the stock movements it caused (in when received, out again if cancelled)
+    const load = useCallback(async () => {
+        if (!receiptId) return null
+        const [receipt, movements] = await Promise.all([
+            goodsReceiptService.getById(receiptId),
+            inventoryLogService.getByReference('grn', receiptId)
+        ])
+        return receipt ? { receipt, movements } : null
+    }, [receiptId])
+    const { data, loading, reload } = useRecord(load)
+    const receipt = data?.receipt
+    const movements = data?.movements ?? []
 
     const backLabel = t('view.backTo', { page: t('nav.purchases') })
     if (loading) return <ViewLoading />
@@ -130,6 +142,10 @@ export function GoodsReceiptView() {
                         <td className={cn(viewCellClass, "text-right font-black text-gray-900 dark:text-white", cancelled && "line-through text-gray-400")}>{formatCurrency(receipt.total)}</td>
                     </tr>
                 </ViewTable>
+            </ViewSection>
+
+            <ViewSection title={t('stock.grnTitle')} icon={History}>
+                <StockMovementsTable logs={movements} showProduct showReference={false} />
             </ViewSection>
 
             <ConfirmDialog

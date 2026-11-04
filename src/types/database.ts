@@ -269,16 +269,24 @@ export interface CartItem {
     quantity: number
 }
 
+// Every way stock changes: opening = stock when the log started, initial = stock of a new product,
+// adjustment = stock edited by hand, import = stock set by a product import
+export const STOCK_MOVEMENT_TYPES = [
+    'opening', 'initial', 'adjustment', 'import',
+    'sale', 'sale_cancel', 'purchase', 'grn', 'grn_cancel', 'capital', 'capital_delete'
+] as const
+export type StockMovementType = typeof STOCK_MOVEMENT_TYPES[number]
+
 export interface InventoryLog {
     id?: number
     product_id: number
     product_code?: string
     product_name?: string
-    movement_type: 'sale' | 'purchase' | 'adjustment' | 'return'
+    movement_type: StockMovementType
     quantity: number // Positive for stock in, negative for stock out
     stock_before: number
     stock_after: number
-    reference_type?: string // 'sale', 'manual', 'purchase_order', etc.
+    reference_type?: 'product' | 'sale' | 'purchase' | 'grn' | 'capital'
     reference_id?: number
     notes?: string
     user?: string

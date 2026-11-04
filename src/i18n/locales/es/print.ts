@@ -96,4 +96,11 @@ export const printTexts = {
     'print.cancelledCount': 'Anuladas',
     'print.col.grn': 'Nota',
     'print.col.status': 'Estado',
+    'print.movementsCount': 'Movimientos',
+    'print.unitsIn': 'Unidades que entraron',
+    'print.unitsOut': 'Unidades que salieron',
+    'print.col.movement': 'Movimiento',
+    'print.col.reference': 'Referencia',
+    'print.col.quantity': 'Cant.',
+    'print.col.stockChange': 'Stock',
 }

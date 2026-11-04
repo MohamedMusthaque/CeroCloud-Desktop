@@ -174,9 +174,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
         getAll: () => ipcRenderer.invoke('inventory-logs:getAll'),
         getByProductId: (productId: number) => ipcRenderer.invoke('inventory-logs:getByProductId', productId),
         getByMovementType: (type: string) => ipcRenderer.invoke('inventory-logs:getByMovementType', type),
+        getByReference: (referenceType: string, referenceId: number) => ipcRenderer.invoke('inventory-logs:getByReference', referenceType, referenceId),
         getByDateRange: (startDate: string, endDate: string) => ipcRenderer.invoke('inventory-logs:getByDateRange', startDate, endDate),
         getRecent: (limit: number) => ipcRenderer.invoke('inventory-logs:getRecent', limit),
-        create: (log: any) => ipcRenderer.invoke('inventory-logs:create', log),
         count: () => ipcRenderer.invoke('inventory-logs:count'),
     },
 

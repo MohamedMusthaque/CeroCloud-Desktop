@@ -18,7 +18,8 @@ import {
     ClipboardList,
     Banknote,
     Landmark,
-    PackagePlus
+    PackagePlus,
+    ArrowLeftRight
 } from 'lucide-react'
 import {
     AreaChart,
@@ -38,7 +39,9 @@ import { productService } from '@/services/productService'
 import { saleService } from '@/services/saleService'
 import { pdfGenerator } from '@/services/pdfGenerator'
 import { companyService } from '@/services/companyService'
-import { CapitalEntry, Expense, GoodsReceipt, Product, Purchase, Sale, SupplierAccount, SupplierPayment } from '@/types/database'
+import { CapitalEntry, Expense, GoodsReceipt, InventoryLog, Product, Purchase, Sale, SupplierAccount, SupplierPayment } from '@/types/database'
+import { inventoryLogService } from '@/services/inventoryLogService'
+import { movementLabel, movementTotals } from '@/lib/stockMovements'
 import { expenseService } from '@/services/expenseService'
 import { ProfitReport } from './ProfitReport'
 import { PurchasesReport } from './PurchasesReport'
@@ -67,6 +70,7 @@ export function Reports() {
     const [supplierAccounts, setSupplierAccounts] = useState<SupplierAccount[]>([])
     const [capitalEntries, setCapitalEntries] = useState<CapitalEntry[]>([])
     const [goodsReceipts, setGoodsReceipts] = useState<GoodsReceipt[]>([])
+    const [stockMovements, setStockMovements] = useState<InventoryLog[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'sales' | 'profit' | 'purchases' | 'inventory' | 'export' | 'transactions'>('sales')
     const [settings] = useState(companyService.getSettings())
@@ -170,7 +174,7 @@ export function Reports() {
     const loadData = async () => {
         try {
             setLoading(true)
-            const [productsData, salesData, expensesData, purchasesData, paymentsData, accountsData, capitalData, receiptsData] = await Promise.all([
+            const [productsData, salesData, expensesData, purchasesData, paymentsData, accountsData, capitalData, receiptsData, movementsData] = await Promise.all([
                 productService.getAll(),
                 saleService.getAll(),
                 expenseService.getAll(),
@@ -178,7 +182,8 @@ export function Reports() {
                 supplierPaymentService.getAll(),
                 supplierAccountService.getAll(),
                 capitalService.getAll(),
-                goodsReceiptService.getAll()
+                goodsReceiptService.getAll(),
+                inventoryLogService.getAll()
             ])
             setProducts(productsData)
             setSales(salesData)
@@ -188,6 +193,7 @@ export function Reports() {
             setSupplierAccounts(accountsData)
             setCapitalEntries(capitalData)
             setGoodsReceipts(receiptsData)
+            setStockMovements(movementsData)
         } catch (error) {
             console.error('Error loading data:', error)
             // Non-reactive translate keeps the load function free of hook dependencies
@@ -745,7 +751,7 @@ export function Reports() {
                     )}
 
                     {activeTab === 'export' && (
-                        <ExportSection sales={sales} expenses={expenses} supplierPayments={supplierPayments} capitalEntries={capitalEntries} goodsReceipts={goodsReceipts} products={products} settings={settings} />
+                        <ExportSection sales={sales} expenses={expenses} supplierPayments={supplierPayments} capitalEntries={capitalEntries} goodsReceipts={goodsReceipts} stockMovements={stockMovements} products={products} settings={settings} />
                     )}
 
                     {activeTab === 'transactions' && (
@@ -956,7 +962,7 @@ function MetricCard({ title, value, subtitle, icon: Icon, color }: any) {
     )
 }
 
-function ExportSection({ sales, expenses, supplierPayments, capitalEntries, goodsReceipts, products, settings }: { sales: Sale[]; expenses: Expense[]; supplierPayments: SupplierPayment[]; capitalEntries: CapitalEntry[]; goodsReceipts: GoodsReceipt[]; products: Product[]; settings: any }) {
+function ExportSection({ sales, expenses, supplierPayments, capitalEntries, goodsReceipts, stockMovements, products, settings }: { sales: Sale[]; expenses: Expense[]; supplierPayments: SupplierPayment[]; capitalEntries: CapitalEntry[]; goodsReceipts: GoodsReceipt[]; stockMovements: InventoryLog[]; products: Product[]; settings: any }) {
     const { t, locale, dateLocale } = useTranslation()
     const [period, setPeriod] = useState<ReportPeriod>({ range: 'today' })
     const timeRange = period.range
@@ -967,6 +973,9 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
     const filteredCapital = filterByDayPeriod(capitalEntries, c => c.entry_date, period, dateLocale)
     const filteredReceipts = filterByDayPeriod(goodsReceipts, r => r.receipt_date, period, dateLocale)
     const receiptsPaid = filteredReceipts.filter(r => r.status === 'completed').reduce((s, r) => s + r.total, 0)
+    // Movements are timestamped: compare on the local day
+    const filteredMovements = filterByDayPeriod(stockMovements, m => m.created_at ? format(new Date(m.created_at), 'yyyy-MM-dd') : null, period, dateLocale)
+    const moved = movementTotals(filteredMovements)
     // Products don't usually filter by date unless it's "created_at", but for inventory snapshots we usually want current state.
     // However, for "Low Stock" we just filter by logic. Used products remains full list usually.
 
@@ -974,13 +983,14 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
 
     const rangeLabel = periodLabel(period, t, locale)
 
-    const handleExport = (type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'goods-receipts' | 'inventory' | 'low-stock' | 'daily-closing') => {
+    const handleExport = (type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'goods-receipts' | 'stock-movements' | 'inventory' | 'low-stock' | 'daily-closing') => {
         const titleMap = {
             'sales': t('rep.export.salesTitle'),
             'expenses': t('rep.export.expensesTitle'),
             'supplier-payments': t('rep.export.supplierPaymentsTitle'),
             'capital': t('rep.export.capitalTitle'),
             'goods-receipts': t('rep.export.grnTitle'),
+            'stock-movements': t('rep.export.stockTitle'),
             'inventory': t('rep.export.inventoryTitle'),
             'low-stock': t('rep.export.lowStockTitle'),
             'daily-closing': t('rep.export.closingTitle')
@@ -991,6 +1001,7 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
             'supplier-payments': t('rep.export.supplierPaymentsSubtitle'),
             'capital': t('rep.export.capitalSubtitle'),
             'goods-receipts': t('rep.export.grnSubtitle'),
+            'stock-movements': t('rep.export.stockSubtitle'),
             'inventory': t('rep.export.inventorySubtitle'),
             'low-stock': t('rep.export.lowStockSubtitle'),
             'daily-closing': t('rep.export.closingSubtitle')
@@ -1004,6 +1015,7 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
         if (type === 'supplier-payments') dataToExport = filteredSupplierPayments
         if (type === 'capital') dataToExport = filteredCapital
         if (type === 'goods-receipts') dataToExport = filteredReceipts
+        if (type === 'stock-movements') dataToExport = filteredMovements
         if (type === 'daily-closing') {
             // Daily closing is specifically Today regardless of filter, or we can respect filter if user selects "Today" specifically? 
             // Usually Daily Closing implies Today. Let's force filter to today for this button or use current filter if it makes sense.
@@ -1128,6 +1140,30 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
                         <div key={r.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="truncate max-w-[150px] text-gray-500">{r.client_name}</span>
                             <span className={cn("font-medium", r.status === 'cancelled' ? "text-gray-400 line-through" : "text-gray-900 dark:text-white")}>{settings.currencySymbol}{r.total.toFixed(2)}</span>
+                        </div>
+                    ))}
+                />
+
+                {/* Stock Movements Card (follows the period): every stock change with the stock before and after */}
+                <NewExportCard
+                    title={t('rep.export.stockTitle')}
+                    description={t('rep.export.stockDesc', { range: timeRange === 'today' ? t('rep.export.descToday') : timeRange === 'all' ? t('rep.export.descAll') : rangeLabel })}
+                    count={filteredMovements.length}
+                    icon={ArrowLeftRight}
+                    color="blue"
+                    onClick={() => handleExport('stock-movements')}
+                    customMetric={
+                        <div className="text-right">
+                            <div className="text-xs text-gray-400 uppercase font-bold">{t('print.unitsIn')} / {t('print.unitsOut')}</div>
+                            <div className="text-xl font-black text-gray-900 dark:text-white">
+                                <span className="text-green-600">+{moved.in}</span> / <span className="text-red-600">-{moved.out}</span>
+                            </div>
+                        </div>
+                    }
+                    previewData={filteredMovements.slice(0, 3).map(m => (
+                        <div key={m.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
+                            <span className="truncate max-w-[150px] text-gray-500">{m.product_name} · {movementLabel(m, t)}</span>
+                            <span className={cn("font-medium", m.quantity > 0 ? "text-green-600" : "text-red-600")}>{m.quantity > 0 ? '+' : ''}{m.quantity}</span>
                         </div>
                     ))}
                 />

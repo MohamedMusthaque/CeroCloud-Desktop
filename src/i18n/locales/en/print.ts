@@ -98,4 +98,11 @@ export const printTexts: Record<keyof typeof es, string> = {
     'print.cancelledCount': 'Cancelled',
     'print.col.grn': 'GRN',
     'print.col.status': 'Status',
+    'print.movementsCount': 'Movements',
+    'print.unitsIn': 'Units in',
+    'print.unitsOut': 'Units out',
+    'print.col.movement': 'Movement',
+    'print.col.reference': 'Reference',
+    'print.col.quantity': 'Qty',
+    'print.col.stockChange': 'Stock',
 }
