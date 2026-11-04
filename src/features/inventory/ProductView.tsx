@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Package, Info, DollarSign, Boxes, ShoppingCart, TrendingUp, AlertTriangle, CheckCircle2, Receipt, CalendarClock } from 'lucide-react'
+import { Package, Info, DollarSign, Boxes, ShoppingCart, TrendingUp, AlertTriangle, CheckCircle2, Receipt, CalendarClock, PackagePlus } from 'lucide-react'
 import { useTranslation, unitLabel } from '@/i18n'
 import { cn, formatCurrency, getImageSrc } from '@/lib/utils'
 import { productService } from '@/services/productService'
@@ -8,7 +8,8 @@ import { saleService } from '@/services/saleService'
 import { categoryService } from '@/services/categoryService'
 import { supplierService } from '@/services/supplierService'
 import { companyService } from '@/services/companyService'
-import type { Category, Product, Sale, Supplier } from '@/types/database'
+import { goodsReceiptService } from '@/services/purchaseService'
+import type { Category, GoodsReceipt, Product, Sale, Supplier } from '@/types/database'
 import { LazyImage } from '@/components/ui/LazyImage'
 import {
     ViewHeader, ViewAvatar, ViewBadge, ViewSection, ViewFields, ViewField, ViewAudit, ViewStat,
@@ -16,6 +17,7 @@ import {
 } from '@/components/view/ViewPage'
 import { useRecord, parseId } from '@/components/view/useRecord'
 import { ProductForm } from './ProductForm'
+import { grnId } from '@/features/purchases/purchaseUi'
 
 // Most recent sales listed on the page; the stats still cover every sale
 const SALES_SHOWN = 50
@@ -25,6 +27,8 @@ interface ProductRecord {
     sales: Sale[]
     category: Category | null
     supplier: Supplier | null
+    // Goods Received Notes that brought this product in from clients
+    receipts: GoodsReceipt[]
 }
 
 export function ProductView() {
@@ -36,13 +40,14 @@ export function ProductView() {
         if (!productId) return null
         const product = await productService.getById(productId)
         if (!product) return null
-        const [sales, categories, supplier] = await Promise.all([
+        const [sales, categories, supplier, receipts] = await Promise.all([
             saleService.getByProductId(productId),
             categoryService.getAll(),
-            product.supplier_id ? supplierService.getById(product.supplier_id) : Promise.resolve(null)
+            product.supplier_id ? supplierService.getById(product.supplier_id) : Promise.resolve(null),
+            goodsReceiptService.getAll()
         ])
         // Products store the category by name
-        return { product, sales, category: categories.find(c => c.name === product.category) ?? null, supplier: supplier ?? null }
+        return { product, sales, category: categories.find(c => c.name === product.category) ?? null, supplier: supplier ?? null, receipts: receipts.filter(r => r.items?.some(i => i.product_id === productId)) }
     }, [productId])
     const { data, loading, reload } = useRecord(load)
 
@@ -50,7 +55,7 @@ export function ProductView() {
     if (loading) return <ViewLoading />
     if (!data) return <ViewNotFound backTo="/inventory" backLabel={backLabel} />
 
-    const { product, sales, category, supplier } = data
+    const { product, sales, category, supplier, receipts } = data
     const settings = companyService.getSettings()
     // Same rule as the inventory list
     const isLowStock = product.stock <= (settings.inventory?.lowStockThreshold ?? product.min_stock)
@@ -65,6 +70,12 @@ export function ProductView() {
     const unitsSold = completed.reduce((sum, line) => sum + line.item.quantity, 0)
     const revenue = completed.reduce((sum, line) => sum + line.item.subtotal, 0)
     const lastSold = completed[0]?.sale.created_at
+
+    // This product's lines across its Goods Received Notes
+    const receiptLines = receipts.flatMap(receipt => (receipt.items ?? []).filter(item => item.product_id === product.id).map(item => ({ receipt, item })))
+    const receivedLines = receiptLines.filter(line => line.receipt.status === 'completed')
+    const unitsReceived = Math.round(receivedLines.reduce((sum, line) => sum + line.item.quantity, 0) * 1000) / 1000
+    const paidForReceived = receivedLines.reduce((sum, line) => sum + line.item.subtotal, 0)
 
     return (
         <div className="space-y-6 pb-20 p-2">
@@ -169,6 +180,43 @@ export function ProductView() {
                             <td className={cn(viewCellClass, "text-right")}>{formatCurrency(item.unit_price)}</td>
                             <td className={cn(viewCellClass, "text-right font-bold text-gray-900 dark:text-white")}>{formatCurrency(item.subtotal)}</td>
                             <td className={viewCellClass}><ViewSaleStatus status={sale.status} /></td>
+                        </tr>
+                    ))}
+                </ViewTable>
+            </ViewSection>
+
+            <ViewSection
+                title={t('grnView.productSection')}
+                icon={PackagePlus}
+                actions={receivedLines.length > 0 && (
+                    <span className="text-xs text-gray-500">
+                        {t('grnView.productSummary', { quantity: `${unitsReceived} ${unit}`, amount: formatCurrency(paidForReceived) })}
+                    </span>
+                )}
+            >
+                <ViewTable
+                    columns={[
+                        { label: t('grn.col.number') }, { label: t('grn.col.date') }, { label: t('grn.col.client') },
+                        { label: t('view.sale.qty'), align: 'right' }, { label: t('purForm.unitCost'), align: 'right' },
+                        { label: t('view.sale.subtotal'), align: 'right' }, { label: t('grn.col.status') }
+                    ]}
+                    empty={receiptLines.length === 0 ? t('grnView.productNone') : undefined}
+                >
+                    {receiptLines.slice(0, SALES_SHOWN).map(({ receipt, item }) => (
+                        <tr key={`${receipt.id}-${item.id}`} className={cn(receipt.status === 'cancelled' && "opacity-60")}>
+                            <td className={cn(viewCellClass, "font-mono whitespace-nowrap")}>
+                                <ViewLink to={`/purchases/grn/${receipt.id}`} page="purchases">{t('grn.number', { id: grnId(receipt.id) })}</ViewLink>
+                            </td>
+                            <td className={cn(viewCellClass, "whitespace-nowrap")}>{new Date(`${receipt.receipt_date}T00:00:00`).toLocaleDateString(locale)}</td>
+                            <td className={viewCellClass}>
+                                {receipt.client_id
+                                    ? <ViewLink to={`/clients/${receipt.client_id}`} page="clients">{receipt.client_name}</ViewLink>
+                                    : `${receipt.client_name} (${t('grn.walkIn')})`}
+                            </td>
+                            <td className={cn(viewCellClass, "text-right")}>{item.quantity}</td>
+                            <td className={cn(viewCellClass, "text-right")}>{formatCurrency(item.unit_cost)}</td>
+                            <td className={cn(viewCellClass, "text-right font-bold text-gray-900 dark:text-white")}>{formatCurrency(item.subtotal)}</td>
+                            <td className={viewCellClass}>{t(`grn.status.${receipt.status}`)}</td>
                         </tr>
                     ))}
                 </ViewTable>

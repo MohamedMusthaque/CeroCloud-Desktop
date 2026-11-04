@@ -56,6 +56,8 @@ export function ClientView() {
     const creditLimit = client.credit_limit ?? 0
     const limitEnabled = !!client.credit_limit_enabled
     const hasCredit = limitEnabled && creditLimit > 0
+    const receiptsDone = receipts.filter(r => r.status === 'completed')
+    const paidToClient = receiptsDone.reduce((sum, r) => sum + r.total, 0)
 
     return (
         <div className="space-y-6 pb-20 p-2">
@@ -129,7 +131,15 @@ export function ClientView() {
                 </ViewTable>
             </ViewSection>
 
-            <ViewSection title={t('grnView.clientSection')} icon={PackagePlus}>
+            <ViewSection
+                title={t('grnView.clientSection')}
+                icon={PackagePlus}
+                actions={receiptsDone.length > 0 && (
+                    <span className="text-xs text-gray-500">
+                        {t('grnView.clientSummary', { count: receiptsDone.length, amount: formatCurrency(paidToClient) })}
+                    </span>
+                )}
+            >
                 <ViewTable
                     columns={[
                         { label: t('grn.col.number') }, { label: t('grn.col.date') }, { label: t('grn.col.items') },

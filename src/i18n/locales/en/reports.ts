@@ -218,4 +218,7 @@ export const reports: Record<keyof typeof es, string> = {
     'rep.export.capitalTitle': 'Capital & Income Report',
     'rep.export.capitalSubtitle': 'Capital, income and withdrawals',
     'rep.export.capitalDesc': 'Generate a report of capital, loans, other income and owner withdrawals ({range}).',
+    'rep.export.grnTitle': 'Goods Received Notes Report',
+    'rep.export.grnSubtitle': 'Goods bought from clients',
+    'rep.export.grnDesc': 'Generate a report of goods bought from clients ({range}).',
 }

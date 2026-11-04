@@ -216,4 +216,7 @@ export const reports = {
     'rep.export.capitalTitle': 'Reporte de Capital e Ingresos',
     'rep.export.capitalSubtitle': 'Capital, ingresos y retiros',
     'rep.export.capitalDesc': 'Generar un reporte de capital, préstamos, otros ingresos y retiros del dueño ({range}).',
+    'rep.export.grnTitle': 'Reporte de notas de recepción',
+    'rep.export.grnSubtitle': 'Mercadería comprada a clientes',
+    'rep.export.grnDesc': 'Generar un reporte de la mercadería comprada a clientes ({range}).',
 }

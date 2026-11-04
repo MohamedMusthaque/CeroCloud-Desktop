@@ -101,4 +101,5 @@ export const exportTexts = {
     'zipBackup.notNexoraCloud': 'Este archivo no es un respaldo válido de NexoraCloud',
     'zipBackup.readFileError': 'Error al leer el archivo: {error}',
     'zipBackup.readBackupError': 'Error al leer el archivo de respaldo',
+    'export.file.reportGrn': 'Reporte_Notas_Recepcion',
 }

@@ -17,7 +17,8 @@ import {
     Search,
     ClipboardList,
     Banknote,
-    Landmark
+    Landmark,
+    PackagePlus
 } from 'lucide-react'
 import {
     AreaChart,
@@ -744,7 +745,7 @@ export function Reports() {
                     )}
 
                     {activeTab === 'export' && (
-                        <ExportSection sales={sales} expenses={expenses} supplierPayments={supplierPayments} capitalEntries={capitalEntries} products={products} settings={settings} />
+                        <ExportSection sales={sales} expenses={expenses} supplierPayments={supplierPayments} capitalEntries={capitalEntries} goodsReceipts={goodsReceipts} products={products} settings={settings} />
                     )}
 
                     {activeTab === 'transactions' && (
@@ -955,7 +956,7 @@ function MetricCard({ title, value, subtitle, icon: Icon, color }: any) {
     )
 }
 
-function ExportSection({ sales, expenses, supplierPayments, capitalEntries, products, settings }: { sales: Sale[]; expenses: Expense[]; supplierPayments: SupplierPayment[]; capitalEntries: CapitalEntry[]; products: Product[]; settings: any }) {
+function ExportSection({ sales, expenses, supplierPayments, capitalEntries, goodsReceipts, products, settings }: { sales: Sale[]; expenses: Expense[]; supplierPayments: SupplierPayment[]; capitalEntries: CapitalEntry[]; goodsReceipts: GoodsReceipt[]; products: Product[]; settings: any }) {
     const { t, locale, dateLocale } = useTranslation()
     const [period, setPeriod] = useState<ReportPeriod>({ range: 'today' })
     const timeRange = period.range
@@ -964,6 +965,8 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, prod
     const filteredExpenses = filterExpensesByPeriod(expenses, period, dateLocale)
     const filteredSupplierPayments = filterByDayPeriod(supplierPayments, p => p.payment_date, period, dateLocale)
     const filteredCapital = filterByDayPeriod(capitalEntries, c => c.entry_date, period, dateLocale)
+    const filteredReceipts = filterByDayPeriod(goodsReceipts, r => r.receipt_date, period, dateLocale)
+    const receiptsPaid = filteredReceipts.filter(r => r.status === 'completed').reduce((s, r) => s + r.total, 0)
     // Products don't usually filter by date unless it's "created_at", but for inventory snapshots we usually want current state.
     // However, for "Low Stock" we just filter by logic. Used products remains full list usually.
 
@@ -971,12 +974,13 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, prod
 
     const rangeLabel = periodLabel(period, t, locale)
 
-    const handleExport = (type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'inventory' | 'low-stock' | 'daily-closing') => {
+    const handleExport = (type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'goods-receipts' | 'inventory' | 'low-stock' | 'daily-closing') => {
         const titleMap = {
             'sales': t('rep.export.salesTitle'),
             'expenses': t('rep.export.expensesTitle'),
             'supplier-payments': t('rep.export.supplierPaymentsTitle'),
             'capital': t('rep.export.capitalTitle'),
+            'goods-receipts': t('rep.export.grnTitle'),
             'inventory': t('rep.export.inventoryTitle'),
             'low-stock': t('rep.export.lowStockTitle'),
             'daily-closing': t('rep.export.closingTitle')
@@ -986,6 +990,7 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, prod
             'expenses': t('rep.export.expensesSubtitle'),
             'supplier-payments': t('rep.export.supplierPaymentsSubtitle'),
             'capital': t('rep.export.capitalSubtitle'),
+            'goods-receipts': t('rep.export.grnSubtitle'),
             'inventory': t('rep.export.inventorySubtitle'),
             'low-stock': t('rep.export.lowStockSubtitle'),
             'daily-closing': t('rep.export.closingSubtitle')
@@ -998,6 +1003,7 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, prod
         if (type === 'expenses') dataToExport = filteredExpenses
         if (type === 'supplier-payments') dataToExport = filteredSupplierPayments
         if (type === 'capital') dataToExport = filteredCapital
+        if (type === 'goods-receipts') dataToExport = filteredReceipts
         if (type === 'daily-closing') {
             // Daily closing is specifically Today regardless of filter, or we can respect filter if user selects "Today" specifically? 
             // Usually Daily Closing implies Today. Let's force filter to today for this button or use current filter if it makes sense.
@@ -1108,6 +1114,24 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, prod
                     ))}
                 />
 
+                {/* Goods Received Notes Card (follows the period); total = paid to clients, cancelled notes left out */}
+                <NewExportCard
+                    title={t('rep.export.grnTitle')}
+                    description={t('rep.export.grnDesc', { range: timeRange === 'today' ? t('rep.export.descToday') : timeRange === 'all' ? t('rep.export.descAll') : rangeLabel })}
+                    count={filteredReceipts.length}
+                    total={receiptsPaid}
+                    currencySymbol={settings.currencySymbol}
+                    icon={PackagePlus}
+                    color="emerald"
+                    onClick={() => handleExport('goods-receipts')}
+                    previewData={filteredReceipts.slice(0, 3).map(r => (
+                        <div key={r.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
+                            <span className="truncate max-w-[150px] text-gray-500">{r.client_name}</span>
+                            <span className={cn("font-medium", r.status === 'cancelled' ? "text-gray-400 line-through" : "text-gray-900 dark:text-white")}>{settings.currencySymbol}{r.total.toFixed(2)}</span>
+                        </div>
+                    ))}
+                />
+
                 {/* Inventory Card (Static snapshot) */}
                 <NewExportCard
                     title={t('rep.export.inventoryTitle')}
@@ -1176,6 +1200,7 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
         red: "text-red-600 bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800",
         orange: "text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800",
         indigo: "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800",
+        emerald: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800",
     }
 
     const solidColors = {
@@ -1185,6 +1210,7 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
         red: "bg-red-600 hover:bg-red-700 text-white shadow-red-500/30",
         orange: "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-500/30",
         indigo: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/30",
+        emerald: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/30",
     }
 
     // Fallback for color indexing

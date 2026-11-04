@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { forwardRef } from 'react'
-import { Sale, CompanySettings, Product, Expense, SupplierPayment, CapitalEntry } from '@/types/database'
+import { Fragment, forwardRef } from 'react'
+import { Sale, CompanySettings, Product, Expense, SupplierPayment, CapitalEntry, GoodsReceipt } from '@/types/database'
+import { grnId } from '@/features/purchases/purchaseUi'
 import { format, parseISO } from 'date-fns'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 
@@ -12,7 +13,7 @@ interface ReportTemplateProps {
     data: any[]
     allData?: any[] // For calculating totals across pages
     pageInfo?: { current: number, total: number }
-    type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'inventory' | 'low-stock' | 'daily-closing'
+    type: 'sales' | 'expenses' | 'supplier-payments' | 'capital' | 'goods-receipts' | 'inventory' | 'low-stock' | 'daily-closing'
     settings: CompanySettings
     range?: string
 }
@@ -199,6 +200,43 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
         </table>
     )
 
+    // Each note with its goods underneath, like the sales table
+    const renderGoodsReceiptsTable = () => (
+        <table className="w-full text-sm">
+            <thead>
+                <tr className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
+                    <th className="py-3 px-4 text-left">{t('print.col.grn')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.date')}</th>
+                    <th className="py-3 px-4 text-left">{t('print.col.client')}</th>
+                    <th className="py-3 px-4 text-center">{t('print.col.payment')}</th>
+                    <th className="py-3 px-4 text-center">{t('print.col.status')}</th>
+                    <th className="py-3 px-4 text-right">{t('print.total')}</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+                {data.map((receipt: GoodsReceipt, i) => (
+                    <Fragment key={receipt.id ?? i}>
+                        <tr className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="py-2 px-4 font-mono font-bold">{t('grn.number', { id: grnId(receipt.id) })}</td>
+                            <td className="py-2 px-4 whitespace-nowrap">{format(parseISO(receipt.receipt_date), 'dd/MM/yy')}</td>
+                            <td className="py-2 px-4 font-medium">{receipt.client_name}</td>
+                            <td className="py-2 px-4 text-center">{paymentMethodLabel(receipt.payment_method)}</td>
+                            <td className={`py-2 px-4 text-center ${receipt.status === 'cancelled' ? 'text-red-600 font-bold' : 'text-green-600'}`}>{t(`grn.status.${receipt.status}`)}</td>
+                            <td className={`py-2 px-4 text-right font-bold ${receipt.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                                {settings.currencySymbol}{receipt.total.toFixed(2)}
+                            </td>
+                        </tr>
+                        <tr className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td colSpan={6} className="px-4 pb-2 pt-0 text-xs text-gray-500">
+                                {(receipt.items ?? []).map(item => `${item.quantity} × ${item.product_name} @ ${settings.currencySymbol}${item.unit_cost.toFixed(2)}`).join(' · ')}
+                            </td>
+                        </tr>
+                    </Fragment>
+                ))}
+            </tbody>
+        </table>
+    )
+
     // --- SUMMARY STATISTICS ---
     // Use allData if available for correct totals across pages
     const sourceData = allData || data
@@ -229,6 +267,10 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
             const paid = sourceData.filter(p => p.type === 'payment').reduce((sum, p) => sum + p.amount, 0)
             const refunds = sourceData.filter(p => p.type === 'refund').reduce((sum, p) => sum + p.amount, 0)
             return { count: sourceData.length, paid, refunds }
+        }
+        if (type === 'goods-receipts') {
+            const done = sourceData.filter(r => r.status === 'completed')
+            return { count: done.length, paid: done.reduce((sum, r) => sum + r.total, 0), cancelled: sourceData.length - done.length }
         }
         if (type === 'inventory' || type === 'low-stock') {
             const totalValue = sourceData.reduce((sum, p) => sum + (p.price * p.stock), 0)
@@ -336,6 +378,23 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                     </>
                 )}
 
+                {type === 'goods-receipts' && (
+                    <>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.grnCount')}</p>
+                            <p className="text-3xl font-black text-gray-900">{stats.count}</p>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalPaidClients')}</p>
+                            <p className="text-3xl font-black text-emerald-600">{settings.currencySymbol}{stats.paid?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs font-bold text-gray-500 uppercase">{t('print.cancelledCount')}</p>
+                            <p className="text-3xl font-black text-red-600">{stats.cancelled}</p>
+                        </div>
+                    </>
+                )}
+
                 {(type === 'inventory' || type === 'low-stock') && (
                     <>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -352,7 +411,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
 
             {/* Data Table */}
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-8 shadow-sm">
-                {(type === 'sales' || type === 'daily-closing') ? renderSalesTable() : type === 'expenses' ? renderExpensesTable() : type === 'supplier-payments' ? renderSupplierPaymentsTable() : type === 'capital' ? renderCapitalTable() : renderInventoryTable()}
+                {(type === 'sales' || type === 'daily-closing') ? renderSalesTable() : type === 'expenses' ? renderExpensesTable() : type === 'supplier-payments' ? renderSupplierPaymentsTable() : type === 'capital' ? renderCapitalTable() : type === 'goods-receipts' ? renderGoodsReceiptsTable() : renderInventoryTable()}
             </div>
 
             {/* Footer */}

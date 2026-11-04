@@ -103,4 +103,5 @@ export const exportTexts: Record<keyof typeof es, string> = {
     'zipBackup.notNexoraCloud': 'This file is not a valid NexoraCloud backup',
     'zipBackup.readFileError': 'Error reading the file: {error}',
     'zipBackup.readBackupError': 'Error reading the backup file',
+    'export.file.reportGrn': 'GRN_Report',
 }

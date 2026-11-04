@@ -91,4 +91,9 @@ export const printTexts = {
     'print.confidential': 'Documento interno confidencial',
     'print.generatedByShort': 'Generado por NexoraCloud',
     'print.page': 'Página {current} de {total}',
+    'print.grnCount': 'Notas',
+    'print.totalPaidClients': 'Pagado a clientes',
+    'print.cancelledCount': 'Anuladas',
+    'print.col.grn': 'Nota',
+    'print.col.status': 'Estado',
 }
