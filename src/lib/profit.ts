@@ -194,7 +194,8 @@ export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: P
             if (onDay) capitalAdded += entry.amount
         }
         for (const settlement of entry.settlements ?? []) {
-            if (!inPeriod(settlement.settlement_date, period)) continue
+            // Payments for goods on credit are supplier payments, counted as paid to suppliers
+            if (settlement.supplier_payment || !inPeriod(settlement.settlement_date, period)) continue
             if (entry.form === 'loan') loanRepayments += settlement.amount
             // Credit income: cash in on the day it's received
             else if (entry.type === 'income') otherIncome += settlement.amount

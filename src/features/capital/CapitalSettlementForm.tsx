@@ -11,7 +11,7 @@ import { PAYMENT_METHODS } from '@/lib/paymentMethods'
 import { capitalService } from '@/services/capitalService'
 import { companyService } from '@/services/companyService'
 import type { CapitalEntry } from '@/types/database'
-import { capitalErrorMessage, outstandingOf } from './capitalUi'
+import { capitalErrorMessage, outstandingOf, sourceOf } from './capitalUi'
 
 interface CapitalSettlementFormProps {
     // Loan, promised capital or credit entry being settled; null closes the form
@@ -77,13 +77,15 @@ export function CapitalSettlementForm({ entry, onClose, onSaved }: CapitalSettle
                         className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
                     >
                         <ModalHeader
-                            title={entry.form === 'loan' ? t('capSettle.repayTitle') : entry.payment_method === 'credit' ? t('capSettle.receiveTitle') : t('capSettle.payInTitle')}
+                            title={entry.form === 'loan' ? t('capSettle.repayTitle')
+                                : entry.form === 'supplier_credit' ? t('capSettle.supplierTitle')
+                                    : entry.payment_method === 'credit' ? t('capSettle.receiveTitle') : t('capSettle.payInTitle')}
                             onClose={onClose}
                         />
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <p className="text-sm text-gray-600 dark:text-gray-300">
-                                <span className="font-bold text-gray-900 dark:text-white">{entry.source || '-'}</span>
+                                <span className="font-bold text-gray-900 dark:text-white">{sourceOf(entry) || '-'}</span>
                                 {' · '}
                                 {t('capSettle.outstanding', { amount: formatCurrency(outstanding) })}
                             </p>

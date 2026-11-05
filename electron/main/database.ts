@@ -1587,7 +1587,7 @@ export const savingsTransactionQueries = {
 
 // Capital errors; the UI translates the code
 export class CapitalError extends Error {
-  constructor(public code: 'TYPE_INVALID' | 'FORM_INVALID' | 'METHOD_INVALID' | 'SOURCE_REQUIRED' | 'AMOUNT_INVALID' | 'DATE_INVALID' | 'SUPPLIER_REQUIRED' | 'ITEMS_REQUIRED' | 'PRODUCT_REQUIRED' | 'QUANTITY_INVALID' | 'COST_INVALID' | 'NOT_EDITABLE' | 'NOT_SETTLEABLE' | 'AMOUNT_TOO_HIGH' | 'BELOW_SETTLED' | 'HAS_SETTLEMENTS' | 'HAS_PAYMENTS' | 'STOCK_USED' | 'NOT_FOUND') {
+  constructor(public code: 'TYPE_INVALID' | 'FORM_INVALID' | 'METHOD_INVALID' | 'SOURCE_REQUIRED' | 'NOTHING_OUTSTANDING' | 'AMOUNT_INVALID' | 'DATE_INVALID' | 'SUPPLIER_REQUIRED' | 'ITEMS_REQUIRED' | 'PRODUCT_REQUIRED' | 'QUANTITY_INVALID' | 'COST_INVALID' | 'NOT_EDITABLE' | 'NOT_SETTLEABLE' | 'AMOUNT_TOO_HIGH' | 'BELOW_SETTLED' | 'HAS_SETTLEMENTS' | 'HAS_PAYMENTS' | 'STOCK_USED' | 'NOT_FOUND') {
     super(code)
   }
 }
@@ -1614,6 +1614,15 @@ export interface CapitalSettlementInput {
   notes?: string
 }
 
+// One repayment covering everything a source has outstanding:
+//   credit  the source pays back what it owes the business on credit (money in)
+//   loan    the business pays back a lender (money out)
+//   supplier  the business pays a supplier for goods on credit (money out); source_id is the supplier
+export interface CapitalSourceRepaymentInput extends CapitalSettlementInput {
+  kind?: string
+  source_id?: number
+}
+
 const CAPITAL_TYPES = ['initial_capital', 'capital']
 const GOODS_FORMS = ['goods', 'supplier_credit']
 const SETTLED_FORMS = ['loan', 'pledge']
@@ -1624,9 +1633,10 @@ function allowsCredit(type: string, form: string): boolean {
   return CREDIT_TYPES.includes(type) && form === 'money'
 }
 
-// Loans and promises are settled over time, and so is anything recorded on credit
+// Loans and promises are settled over time, and so is anything recorded on credit.
+// Goods on credit are paid off with supplier payments on their order.
 function isSettleable(entry: Pick<CapitalEntry, 'form' | 'payment_method'>): boolean {
-  return SETTLED_FORMS.includes(entry.form) || entry.payment_method === 'credit'
+  return SETTLED_FORMS.includes(entry.form) || entry.form === 'supplier_credit' || entry.payment_method === 'credit'
 }
 
 // Capital and income name where they came from as a registered source (withdrawals and goods on credit don't)
@@ -1696,8 +1706,21 @@ export const capitalQueries = {
     `).all() as CapitalEntry[]
     const items = db.prepare('SELECT * FROM capital_items ORDER BY id ASC').all() as CapitalItem[]
     const settlements = db.prepare('SELECT * FROM capital_settlements ORDER BY settlement_date ASC, id ASC').all() as CapitalSettlement[]
+    // Goods on credit are paid with supplier payments on their order (from here or from Purchases)
+    const supplierPayments = db.prepare(`
+      SELECT * FROM supplier_payments
+      WHERE purchase_id IN (SELECT purchase_id FROM capital_entries WHERE form = 'supplier_credit' AND purchase_id IS NOT NULL)
+      ORDER BY payment_date ASC, id ASC
+    `).all() as SupplierPayment[]
     return entries.map(entry => {
-      const own = settlements.filter(st => st.entry_id === entry.id)
+      const own: CapitalSettlement[] = entry.form === 'supplier_credit'
+        ? supplierPayments.filter(p => p.purchase_id === entry.purchase_id).map(p => ({
+          id: p.id, entry_id: entry.id!, amount: p.type === 'refund' ? -p.amount : p.amount,
+          settlement_date: p.payment_date, payment_method: p.payment_method, notes: p.notes,
+          created_at: p.created_at, created_by: p.created_by, updated_at: p.updated_at, updated_by: p.updated_by,
+          supplier_payment: true
+        }))
+        : settlements.filter(st => st.entry_id === entry.id)
       return {
         ...entry,
         items: items.filter(i => i.entry_id === entry.id),
@@ -1874,20 +1897,89 @@ export const capitalQueries = {
     // A payment is real money: it can't itself be on credit
     const method = String(input.payment_method || 'cash')
     if (method === 'credit') throw new CapitalError('METHOD_INVALID')
+    const date = requireCapitalDay(input.settlement_date)
+    const notes = String(input.notes ?? '').trim()
+    if (entry.form === 'supplier_credit') {
+      // Paid on the supplier account, against the order that holds the debt
+      if (!entry.supplier_id || !entry.purchase_id) throw new CapitalError('NOT_SETTLEABLE')
+      insertSupplierPayment({ supplier_id: entry.supplier_id, purchase_id: entry.purchase_id, type: 'payment', amount, payment_date: date, payment_method: method, notes }, actor)
+      return capitalQueries.getById(entryId)!
+    }
     const now = new Date().toISOString()
     db.prepare(`
       INSERT INTO capital_settlements(entry_id, amount, settlement_date, payment_method, notes, created_at, created_by, updated_at, updated_by)
       VALUES(@entry_id, @amount, @settlement_date, @payment_method, @notes, @now, @actor, @now, @actor)
-    `).run({
-      entry_id: entryId, amount, settlement_date: requireCapitalDay(input.settlement_date),
-      payment_method: method, notes: String(input.notes ?? '').trim(), now, actor
-    })
+    `).run({ entry_id: entryId, amount, settlement_date: date, payment_method: method, notes, now, actor })
     return capitalQueries.getById(entryId)!
   },
 
-  deleteSettlement: (id: number): void => {
+  // A supplier payment can only be deleted from here when it pays goods on credit given as capital
+  deleteSettlement: (id: number, supplierPayment = false): void => {
+    if (supplierPayment) {
+      const owned = db.prepare(`
+        SELECT 1 FROM supplier_payments p JOIN capital_entries c ON c.purchase_id = p.purchase_id
+        WHERE p.id = ? AND c.form = 'supplier_credit'
+      `).get(id)
+      if (!owned) throw new CapitalError('NOT_FOUND')
+      db.prepare('DELETE FROM supplier_payments WHERE id = ?').run(id)
+      return
+    }
     const info = db.prepare('DELETE FROM capital_settlements WHERE id = ?').run(id)
     if (info.changes === 0) throw new CapitalError('NOT_FOUND')
+  },
+
+  // Credit paid back by a source, or loans paid back to a lender: the amount goes to that source's
+  // outstanding entries oldest first, as one payment on each entry it reaches. Returns the entries paid.
+  repaySource: (input: CapitalSourceRepaymentInput, actor: Actor = null): CapitalEntry[] => {
+    const kind = String(input.kind ?? '')
+    if (kind !== 'credit' && kind !== 'loan' && kind !== 'supplier') throw new CapitalError('NOT_SETTLEABLE')
+    // A capital source, or the supplier for goods on credit
+    const sourceId = Number(input.source_id)
+    if (kind === 'supplier') {
+      if (!sourceId || !db.prepare('SELECT 1 FROM suppliers WHERE id = ?').get(sourceId)) throw new CapitalError('SUPPLIER_REQUIRED')
+    } else if (!sourceId || !db.prepare('SELECT 1 FROM capital_sources WHERE id = ?').get(sourceId)) {
+      throw new CapitalError('SOURCE_REQUIRED')
+    }
+    const amount = requireCapitalAmount(input.amount)
+    const date = requireCapitalDay(input.settlement_date)
+    // A payment is real money: it can't itself be on credit
+    const method = String(input.payment_method || 'cash')
+    if (method === 'credit') throw new CapitalError('METHOD_INVALID')
+
+    // getAll is newest first
+    const due = capitalQueries.getAll()
+      .filter(entry => kind === 'supplier'
+        ? entry.form === 'supplier_credit' && entry.supplier_id === sourceId && !!entry.purchase_id
+        : entry.source_id === sourceId && (kind === 'loan' ? entry.form === 'loan' : entry.payment_method === 'credit'))
+      .map(entry => ({ id: entry.id!, purchaseId: entry.purchase_id ?? null, left: roundMoney(entry.amount - (entry.settled ?? 0)) }))
+      .filter(entry => entry.left > 0)
+      .reverse()
+    const outstanding = roundMoney(due.reduce((sum, entry) => sum + entry.left, 0))
+    if (outstanding <= 0) throw new CapitalError('NOTHING_OUTSTANDING')
+    if (amount > outstanding) throw new CapitalError('AMOUNT_TOO_HIGH')
+
+    const now = new Date().toISOString()
+    const notes = String(input.notes ?? '').trim()
+    const insert = db.prepare(`
+      INSERT INTO capital_settlements(entry_id, amount, settlement_date, payment_method, notes, created_at, created_by, updated_at, updated_by)
+      VALUES(@entry_id, @amount, @settlement_date, @payment_method, @notes, @now, @actor, @now, @actor)
+    `)
+    const paid: number[] = []
+    db.transaction(() => {
+      let remaining = amount
+      for (const entry of due) {
+        if (remaining <= 0) break
+        const part = roundMoney(Math.min(remaining, entry.left))
+        if (kind === 'supplier') {
+          insertSupplierPayment({ supplier_id: sourceId, purchase_id: entry.purchaseId, type: 'payment', amount: part, payment_date: date, payment_method: method, notes }, actor)
+        } else {
+          insert.run({ entry_id: entry.id, amount: part, settlement_date: date, payment_method: method, notes, now, actor })
+        }
+        paid.push(entry.id)
+        remaining = roundMoney(remaining - part)
+      }
+    })()
+    return paid.map(id => capitalQueries.getById(id)!)
   }
 }
 
@@ -2723,6 +2815,8 @@ export function restoreDatabase(data: any) {
           })
         }
         for (const st of c.settlements ?? []) {
+          // Payments for goods on credit live in supplier_payments, restored with the purchases
+          if (st.supplier_payment) continue
           insertCapitalSettlement.run({
             id: st.id ?? null, entry_id: c.id, amount: st.amount, settlement_date: st.settlement_date,
             payment_method: st.payment_method || 'cash', notes: st.notes || '',

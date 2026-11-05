@@ -140,14 +140,18 @@ export interface CapitalItem {
     unit_cost: number
 }
 
-// A loan repayment, or a payment in towards promised capital or capital / income on credit
+// A loan repayment, a payment in towards promised capital or capital / income on credit,
+// or (goods on credit) a payment to the supplier
 export interface CapitalSettlement extends AuditFields {
     id?: number
     entry_id: number
+    // A supplier refund on goods on credit is negative
     amount: number
     settlement_date: string // Local day 'YYYY-MM-DD'
     payment_method: string
     notes?: string
+    // Goods on credit: this is a supplier payment on the entry's order (`id` is the supplier payment's)
+    supplier_payment?: boolean
 }
 
 // Who owes capital or income recorded on credit (picked or created when the entry is saved)
@@ -176,7 +180,7 @@ export interface CapitalEntry extends AuditFields {
     purchase_id?: number | null
     items?: CapitalItem[]
     settlements?: CapitalSettlement[]
-    // Repaid (loan), paid in (pledge) or received (credit) so far
+    // Repaid (loan), paid in (pledge), received (credit) or paid to the supplier (goods on credit) so far
     settled?: number
 }
 

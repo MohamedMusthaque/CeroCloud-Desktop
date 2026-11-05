@@ -504,8 +504,10 @@ export function registerIpcHandlers() {
         withCapitalAccess(actor => capitalQueries.delete(id, actor.username)))
     ipcMain.handle('capital:settle', (_event, id: number, input) =>
         withCapitalAccess(actor => capitalQueries.settle(id, input ?? {}, actor.username)))
-    ipcMain.handle('capital:deleteSettlement', (_event, id: number) =>
-        withCapitalAccess(() => capitalQueries.deleteSettlement(id)))
+    ipcMain.handle('capital:repaySource', (_event, input) =>
+        withCapitalAccess(actor => capitalQueries.repaySource(input ?? {}, actor.username)))
+    ipcMain.handle('capital:deleteSettlement', (_event, id: number, supplierPayment?: boolean) =>
+        withCapitalAccess(() => capitalQueries.deleteSettlement(id, !!supplierPayment)))
 
     // Purchases (reads stay open so backups include them for every user)
     ipcMain.handle('purchases:getAll', () => purchaseQueries.getAll())

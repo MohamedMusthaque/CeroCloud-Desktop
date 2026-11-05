@@ -1,4 +1,4 @@
-import type { CapitalEntry, CapitalEntryType, CapitalForm, CapitalSource } from '@/types/database'
+import type { CapitalEntry, CapitalEntryType, CapitalForm, CapitalSettlement, CapitalSource } from '@/types/database'
 
 // Errors carry the main-process code (e.g. 'AMOUNT_INVALID'); the UI translates it via `capError.<code>`
 export class CapitalServiceError extends Error {
@@ -35,6 +35,16 @@ export interface CapitalSettlementInput {
     notes?: string
 }
 
+// Credit a source pays back (money in), loans paid back to a lender, or goods on credit paid to the supplier (money out)
+export type RepaymentKind = 'credit' | 'loan' | 'supplier'
+
+// One repayment covering everything a source has outstanding of that kind
+export interface CapitalSourceRepaymentInput extends CapitalSettlementInput {
+    kind: RepaymentKind
+    // The capital source, or the supplier for goods on credit
+    source_id: number
+}
+
 export const capitalService = {
     // Newest first, with `items`, `settlements` and `settled`
     getAll: (): Promise<CapitalEntry[]> => window.electronAPI.capital.getAll(),
@@ -46,5 +56,9 @@ export const capitalService = {
     delete: (id: number): Promise<void> => unwrap(window.electronAPI.capital.delete(id)),
     // Loan repayment, or payment in towards promised capital or a credit entry
     settle: (id: number, input: CapitalSettlementInput): Promise<CapitalEntry> => unwrap(window.electronAPI.capital.settle(id, input)),
-    deleteSettlement: (id: number): Promise<void> => unwrap(window.electronAPI.capital.deleteSettlement(id))
+    // Supplier payments of goods on credit are deleted from the supplier account
+    deleteSettlement: (settlement: CapitalSettlement): Promise<void> =>
+        unwrap(window.electronAPI.capital.deleteSettlement(settlement.id!, !!settlement.supplier_payment)),
+    // Spread over the source's outstanding entries, oldest first; returns the entries that were paid
+    repaySource: (input: CapitalSourceRepaymentInput): Promise<CapitalEntry[]> => unwrap(window.electronAPI.capital.repaySource(input))
 }

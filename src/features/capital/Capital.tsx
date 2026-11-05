@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import { motion } from 'framer-motion'
-import { Search, Edit2, Trash2, Eye, Landmark, Coins, PlusCircle, Info, HandCoins, ArrowUpFromLine, FileDown, CheckCircle2 } from 'lucide-react'
+import { Search, Edit2, Trash2, Eye, Landmark, Coins, PlusCircle, Info, HandCoins, ArrowUpFromLine, ArrowLeftRight, FileDown, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -19,7 +19,8 @@ import { cn, formatCurrency } from '@/lib/utils'
 import { CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, type CapitalEntry, type CapitalEntryType, type CapitalForm, type Product, type Supplier } from '@/types/database'
 import { CapitalEntryForm } from './CapitalEntryForm'
 import { CapitalSettlementForm } from './CapitalSettlementForm'
-import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, formLabel, isCapitalType, isCreditEntry, isGoodsForm, isSettledEntry, outstandingOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
+import { RepaymentForm } from './RepaymentForm'
+import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, formLabel, isCapitalType, isCreditEntry, isGoodsForm, isPaidOut, isSettledEntry, outstandingOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
 
 export function Capital() {
     const { t, locale } = useTranslation()
@@ -41,6 +42,7 @@ export function Capital() {
     const [formType, setFormType] = useState<CapitalEntryType>('capital')
     const [editing, setEditing] = useState<CapitalEntry | null>(null)
     const [settling, setSettling] = useState<CapitalEntry | null>(null)
+    const [repayOpen, setRepayOpen] = useState(false)
     const [toDelete, setToDelete] = useState<CapitalEntry | null>(null)
 
     const loadData = useCallback(async () => {
@@ -83,7 +85,11 @@ export function Capital() {
             netCapital: invested - withdrawals,
             income: sum(income),
             incomeThisMonth: sum(income.filter(e => e.entry_date.startsWith(month))),
-            incomeToReceive: sum(income.filter(isCreditEntry), outstandingOf)
+            incomeToReceive: sum(income.filter(isCreditEntry), outstandingOf),
+            // Everything still owed on credit, capital and income
+            creditDue: sum(entries.filter(isCreditEntry), outstandingOf),
+            // Goods on credit still to be paid to suppliers
+            supplierDue: sum(entries.filter(e => e.form === 'supplier_credit'), outstandingOf)
         }
     }, [entries])
 
@@ -194,7 +200,7 @@ export function Capital() {
     const outstandingTag = (entry: CapitalEntry) => {
         if (!isSettledEntry(entry)) return null
         const left = outstandingOf(entry)
-        const settledText = entry.form === 'loan' ? t('cap.paidOff') : isCreditEntry(entry) ? t('cap.fullyReceived') : t('cap.fullyPaidIn')
+        const settledText = isPaidOut(entry) ? t('cap.paidOff') : isCreditEntry(entry) ? t('cap.fullyReceived') : t('cap.fullyPaidIn')
         return left > 0
             ? <span className="text-xs font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{t('cap.left', { amount: formatCurrency(left) })}</span>
             : <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600 dark:text-green-400 whitespace-nowrap"><CheckCircle2 className="w-3.5 h-3.5" />{settledText}</span>
@@ -222,6 +228,17 @@ export function Capital() {
                     >
                         <FileDown className="w-5 h-5" />
                         {t('cap.exportPdf')}
+                    </button>
+                    <button
+                        onClick={() => setRepayOpen(true)}
+                        disabled={stats.creditDue <= 0 && stats.borrowedOutstanding <= 0 && stats.supplierDue <= 0}
+                        title={stats.creditDue > 0 || stats.borrowedOutstanding > 0 || stats.supplierDue > 0
+                            ? t('cap.repaymentsHint', { credit: formatCurrency(stats.creditDue), loan: formatCurrency(stats.borrowedOutstanding), supplier: formatCurrency(stats.supplierDue) })
+                            : t('cap.repaymentsNone')}
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                    >
+                        <ArrowLeftRight className="w-5 h-5" />
+                        {t('cap.repayments')}
                     </button>
                     <button
                         onClick={() => openForm('withdrawal')}
@@ -413,6 +430,8 @@ export function Capital() {
             />
 
             <CapitalSettlementForm entry={settling} onClose={() => setSettling(null)} onSaved={loadData} />
+
+            <RepaymentForm isOpen={repayOpen} entries={entries} onClose={() => setRepayOpen(false)} onSaved={loadData} />
 
             <ConfirmDialog
                 isOpen={!!toDelete}

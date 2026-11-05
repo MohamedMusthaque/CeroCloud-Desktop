@@ -1,5 +1,6 @@
 import { Landmark, PlusCircle, Coins, ArrowUpFromLine, Banknote, Package, Truck, HandCoins, CalendarClock } from 'lucide-react'
 import type { TranslationKey } from '@/i18n'
+import type { RepaymentKind } from '@/services/capitalService'
 import { CapitalServiceError } from '@/services/capitalService'
 import type { CapitalEntry, CapitalEntryType, CapitalForm } from '@/types/database'
 
@@ -31,12 +32,73 @@ export const isSettledForm = (form: CapitalForm) => form === 'loan' || form === 
 export const allowsCredit = (type: CapitalEntryType, form: CapitalForm) => (isCapitalType(type) || type === 'income') && form === 'money'
 export const isCreditEntry = (entry: Pick<CapitalEntry, 'payment_method'>) => entry.payment_method === 'credit'
 
-// Entries that get payments against them: loans, promises and anything on credit
-export const isSettledEntry = (entry: CapitalEntry) => isSettledForm(entry.form) || isCreditEntry(entry)
+// Entries that get payments against them: loans, promises, anything on credit,
+// and goods on credit (paid to the supplier)
+export const isSettledEntry = (entry: CapitalEntry) => isSettledForm(entry.form) || entry.form === 'supplier_credit' || isCreditEntry(entry)
+
+// Money going out to settle it: a loan repaid or a supplier paid
+export const isPaidOut = (entry: CapitalEntry) => entry.form === 'loan' || entry.form === 'supplier_credit'
+
+export interface SourceDue {
+    sourceId: number
+    name: string
+    // Entries still outstanding, oldest first
+    entries: CapitalEntry[]
+    outstanding: number
+}
+
+const roundMoney = (value: number) => Math.round(value * 100) / 100
+
+// What a repayment of this kind covers: credit owed to the business, loans it owes, or goods on credit
+export const isRepaidBy = (entry: CapitalEntry, kind: RepaymentKind) =>
+    kind === 'loan' ? entry.form === 'loan'
+        : kind === 'supplier' ? entry.form === 'supplier_credit' && !!entry.purchase_id
+            : isCreditEntry(entry)
+
+// The kind of source-wide repayment an entry takes part in, if any
+export const repaymentKindOf = (entry: CapitalEntry): RepaymentKind | null =>
+    entry.form === 'loan' ? 'loan' : entry.form === 'supplier_credit' ? 'supplier' : isCreditEntry(entry) ? 'credit' : null
+
+// Who is paid or pays: the supplier for goods on credit, otherwise the registered source
+const counterpartOf = (entry: CapitalEntry, kind: RepaymentKind): { id: number; name: string } | null => {
+    const id = kind === 'supplier' ? entry.supplier_id : entry.source_id
+    if (!id) return null
+    return { id, name: (kind === 'supplier' ? entry.supplier_name : entry.source) ?? '' }
+}
+
+// Sources (or suppliers) with something still outstanding of this kind, by name
+export function dueBySource(entries: CapitalEntry[], kind: RepaymentKind): SourceDue[] {
+    const bySource = new Map<number, SourceDue>()
+    for (const entry of entries) {
+        const counterpart = counterpartOf(entry, kind)
+        if (!isRepaidBy(entry, kind) || !counterpart || outstandingOf(entry) <= 0) continue
+        const due = bySource.get(counterpart.id) ?? { sourceId: counterpart.id, name: counterpart.name, entries: [], outstanding: 0 }
+        due.entries.push(entry)
+        due.outstanding = roundMoney(due.outstanding + outstandingOf(entry))
+        bySource.set(counterpart.id, due)
+    }
+    for (const due of bySource.values()) {
+        due.entries.sort((a, b) => a.entry_date.localeCompare(b.entry_date) || (a.id ?? 0) - (b.id ?? 0))
+    }
+    return [...bySource.values()].sort((a, b) => a.name.localeCompare(b.name))
+}
+
+// How a repayment is split over the entries, oldest first (same rule as the main process)
+export function allocateRepayment(entries: CapitalEntry[], amount: number): Map<number, number> {
+    const parts = new Map<number, number>()
+    let remaining = roundMoney(amount)
+    for (const entry of entries) {
+        if (remaining <= 0) break
+        const part = roundMoney(Math.min(remaining, outstandingOf(entry)))
+        if (part > 0 && entry.id) parts.set(entry.id, part)
+        remaining = roundMoney(remaining - part)
+    }
+    return parts
+}
 
 // Button label for recording a payment against the entry
 export const settleActionKey = (entry: CapitalEntry): TranslationKey =>
-    entry.form === 'loan' ? 'cap.repay' : isCreditEntry(entry) ? 'cap.receive' : 'cap.payIn'
+    entry.form === 'loan' ? 'cap.repay' : entry.form === 'supplier_credit' ? 'cap.paySupplier' : isCreditEntry(entry) ? 'cap.receive' : 'cap.payIn'
 
 export const outstandingOf = (entry: CapitalEntry) => Math.max(Math.round((entry.amount - (entry.settled ?? 0)) * 100) / 100, 0)
 
@@ -47,7 +109,7 @@ export const amountSign = (entry: CapitalEntry) => entry.type === 'withdrawal' ?
 export const sourceOf = (entry: CapitalEntry) => entry.form === 'supplier_credit' ? entry.supplier_name ?? entry.source : entry.source
 
 const KNOWN_CODES = [
-    'TYPE_INVALID', 'FORM_INVALID', 'METHOD_INVALID', 'SOURCE_REQUIRED', 'AMOUNT_INVALID', 'DATE_INVALID', 'SUPPLIER_REQUIRED', 'ITEMS_REQUIRED', 'PRODUCT_REQUIRED',
+    'TYPE_INVALID', 'FORM_INVALID', 'METHOD_INVALID', 'SOURCE_REQUIRED', 'NOTHING_OUTSTANDING', 'AMOUNT_INVALID', 'DATE_INVALID', 'SUPPLIER_REQUIRED', 'ITEMS_REQUIRED', 'PRODUCT_REQUIRED',
     'QUANTITY_INVALID', 'COST_INVALID', 'NOT_EDITABLE', 'NOT_SETTLEABLE', 'AMOUNT_TOO_HIGH', 'BELOW_SETTLED', 'HAS_SETTLEMENTS',
     'HAS_PAYMENTS', 'STOCK_USED', 'NOT_FOUND', 'FORBIDDEN', 'UNKNOWN'
 ] as const

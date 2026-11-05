@@ -94,7 +94,8 @@ interface ElectronAPI {
         update: (id: number, entry: any) => Promise<UserResult<any>>
         delete: (id: number) => Promise<UserResult<void>>
         settle: (id: number, input: any) => Promise<UserResult<any>>
-        deleteSettlement: (id: number) => Promise<UserResult<void>>
+        deleteSettlement: (id: number, supplierPayment?: boolean) => Promise<UserResult<void>>
+        repaySource: (input: any) => Promise<UserResult<any[]>>
     }
     purchases: {
         getAll: () => Promise<any[]>

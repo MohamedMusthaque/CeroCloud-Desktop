@@ -103,7 +103,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
         update: (id: number, entry: any) => ipcRenderer.invoke('capital:update', id, entry),
         delete: (id: number) => ipcRenderer.invoke('capital:delete', id),
         settle: (id: number, input: any) => ipcRenderer.invoke('capital:settle', id, input),
-        deleteSettlement: (id: number) => ipcRenderer.invoke('capital:deleteSettlement', id),
+        deleteSettlement: (id: number, supplierPayment?: boolean) => ipcRenderer.invoke('capital:deleteSettlement', id, supplierPayment),
+        repaySource: (input: any) => ipcRenderer.invoke('capital:repaySource', input),
     },
 
     // Purchase orders

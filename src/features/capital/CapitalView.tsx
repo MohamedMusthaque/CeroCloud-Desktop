@@ -17,10 +17,13 @@ import {
 import { useRecord, parseId } from '@/components/view/useRecord'
 import { CapitalEntryForm } from './CapitalEntryForm'
 import { CapitalSettlementForm } from './CapitalSettlementForm'
-import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, formLabel, isCreditEntry, isGoodsForm, isSettledEntry, outstandingOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
+import { RepaymentForm } from './RepaymentForm'
+import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, dueBySource, formLabel, isCreditEntry, isGoodsForm, isSettledEntry, outstandingOf, repaymentKindOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
 
 interface CapitalRecord {
     entry: CapitalEntry
+    // Every entry, for what the same source owes on credit
+    entries: CapitalEntry[]
     products: Product[]
     suppliers: Supplier[]
 }
@@ -30,13 +33,14 @@ export function CapitalView() {
     const entryId = parseId(useParams().id)
     const [editing, setEditing] = useState(false)
     const [settling, setSettling] = useState(false)
+    const [repaying, setRepaying] = useState(false)
     const [toDelete, setToDelete] = useState<CapitalSettlement | null>(null)
 
     const load = useCallback(async (): Promise<CapitalRecord | null> => {
         if (!entryId) return null
         const [entries, products, suppliers] = await Promise.all([capitalService.getAll(), productService.getAll(), supplierService.getAll()])
         const entry = entries.find(e => e.id === entryId)
-        return entry ? { entry, products, suppliers } : null
+        return entry ? { entry, entries, products, suppliers } : null
     }, [entryId])
     const { data, loading, reload } = useRecord(load)
 
@@ -44,19 +48,27 @@ export function CapitalView() {
     if (loading) return <ViewLoading />
     if (!data) return <ViewNotFound backTo="/capital" backLabel={backLabel} />
 
-    const { entry, products, suppliers } = data
+    const { entry, entries, products, suppliers } = data
     const style = TYPE_STYLES[entry.type] ?? TYPE_STYLES.capital
     const FormIcon = FORM_ICONS[entry.form] ?? FORM_ICONS.money
     const formatDay = (day: string) => parseISO(day).toLocaleDateString(locale)
     const isSettled = isSettledEntry(entry)
     const onCredit = isCreditEntry(entry)
     const outstanding = outstandingOf(entry)
-    const settledLabel = entry.form === 'loan' ? t('capView.repaid') : onCredit ? t('capView.received') : t('capView.paidIn')
+    // The same source has other credit entries or loans outstanding too: offer one repayment for all of it
+    const repaymentKind = repaymentKindOf(entry)
+    const sourceDue = repaymentKind ? dueBySource(entries, repaymentKind).find(d => d.sourceId === entry.source_id) : undefined
+    const settledLabel = entry.form === 'loan' ? t('capView.repaid')
+        : entry.form === 'supplier_credit' ? t('capView.paidToSupplier')
+            : onCredit ? t('capView.received') : t('capView.paidIn')
+    const settlementsTitle = entry.form === 'loan' ? t('capView.repayments')
+        : entry.form === 'supplier_credit' ? t('capView.supplierPayments')
+            : onCredit ? t('capView.paymentsReceived') : t('capView.paymentsIn')
 
     const deleteSettlement = async () => {
         if (!toDelete?.id) return
         try {
-            await capitalService.deleteSettlement(toDelete.id)
+            await capitalService.deleteSettlement(toDelete)
             toast.success(t('capSettle.deleted'))
             reload()
         } catch (error) {
@@ -146,12 +158,23 @@ export function CapitalView() {
 
             {isSettled && (
                 <ViewSection
-                    title={entry.form === 'loan' ? t('capView.repayments') : onCredit ? t('capView.paymentsReceived') : t('capView.paymentsIn')}
+                    title={settlementsTitle}
                     icon={CheckCircle2}
                     actions={outstanding > 0 && (
-                        <button onClick={() => setSettling(true)} className="px-3 py-1.5 rounded-lg text-sm font-bold text-primary hover:bg-primary/10 transition-colors">
-                            {t(settleActionKey(entry))}
-                        </button>
+                        <div className="flex items-center gap-1">
+                            {repaymentKind && sourceDue && sourceDue.entries.length > 1 && (
+                                <button
+                                    onClick={() => setRepaying(true)}
+                                    title={t(`capView.repayAllHint.${repaymentKind}`, { name: sourceDue.name, amount: formatCurrency(sourceDue.outstanding) })}
+                                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    {t(`capView.repayAll.${repaymentKind}`, { amount: formatCurrency(sourceDue.outstanding) })}
+                                </button>
+                            )}
+                            <button onClick={() => setSettling(true)} className="px-3 py-1.5 rounded-lg text-sm font-bold text-primary hover:bg-primary/10 transition-colors">
+                                {t(settleActionKey(entry))}
+                            </button>
+                        </div>
                     )}
                 >
                     <ViewTable
@@ -194,6 +217,15 @@ export function CapitalView() {
             />
 
             <CapitalSettlementForm entry={settling ? entry : null} onClose={() => setSettling(false)} onSaved={reload} />
+
+            <RepaymentForm
+                isOpen={repaying}
+                entries={entries}
+                defaultKind={repaymentKind ?? undefined}
+                defaultSourceId={entry.source_id}
+                onClose={() => setRepaying(false)}
+                onSaved={reload}
+            />
 
             <ConfirmDialog
                 isOpen={!!toDelete}
