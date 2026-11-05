@@ -18,9 +18,9 @@ import { useRecord, parseId } from '@/components/view/useRecord'
 import { PurchaseForm } from './PurchaseForm'
 import { ReceiveGoodsDialog } from './ReceiveGoodsDialog'
 import { SupplierPaymentForm, type SupplierPaymentPreset } from './SupplierPaymentForm'
-import { AccountBalance, PaymentRow } from './Purchases'
+import { PaymentRow } from './Purchases'
 import { purchaseErrorMessage } from './purchaseErrors'
-import { STATUS_STYLES, statusLabel } from './purchaseUi'
+import { STATUS_STYLES, accountState, statusLabel } from './purchaseUi'
 
 interface PurchaseRecord {
     order: Purchase
@@ -70,6 +70,8 @@ export function PurchaseView() {
     const paid = order.paid ?? 0
     const formatDay = (day: string) => parseISO(day).toLocaleDateString(locale)
     const leftToPay = Math.max(order.total - paid, 0)
+    // Amount on its own line so it fits the card; whether it's owed or in credit goes underneath
+    const balance = accountState(account)
 
     const runAction = async (action: () => Promise<unknown>, success: string, after?: () => void) => {
         try {
@@ -142,7 +144,13 @@ export function PurchaseView() {
                     icon={HandCoins}
                     color="bg-purple-500"
                 />
-                <ViewStat label={t('pur.acc.title')} value={<AccountBalance account={account} />} hint={order.supplier_name} icon={Wallet} color="bg-blue-500" />
+                <ViewStat
+                    label={t('pur.acc.title')}
+                    value={<span className={balance.tone}>{balance.state === 'settled' ? t('pur.acc.settled') : formatCurrency(balance.amount)}</span>}
+                    hint={balance.state === 'settled' ? order.supplier_name : `${t(`pur.acc.state.${balance.state}`)} · ${order.supplier_name ?? ''}`}
+                    icon={Wallet}
+                    color="bg-blue-500"
+                />
                 <ViewStat label={t('pur.col.items')} value={order.items?.length ?? 0} icon={Package} color="bg-orange-500" />
             </div>
 

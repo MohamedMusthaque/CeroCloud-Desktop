@@ -688,12 +688,12 @@ function AccountCard({ account, name, onRecordPayment }: { account: SupplierAcco
 
             <div className="mt-3 flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('pur.acc.balance')}</p>
-                <p className="text-xl truncate"><AccountBalance account={account} /></p>
+                <p className="text-xl break-words"><AccountBalance account={account} /></p>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-2 mt-3">
                     {figures.map(figure => (
                         <div key={figure.label} className="min-w-0">
                             <dt className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{figure.label}</dt>
-                            <dd className="text-sm font-semibold text-gray-900 dark:text-white truncate">{formatCurrency(figure.value)}</dd>
+                            <dd className="text-sm font-semibold text-gray-900 dark:text-white break-words">{formatCurrency(figure.value)}</dd>
                         </div>
                     ))}
                 </dl>

@@ -34,7 +34,6 @@ export function GoodsReceiptForm({ isOpen, clients, products, defaultClientId, o
     const [sellerName, setSellerName] = useState('')
     const [date, setDate] = useState('')
     const [rows, setRows] = useState<GoodsRow[]>([])
-    const [updateCosts, setUpdateCosts] = useState(true)
     const [method, setMethod] = useState<string>('cash')
     const [notes, setNotes] = useState('')
     const [saving, setSaving] = useState(false)
@@ -46,7 +45,6 @@ export function GoodsReceiptForm({ isOpen, clients, products, defaultClientId, o
         setSellerName('')
         setDate(format(new Date(), 'yyyy-MM-dd'))
         setRows([emptyGoodsRow()])
-        setUpdateCosts(true)
         setMethod('cash')
         setNotes('')
     }, [isOpen, defaultClientId, clients.length])
@@ -62,7 +60,8 @@ export function GoodsReceiptForm({ isOpen, clients, products, defaultClientId, o
                 payment_method: method,
                 notes,
                 items: goodsInput(rows),
-                update_costs: updateCosts
+                // Buying from a client never changes the products' cost
+                update_costs: false
             })
             const settings = companyService.getSettings()
             toast.success(t('grn.created'), {
@@ -146,15 +145,6 @@ export function GoodsReceiptForm({ isOpen, clients, products, defaultClientId, o
                             </div>
 
                             <GoodsItemsEditor rows={rows} onChange={setRows} products={products} totalLabel={t('grnForm.total')} />
-                            <label className="flex items-center gap-2 cursor-pointer w-fit">
-                                <input
-                                    type="checkbox"
-                                    checked={updateCosts}
-                                    onChange={(e) => setUpdateCosts(e.target.checked)}
-                                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                />
-                                <span className="text-sm text-gray-700 dark:text-gray-200">{t('grnForm.updateCosts')}</span>
-                            </label>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>

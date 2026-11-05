@@ -120,8 +120,8 @@ export function ViewStat({ label, value, hint, icon: Icon, color }: ViewStatProp
             </div>
             <div className="min-w-0">
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{label}</p>
-                <p className="text-2xl font-black text-gray-900 dark:text-white truncate">{value}</p>
-                {hint && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{hint}</p>}
+                <p className="text-2xl font-black text-gray-900 dark:text-white break-words leading-tight">{value}</p>
+                {hint && <p className="text-xs text-gray-500 dark:text-gray-400 break-words mt-0.5">{hint}</p>}
             </div>
         </div>
     )

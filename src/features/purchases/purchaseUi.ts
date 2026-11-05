@@ -30,3 +30,10 @@ export function settlementFor(advance: number, account: SupplierAccount | null, 
         result
     }
 }
+
+// Where the account stands: credit with the supplier, owed to them, or settled, and by how much
+export function accountState(account: SupplierAccount): { state: 'credit' | 'owed' | 'settled'; amount: number; tone: string } {
+    if (account.available > 0) return { state: 'credit', amount: account.available, tone: 'text-blue-600 dark:text-blue-400' }
+    if (account.available < 0) return { state: 'owed', amount: -account.available, tone: 'text-red-600 dark:text-red-400' }
+    return { state: 'settled', amount: 0, tone: 'text-green-600 dark:text-green-400' }
+}
