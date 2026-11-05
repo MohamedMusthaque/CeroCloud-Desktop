@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseISO } from 'date-fns'
 import { motion } from 'framer-motion'
-import { BookOpen, Search, ArrowDownLeft, ArrowUpRight, ListOrdered, Users, ChevronRight, CalendarRange } from 'lucide-react'
+import { BookOpen, Search, ArrowDownLeft, ArrowUpRight, ListOrdered, Users, ChevronRight, CalendarRange, FileDown } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
@@ -10,6 +10,7 @@ import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
 import { ACCOUNT_TYPES, BALANCE_MODES, accountKey, accountName, accountPath, typeLabel, type Account, type AccountType } from './accountLedger'
 import { TYPE_STYLES, useAccounts } from './accountUi'
 import { AccountBalance, AccountTypeBadge } from './AccountParts'
+import { downloadAccountsSummary } from './accountReports'
 
 type BalanceFilter = 'all' | 'owesYou' | 'youOwe' | 'settled' | 'active'
 type SortKey = 'name' | 'recent' | 'balance'
@@ -91,14 +92,50 @@ export function Accounts() {
     }
     const formatDay = (day: string) => parseISO(day).toLocaleDateString(locale)
 
+    // PDF of the list exactly as filtered on screen
+    const [exporting, setExporting] = useState(false)
+    const exportPdf = async () => {
+        const filters = [
+            fromDate && toDate ? t('acct.report.range', { from: formatDay(fromDate), to: formatDay(toDate) })
+                : fromDate ? t('acct.report.from', { date: formatDay(fromDate) })
+                    : toDate ? t('acct.report.until', { date: formatDay(toDate) }) : '',
+            type !== 'all' ? t(typeLabel(type)) : '',
+            balanceFilter !== 'all' ? t(`acct.filter.${balanceFilter}`) : '',
+            term ? t('acct.report.search', { term: search.trim() }) : ''
+        ].filter(Boolean)
+        setExporting(true)
+        try {
+            await downloadAccountsSummary({
+                rows: shown,
+                filters,
+                balanceLabel: toDate ? t('acct.col.balanceAsOf', { date: formatDay(toDate) }) : t('acct.col.balance')
+            }).unwrap()
+        } catch (error) {
+            console.error('Error generating accounts PDF:', error)
+        } finally {
+            setExporting(false)
+        }
+    }
+
     return (
         <div className="space-y-6 pb-20 p-2">
-            <div>
-                <h1 className="flex items-center gap-3 text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                    <BookOpen className="w-8 h-8 text-primary" />
-                    {t('acct.title')}
-                </h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">{t('acct.subtitle')}</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="flex items-center gap-3 text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                        <BookOpen className="w-8 h-8 text-primary" />
+                        {t('acct.title')}
+                    </h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">{t('acct.subtitle')}</p>
+                </div>
+                <button
+                    onClick={exportPdf}
+                    disabled={loading || exporting || shown.length === 0}
+                    title={t('acct.report.pdfHint')}
+                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all font-semibold shadow-lg shadow-primary/20 active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <FileDown className="w-4 h-4" />
+                    {t('acct.report.pdf')}
+                </button>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

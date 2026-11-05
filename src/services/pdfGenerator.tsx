@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Sale, CompanySettings, GoodsReceipt, CapitalEntry, Supplier } from '@/types/database'
 import { InvoiceTemplate } from '@/components/print/InvoiceTemplate'
@@ -197,6 +198,46 @@ export const pdfGenerator = {
     },
 
     // New General Report Generator
+    // Renders ready-made A4 pages (1000px wide each) off screen and saves them as one PDF
+    generatePages: async (pages: ReactNode[], filename: string) => {
+        const container = document.createElement('div')
+        container.style.position = 'fixed'
+        container.style.top = '0'
+        container.style.left = '0'
+        container.style.opacity = '0'
+        container.style.pointerEvents = 'none'
+        container.style.zIndex = '-9999'
+        container.style.width = '1000px'
+        container.style.backgroundColor = '#ffffff'
+        document.body.appendChild(container)
+
+        const root = createRoot(container)
+        try {
+            await new Promise<void>((resolve) => {
+                root.render(
+                    <div style={{ width: '1000px', backgroundColor: '#ffffff' }}>
+                        {pages.map((page, index) => <div key={index} id={`pdf-page-${index}`}>{page}</div>)}
+                    </div>
+                )
+                // Give it a moment to paint and load the logo
+                setTimeout(resolve, 1200)
+            })
+
+            const pdf = new jsPDF('p', 'mm', 'a4')
+            for (let i = 0; i < pages.length; i++) {
+                const element = container.querySelector(`#pdf-page-${i}`) as HTMLElement | null
+                if (!element) continue
+                const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', windowWidth: 1000 })
+                if (i > 0) pdf.addPage()
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width)
+            }
+            pdf.save(filename)
+        } finally {
+            root.unmount()
+            if (document.body.contains(container)) document.body.removeChild(container)
+        }
+    },
+
     generateReport: async (
         title: string,
         subtitle: string,
