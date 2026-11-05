@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { format } from 'date-fns'
-import { Save, Loader2, Info } from 'lucide-react'
+import { Save, Loader2, Info, CheckCircle2, PlusCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ModalHeader } from '@/components/ui/ModalHeader'
@@ -10,10 +10,10 @@ import { cn, formatCurrency } from '@/lib/utils'
 import { PAYMENT_METHODS } from '@/lib/paymentMethods'
 import { capitalService } from '@/services/capitalService'
 import { companyService } from '@/services/companyService'
-import { CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, type CapitalEntry, type CapitalEntryType, type CapitalForm, type Product, type Supplier } from '@/types/database'
+import { CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, type CapitalEntry, type CapitalEntryType, type CapitalForm, type CapitalSource, type Product, type Supplier } from '@/types/database'
 import { GoodsItemsEditor } from '@/features/purchases/GoodsItemsEditor'
 import { emptyGoodsRow, goodsInput, goodsTotal, type GoodsRow } from '@/features/purchases/goodsRows'
-import { FORM_ICONS, TYPE_STYLES, capitalErrorMessage, formLabel, isCapitalType, isGoodsForm, typeLabel } from './capitalUi'
+import { FORM_ICONS, TYPE_STYLES, allowsCredit, capitalErrorMessage, formLabel, isCapitalType, isGoodsForm, typeLabel } from './capitalUi'
 
 interface CapitalEntryFormProps {
     isOpen: boolean
@@ -39,9 +39,12 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
     const [method, setMethod] = useState<string>('cash')
     const [description, setDescription] = useState('')
     const [saving, setSaving] = useState(false)
+    // Sources already registered by credit entries
+    const [sources, setSources] = useState<CapitalSource[]>([])
 
     useEffect(() => {
         if (!isOpen) return
+        capitalService.getSources().then(setSources).catch(() => setSources([]))
         setType(entry?.type ?? defaultType)
         setForm(entry?.form ?? 'money')
         setDate(entry?.entry_date ?? format(new Date(), 'yyyy-MM-dd'))
@@ -60,13 +63,22 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
     const effectiveForm: CapitalForm = isCapital ? form : 'money'
     const isGoods = isGoodsForm(effectiveForm)
     const takesMethod = !isGoods && effectiveForm !== 'pledge'
+    // Credit only for capital in money and other income; switching away from those falls back to cash
+    const creditAllowed = allowsCredit(type, effectiveForm)
+    const methods: string[] = creditAllowed ? [...PAYMENT_METHODS, 'credit'] : [...PAYMENT_METHODS]
+    const effectiveMethod = method === 'credit' && !creditAllowed ? 'cash' : method
+    const onCredit = takesMethod && effectiveMethod === 'credit'
+    // The registered source the typed name picks (any case); none means a new one is created on save
+    const matchedSource = onCredit ? sources.find(s => s.name.toLowerCase() === source.trim().toLowerCase()) : undefined
+    const isNewSource = onCredit && !!source.trim() && !matchedSource
 
     const suggestions = type === 'income'
         ? [t('cap.suggest.commission'), t('cap.suggest.rent'), t('cap.suggest.interest')]
         : type === 'withdrawal'
             ? [t('cap.suggest.personal')]
             : effectiveForm === 'loan' ? [t('cap.suggest.bankLoan')] : [t('cap.suggest.ownSavings'), t('cap.suggest.partner')]
-    const sourceLabel = effectiveForm === 'loan' ? t('capForm.lender') : effectiveForm === 'pledge' ? t('capForm.promisedBy') : t('capForm.source')
+    const sourceLabel = onCredit ? t('capForm.owedBy') : effectiveForm === 'loan' ? t('capForm.lender') : effectiveForm === 'pledge' ? t('capForm.promisedBy') : t('capForm.source')
+    const sourceOptions = onCredit ? sources.map(s => s.name) : suggestions
     const sourcePlaceholder = effectiveForm === 'loan' ? t('capForm.lenderPlaceholder')
         : type === 'income' ? t('capForm.sourcePlaceholder.income')
             : type === 'withdrawal' ? t('capForm.sourcePlaceholder.withdrawal')
@@ -78,19 +90,19 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
         try {
             if (isEditing) {
                 await capitalService.update(entry!.id!, {
-                    entry_date: date, source, description, payment_method: method,
+                    entry_date: date, source, description, payment_method: effectiveMethod,
                     ...(isGoods ? {} : { amount: Number(amount) })
                 })
                 toast.success(t('capForm.updated'))
             } else {
                 await capitalService.create({
                     type, form: effectiveForm, entry_date: date, source, description,
-                    payment_method: takesMethod ? method : '',
+                    payment_method: takesMethod ? effectiveMethod : '',
                     ...(isGoods
                         ? { items: goodsInput(rows), update_costs: updateCosts, supplier_id: effectiveForm === 'supplier_credit' ? Number(supplierId) : null }
                         : { amount: Number(amount) })
                 })
-                toast.success(t('capForm.created'))
+                toast.success(isNewSource ? t('capForm.createdWithSource', { name: source.trim() }) : t('capForm.created'))
             }
             onSaved()
             onClose()
@@ -266,26 +278,48 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
                                             id="capital-source"
                                             type="text"
                                             list="capital-source-suggestions"
-                                            required={effectiveForm === 'loan'}
+                                            required={effectiveForm === 'loan' || onCredit}
+                                            autoComplete="off"
                                             value={source}
                                             onChange={(e) => setSource(e.target.value)}
-                                            placeholder={sourcePlaceholder}
+                                            onBlur={() => { if (matchedSource) setSource(matchedSource.name) }}
+                                            placeholder={onCredit ? (sources.length ? t('capForm.owedByPlaceholder') : t('capForm.owedByPlaceholderEmpty')) : sourcePlaceholder}
+                                            aria-describedby={onCredit ? 'capital-source-status' : undefined}
                                             className={inputClass}
                                         />
                                         <datalist id="capital-source-suggestions">
-                                            {suggestions.map(s => <option key={s} value={s} />)}
+                                            {sourceOptions.map(s => <option key={s} value={s} />)}
                                         </datalist>
+                                        {matchedSource && (
+                                            <p id="capital-source-status" className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 mt-1.5">
+                                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                                {t('capForm.sourceExisting')}
+                                            </p>
+                                        )}
+                                        {isNewSource && (
+                                            <p id="capital-source-status" className="flex items-center gap-1 text-xs text-primary mt-1.5">
+                                                <PlusCircle className="w-3.5 h-3.5 shrink-0" />
+                                                {t('capForm.sourceNew', { name: source.trim() })}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
                                 {takesMethod && (
                                     <div>
                                         <label htmlFor="capital-method" className={labelClass}>{t('capForm.paymentMethod')}</label>
-                                        <select id="capital-method" value={method} onChange={(e) => setMethod(e.target.value)} className={inputClass}>
-                                            {PAYMENT_METHODS.map(m => <option key={m} value={m}>{paymentMethodLabel(m)}</option>)}
+                                        <select id="capital-method" value={effectiveMethod} onChange={(e) => setMethod(e.target.value)} className={inputClass}>
+                                            {methods.map(m => <option key={m} value={m}>{paymentMethodLabel(m)}</option>)}
                                         </select>
                                     </div>
                                 )}
                             </div>
+
+                            {onCredit && (
+                                <p className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-xs">
+                                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                    {type === 'income' ? t('capForm.creditNote.income') : t('capForm.creditNote.capital')}
+                                </p>
+                            )}
 
                             <div>
                                 <label htmlFor="capital-description" className={labelClass}>{t('capForm.description')}</label>

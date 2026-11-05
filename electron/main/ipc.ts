@@ -495,6 +495,7 @@ export function registerIpcHandlers() {
 
     // Capital and other income (reads stay open so backups and reports include them for every user)
     ipcMain.handle('capital:getAll', () => capitalQueries.getAll())
+    ipcMain.handle('capital:getSources', () => capitalQueries.getSources())
     ipcMain.handle('capital:create', (_event, input) =>
         withCapitalAccess(actor => capitalQueries.create(input ?? {}, actor.username)))
     ipcMain.handle('capital:update', (_event, id: number, input) =>

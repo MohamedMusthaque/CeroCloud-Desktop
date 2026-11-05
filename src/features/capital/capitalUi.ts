@@ -27,6 +27,17 @@ export const isGoodsForm = (form: CapitalForm) => form === 'goods' || form === '
 // Loans are repaid and promises paid in over time
 export const isSettledForm = (form: CapitalForm) => form === 'loan' || form === 'pledge'
 
+// Capital in money and other income can be recorded on credit: owed by the source, received later
+export const allowsCredit = (type: CapitalEntryType, form: CapitalForm) => (isCapitalType(type) || type === 'income') && form === 'money'
+export const isCreditEntry = (entry: Pick<CapitalEntry, 'payment_method'>) => entry.payment_method === 'credit'
+
+// Entries that get payments against them: loans, promises and anything on credit
+export const isSettledEntry = (entry: CapitalEntry) => isSettledForm(entry.form) || isCreditEntry(entry)
+
+// Button label for recording a payment against the entry
+export const settleActionKey = (entry: CapitalEntry): TranslationKey =>
+    entry.form === 'loan' ? 'cap.repay' : isCreditEntry(entry) ? 'cap.receive' : 'cap.payIn'
+
 export const outstandingOf = (entry: CapitalEntry) => Math.max(Math.round((entry.amount - (entry.settled ?? 0)) * 100) / 100, 0)
 
 // Money in (+) or out (−) shown next to the amount
@@ -36,7 +47,7 @@ export const amountSign = (entry: CapitalEntry) => entry.type === 'withdrawal' ?
 export const sourceOf = (entry: CapitalEntry) => entry.form === 'supplier_credit' ? entry.supplier_name ?? entry.source : entry.source
 
 const KNOWN_CODES = [
-    'TYPE_INVALID', 'FORM_INVALID', 'AMOUNT_INVALID', 'DATE_INVALID', 'SUPPLIER_REQUIRED', 'ITEMS_REQUIRED', 'PRODUCT_REQUIRED',
+    'TYPE_INVALID', 'FORM_INVALID', 'METHOD_INVALID', 'SOURCE_REQUIRED', 'AMOUNT_INVALID', 'DATE_INVALID', 'SUPPLIER_REQUIRED', 'ITEMS_REQUIRED', 'PRODUCT_REQUIRED',
     'QUANTITY_INVALID', 'COST_INVALID', 'NOT_EDITABLE', 'NOT_SETTLEABLE', 'AMOUNT_TOO_HIGH', 'BELOW_SETTLED', 'HAS_SETTLEMENTS',
     'HAS_PAYMENTS', 'STOCK_USED', 'NOT_FOUND', 'FORBIDDEN', 'UNKNOWN'
 ] as const

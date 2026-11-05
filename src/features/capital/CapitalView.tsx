@@ -17,7 +17,7 @@ import {
 import { useRecord, parseId } from '@/components/view/useRecord'
 import { CapitalEntryForm } from './CapitalEntryForm'
 import { CapitalSettlementForm } from './CapitalSettlementForm'
-import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, formLabel, isGoodsForm, isSettledForm, outstandingOf, sourceOf, typeLabel } from './capitalUi'
+import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, formLabel, isCreditEntry, isGoodsForm, isSettledEntry, outstandingOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
 
 interface CapitalRecord {
     entry: CapitalEntry
@@ -48,9 +48,10 @@ export function CapitalView() {
     const style = TYPE_STYLES[entry.type] ?? TYPE_STYLES.capital
     const FormIcon = FORM_ICONS[entry.form] ?? FORM_ICONS.money
     const formatDay = (day: string) => parseISO(day).toLocaleDateString(locale)
-    const isSettled = isSettledForm(entry.form)
+    const isSettled = isSettledEntry(entry)
+    const onCredit = isCreditEntry(entry)
     const outstanding = outstandingOf(entry)
-    const settledLabel = entry.form === 'loan' ? t('capView.repaid') : t('capView.paidIn')
+    const settledLabel = entry.form === 'loan' ? t('capView.repaid') : onCredit ? t('capView.received') : t('capView.paidIn')
 
     const deleteSettlement = async () => {
         if (!toDelete?.id) return
@@ -103,7 +104,7 @@ export function CapitalView() {
                         <ViewField label={t('cap.col.amount')} value={formatCurrency(entry.amount)} icon={Banknote} />
                         {entry.form === 'supplier_credit'
                             ? <ViewField label={t('capForm.supplier')} value={entry.supplier_id ? <ViewLink to={`/suppliers/${entry.supplier_id}`} page="suppliers">{entry.supplier_name}</ViewLink> : undefined} icon={Truck} />
-                            : <ViewField label={entry.form === 'loan' ? t('capForm.lender') : t('cap.col.source')} value={sourceOf(entry)} icon={User} />}
+                            : <ViewField label={entry.form === 'loan' ? t('capForm.lender') : onCredit ? t('capForm.owedBy') : t('cap.col.source')} value={sourceOf(entry)} icon={User} />}
                         <ViewField label={t('cap.col.payment')} value={entry.payment_method ? paymentMethodLabel(entry.payment_method) : undefined} icon={Banknote} />
                         <ViewField label={t('view.description')} value={entry.description} wide />
                     </ViewFields>
@@ -145,11 +146,11 @@ export function CapitalView() {
 
             {isSettled && (
                 <ViewSection
-                    title={entry.form === 'loan' ? t('capView.repayments') : t('capView.paymentsIn')}
+                    title={entry.form === 'loan' ? t('capView.repayments') : onCredit ? t('capView.paymentsReceived') : t('capView.paymentsIn')}
                     icon={CheckCircle2}
                     actions={outstanding > 0 && (
                         <button onClick={() => setSettling(true)} className="px-3 py-1.5 rounded-lg text-sm font-bold text-primary hover:bg-primary/10 transition-colors">
-                            {entry.form === 'loan' ? t('cap.repay') : t('cap.payIn')}
+                            {t(settleActionKey(entry))}
                         </button>
                     )}
                 >

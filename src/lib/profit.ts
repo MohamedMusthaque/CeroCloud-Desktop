@@ -150,8 +150,10 @@ export interface CashFlowSummary {
     // Bills put on a client's credit: earned, but not yet received
     creditSales: number
     otherIncome: number
-    // Money put into the business as capital: money and loans on their day, promised capital as it's paid in
-    // (capital given as goods brings no cash)
+    // Other income recorded on credit in the period (its cash counts when it's received)
+    creditIncome: number
+    // Money put into the business as capital: money and loans on their day, promised capital and capital
+    // on credit as it's paid in (capital given as goods brings no cash)
     capitalAdded: number
     loanRepayments: number
     ownerWithdrawals: number
@@ -179,20 +181,24 @@ export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: P
         if (payment.type === 'payment') paidToSuppliers += payment.amount
         else refundsFromSuppliers += payment.amount
     }
-    let otherIncome = 0, capitalAdded = 0, loanRepayments = 0, ownerWithdrawals = 0
+    let otherIncome = 0, creditIncome = 0, capitalAdded = 0, loanRepayments = 0, ownerWithdrawals = 0
     for (const entry of capitalEntries) {
         const onDay = inPeriod(entry.entry_date, period)
+        const onCredit = entry.payment_method === 'credit'
         if (entry.type === 'income') {
-            if (onDay) otherIncome += entry.amount
+            if (onDay && onCredit) creditIncome += entry.amount
+            else if (onDay) otherIncome += entry.amount
         } else if (entry.type === 'withdrawal') {
             if (onDay) ownerWithdrawals += entry.amount
-        } else if (entry.form === 'money' || entry.form === 'loan') {
+        } else if ((entry.form === 'money' && !onCredit) || entry.form === 'loan') {
             if (onDay) capitalAdded += entry.amount
         }
         for (const settlement of entry.settlements ?? []) {
             if (!inPeriod(settlement.settlement_date, period)) continue
             if (entry.form === 'loan') loanRepayments += settlement.amount
-            else if (entry.form === 'pledge') capitalAdded += settlement.amount
+            // Credit income: cash in on the day it's received
+            else if (entry.type === 'income') otherIncome += settlement.amount
+            else if (entry.form === 'pledge' || onCredit) capitalAdded += settlement.amount
         }
     }
     const paidToClients = goodsReceipts
@@ -206,6 +212,7 @@ export function computeCashFlow(sales: Sale[], expenses: Expense[], purchases: P
         salesCollected,
         creditSales,
         otherIncome,
+        creditIncome,
         capitalAdded,
         loanRepayments,
         ownerWithdrawals,

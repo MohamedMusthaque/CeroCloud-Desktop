@@ -98,6 +98,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Capital and other income
     capital: {
         getAll: () => ipcRenderer.invoke('capital:getAll'),
+        getSources: () => ipcRenderer.invoke('capital:getSources'),
         create: (entry: any) => ipcRenderer.invoke('capital:create', entry),
         update: (id: number, entry: any) => ipcRenderer.invoke('capital:update', id, entry),
         delete: (id: number) => ipcRenderer.invoke('capital:delete', id),

@@ -14,13 +14,13 @@ import type { CapitalEntry } from '@/types/database'
 import { capitalErrorMessage, outstandingOf } from './capitalUi'
 
 interface CapitalSettlementFormProps {
-    // Loan or promised capital being settled; null closes the form
+    // Loan, promised capital or credit entry being settled; null closes the form
     entry: CapitalEntry | null
     onClose: () => void
     onSaved: () => void
 }
 
-// Loan repayment (money out) or payment in towards promised capital (money in)
+// Loan repayment (money out), or payment in towards promised capital or a credit entry (money in)
 export function CapitalSettlementForm({ entry, onClose, onSaved }: CapitalSettlementFormProps) {
     const { t } = useTranslation()
     const [amount, setAmount] = useState('')
@@ -76,7 +76,10 @@ export function CapitalSettlementForm({ entry, onClose, onSaved }: CapitalSettle
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
                     >
-                        <ModalHeader title={entry.form === 'loan' ? t('capSettle.repayTitle') : t('capSettle.payInTitle')} onClose={onClose} />
+                        <ModalHeader
+                            title={entry.form === 'loan' ? t('capSettle.repayTitle') : entry.payment_method === 'credit' ? t('capSettle.receiveTitle') : t('capSettle.payInTitle')}
+                            onClose={onClose}
+                        />
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <p className="text-sm text-gray-600 dark:text-gray-300">

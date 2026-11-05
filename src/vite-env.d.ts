@@ -89,6 +89,7 @@ interface ElectronAPI {
     }
     capital: {
         getAll: () => Promise<any[]>
+        getSources: () => Promise<any[]>
         create: (entry: any) => Promise<UserResult<any>>
         update: (id: number, entry: any) => Promise<UserResult<any>>
         delete: (id: number) => Promise<UserResult<void>>

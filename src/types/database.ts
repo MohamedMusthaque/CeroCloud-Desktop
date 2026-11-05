@@ -140,7 +140,7 @@ export interface CapitalItem {
     unit_cost: number
 }
 
-// A loan repayment or a payment in towards promised capital
+// A loan repayment, or a payment in towards promised capital or capital / income on credit
 export interface CapitalSettlement extends AuditFields {
     id?: number
     entry_id: number
@@ -150,12 +150,22 @@ export interface CapitalSettlement extends AuditFields {
     notes?: string
 }
 
+// Who owes capital or income recorded on credit (picked or created when the entry is saved)
+export interface CapitalSource {
+    id: number
+    name: string
+    created_at?: string
+    created_by?: string | null
+}
+
 export interface CapitalEntry extends AuditFields {
     id?: number
     type: CapitalEntryType
     form: CapitalForm
     // Where it came from, e.g. "Own savings", the lender, "Commission"
     source?: string
+    // Credit entries: the registered source that owes the money
+    source_id?: number | null
     amount: number
     entry_date: string // Local day 'YYYY-MM-DD'
     payment_method: string
@@ -166,7 +176,7 @@ export interface CapitalEntry extends AuditFields {
     purchase_id?: number | null
     items?: CapitalItem[]
     settlements?: CapitalSettlement[]
-    // Repaid (loan) or paid in (pledge) so far
+    // Repaid (loan), paid in (pledge) or received (credit) so far
     settled?: number
 }
 

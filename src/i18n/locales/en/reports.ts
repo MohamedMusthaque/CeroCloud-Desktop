@@ -208,6 +208,7 @@ export const reports: Record<keyof typeof es, string> = {
     'profit.cash.paidToClients': 'Paid to clients for goods',
     'profit.cash.net': 'Net cash flow',
     'profit.cash.creditSales': 'Credit sales not yet collected: {amount}',
+    'profit.cash.creditIncome': 'Other income on credit, received later: {amount}',
     'profit.cash.goodsReceived': 'Goods received from suppliers: {amount}',
     'profit.cash.note': 'Supplier payments move cash but don\'t lower profit: goods count as a cost (cost of goods sold) when they are sold.',
 

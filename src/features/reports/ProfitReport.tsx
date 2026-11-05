@@ -231,6 +231,9 @@ export function ProfitReport({ sales, expenses, products, purchases, supplierPay
                         {cashFlow.creditSales > 0 && (
                             <p className="text-gray-600 dark:text-gray-300">{t('profit.cash.creditSales', { amount: formatCurrency(cashFlow.creditSales) })}</p>
                         )}
+                        {cashFlow.creditIncome > 0 && (
+                            <p className="text-gray-600 dark:text-gray-300">{t('profit.cash.creditIncome', { amount: formatCurrency(cashFlow.creditIncome) })}</p>
+                        )}
                         <p className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 text-xs leading-relaxed">
                             <Info className="w-4 h-4 shrink-0 mt-0.5" />
                             {t('profit.cash.note')}

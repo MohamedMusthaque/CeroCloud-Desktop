@@ -19,7 +19,7 @@ import { cn, formatCurrency } from '@/lib/utils'
 import { CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, type CapitalEntry, type CapitalEntryType, type CapitalForm, type Product, type Supplier } from '@/types/database'
 import { CapitalEntryForm } from './CapitalEntryForm'
 import { CapitalSettlementForm } from './CapitalSettlementForm'
-import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, formLabel, isCapitalType, isGoodsForm, isSettledForm, outstandingOf, sourceOf, typeLabel } from './capitalUi'
+import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, formLabel, isCapitalType, isCreditEntry, isGoodsForm, isSettledEntry, outstandingOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
 
 export function Capital() {
     const { t, locale } = useTranslation()
@@ -74,14 +74,16 @@ export function Capital() {
         return {
             invested,
             goods: sum(ownCapital.filter(e => isGoodsForm(e.form))),
-            promised: sum(ownCapital.filter(e => e.form === 'pledge'), outstandingOf),
+            // Promised capital and capital on credit not yet received
+            promised: sum(ownCapital.filter(e => e.form === 'pledge' || isCreditEntry(e)), outstandingOf),
             borrowed: sum(loans),
             borrowedOutstanding: sum(loans, outstandingOf),
             repaid: sum(loans, e => e.settled ?? 0),
             withdrawals,
             netCapital: invested - withdrawals,
             income: sum(income),
-            incomeThisMonth: sum(income.filter(e => e.entry_date.startsWith(month)))
+            incomeThisMonth: sum(income.filter(e => e.entry_date.startsWith(month))),
+            incomeToReceive: sum(income.filter(isCreditEntry), outstandingOf)
         }
     }, [entries])
 
@@ -148,12 +150,12 @@ export function Capital() {
 
     const actions = (entry: CapitalEntry) => (
         <div className="flex justify-end items-center gap-1">
-            {isSettledForm(entry.form) && outstandingOf(entry) > 0 && (
+            {isSettledEntry(entry) && outstandingOf(entry) > 0 && (
                 <button
                     onClick={() => setSettling(entry)}
                     className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 transition-colors whitespace-nowrap"
                 >
-                    {entry.form === 'loan' ? t('cap.repay') : t('cap.payIn')}
+                    {t(settleActionKey(entry))}
                 </button>
             )}
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
@@ -188,13 +190,14 @@ export function Capital() {
         )
     }
 
-    // Loans and promises: what's left, or that they're settled
+    // Loans, promises and credit: what's left, or that they're settled
     const outstandingTag = (entry: CapitalEntry) => {
-        if (!isSettledForm(entry.form)) return null
+        if (!isSettledEntry(entry)) return null
         const left = outstandingOf(entry)
+        const settledText = entry.form === 'loan' ? t('cap.paidOff') : isCreditEntry(entry) ? t('cap.fullyReceived') : t('cap.fullyPaidIn')
         return left > 0
             ? <span className="text-xs font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{t('cap.left', { amount: formatCurrency(left) })}</span>
-            : <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600 dark:text-green-400 whitespace-nowrap"><CheckCircle2 className="w-3.5 h-3.5" />{entry.form === 'loan' ? t('cap.paidOff') : t('cap.fullyPaidIn')}</span>
+            : <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600 dark:text-green-400 whitespace-nowrap"><CheckCircle2 className="w-3.5 h-3.5" />{settledText}</span>
     }
 
     const amountText = (entry: CapitalEntry) => (
@@ -267,7 +270,9 @@ export function Capital() {
                     icon={ArrowUpFromLine}
                     color="bg-red-500"
                 />
-                <StatCard label={t('cap.statIncome')} value={formatCurrency(stats.income)} hint={t('cap.statIncomeHint', { amount: formatCurrency(stats.incomeThisMonth) })} icon={Coins} color="bg-emerald-500" />
+                <StatCard label={t('cap.statIncome')} value={formatCurrency(stats.income)} hint={stats.incomeToReceive > 0
+                        ? t('cap.statIncomeHintCredit', { amount: formatCurrency(stats.incomeThisMonth), pending: formatCurrency(stats.incomeToReceive) })
+                        : t('cap.statIncomeHint', { amount: formatCurrency(stats.incomeThisMonth) })} icon={Coins} color="bg-emerald-500" />
             </div>
 
             <p className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 text-sm">

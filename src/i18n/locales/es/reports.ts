@@ -206,6 +206,7 @@ export const reports = {
     'profit.cash.paidToClients': 'Pagado a clientes por mercadería',
     'profit.cash.net': 'Flujo de caja neto',
     'profit.cash.creditSales': 'Ventas a crédito aún por cobrar: {amount}',
+    'profit.cash.creditIncome': 'Otros ingresos a crédito, por cobrar: {amount}',
     'profit.cash.goodsReceived': 'Mercadería recibida de proveedores: {amount}',
     'profit.cash.note': 'Los pagos a proveedores mueven dinero, pero no reducen la ganancia: la mercadería se cuenta como costo (costo de ventas) cuando se vende.',
 

@@ -3,7 +3,7 @@ import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
 import crypto from 'crypto'
-import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES, Purchase, PurchaseItem, SupplierPayment, SupplierAccount, CapitalEntry, CapitalItem, CapitalSettlement, CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, GoodsReceipt, GoodsReceiptItem, InventoryLog } from '../../src/types/database'
+import { Product, Category, Sale, Supplier, SaleItem, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, SAVINGS_CATEGORIES, Purchase, PurchaseItem, SupplierPayment, SupplierAccount, CapitalEntry, CapitalItem, CapitalSettlement, CapitalSource, CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, GoodsReceipt, GoodsReceiptItem, InventoryLog } from '../../src/types/database'
 import { PAGE_IDS, sanitizePermissions, type AuthUser, type UserRole } from '../../src/lib/permissions'
 
 // Database setup: opened by initializeDatabase() once the data folder is known (see dataLocation.ts)
@@ -473,6 +473,15 @@ function initSchema() {
         FOREIGN KEY (entry_id) REFERENCES capital_entries(id) ON DELETE CASCADE
     )`)
 
+  // Table: who owes capital or income recorded on credit (created on first use)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS capital_sources (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+        created_at TEXT,
+        created_by TEXT
+    )`)
+
   // Table: Goods Received Notes (goods bought from clients)
   // (client_id has no foreign key: a restore can replace clients while keeping these)
   db.exec(`
@@ -543,6 +552,8 @@ function initSchema() {
   addColumnIfMissing('capital_entries', 'form', "TEXT NOT NULL DEFAULT 'money'")
   addColumnIfMissing('capital_entries', 'supplier_id', 'INTEGER')
   addColumnIfMissing('capital_entries', 'purchase_id', 'INTEGER')
+  // Credit entries: the capital source that owes the money (no foreign key, like supplier_id)
+  addColumnIfMissing('capital_entries', 'source_id', 'INTEGER')
   if (addColumnIfMissing('clients', 'credit_limit_enabled', 'INTEGER DEFAULT 0')) {
     // Existing clients were always limit-checked: keep enforcing it for them
     db.exec('UPDATE clients SET credit_limit_enabled = 1')
@@ -585,6 +596,7 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_capital_entries_date ON capital_entries(entry_date);
     CREATE INDEX IF NOT EXISTS idx_capital_items_entry_id ON capital_items(entry_id);
     CREATE INDEX IF NOT EXISTS idx_capital_settlements_entry_id ON capital_settlements(entry_id);
+    CREATE INDEX IF NOT EXISTS idx_capital_entries_source_id ON capital_entries(source_id);
     CREATE INDEX IF NOT EXISTS idx_goods_receipts_client_id ON goods_receipts(client_id);
     CREATE INDEX IF NOT EXISTS idx_goods_receipt_items_receipt_id ON goods_receipt_items(receipt_id);
     CREATE INDEX IF NOT EXISTS idx_inventory_logs_product_id ON inventory_logs(product_id);
@@ -1574,7 +1586,7 @@ export const savingsTransactionQueries = {
 
 // Capital errors; the UI translates the code
 export class CapitalError extends Error {
-  constructor(public code: 'TYPE_INVALID' | 'FORM_INVALID' | 'AMOUNT_INVALID' | 'DATE_INVALID' | 'SUPPLIER_REQUIRED' | 'ITEMS_REQUIRED' | 'PRODUCT_REQUIRED' | 'QUANTITY_INVALID' | 'COST_INVALID' | 'NOT_EDITABLE' | 'NOT_SETTLEABLE' | 'AMOUNT_TOO_HIGH' | 'BELOW_SETTLED' | 'HAS_SETTLEMENTS' | 'HAS_PAYMENTS' | 'STOCK_USED' | 'NOT_FOUND') {
+  constructor(public code: 'TYPE_INVALID' | 'FORM_INVALID' | 'METHOD_INVALID' | 'SOURCE_REQUIRED' | 'AMOUNT_INVALID' | 'DATE_INVALID' | 'SUPPLIER_REQUIRED' | 'ITEMS_REQUIRED' | 'PRODUCT_REQUIRED' | 'QUANTITY_INVALID' | 'COST_INVALID' | 'NOT_EDITABLE' | 'NOT_SETTLEABLE' | 'AMOUNT_TOO_HIGH' | 'BELOW_SETTLED' | 'HAS_SETTLEMENTS' | 'HAS_PAYMENTS' | 'STOCK_USED' | 'NOT_FOUND') {
     super(code)
   }
 }
@@ -1604,6 +1616,27 @@ export interface CapitalSettlementInput {
 const CAPITAL_TYPES = ['initial_capital', 'capital']
 const GOODS_FORMS = ['goods', 'supplier_credit']
 const SETTLED_FORMS = ['loan', 'pledge']
+// Capital in money and other income can be recorded on credit: owed by the source, received later
+const CREDIT_TYPES = ['initial_capital', 'capital', 'income']
+
+function allowsCredit(type: string, form: string): boolean {
+  return CREDIT_TYPES.includes(type) && form === 'money'
+}
+
+// Loans and promises are settled over time, and so is anything recorded on credit
+function isSettleable(entry: Pick<CapitalEntry, 'form' | 'payment_method'>): boolean {
+  return SETTLED_FORMS.includes(entry.form) || entry.payment_method === 'credit'
+}
+
+// The registered source with this name (any case), created when there's none yet
+function resolveCapitalSource(name: unknown, actor: Actor, now: string): { id: number; name: string } {
+  const trimmed = String(name ?? '').trim()
+  if (!trimmed) throw new CapitalError('SOURCE_REQUIRED')
+  const existing = db.prepare('SELECT id, name FROM capital_sources WHERE name = ?').get(trimmed) as { id: number; name: string } | undefined
+  if (existing) return existing
+  const info = db.prepare('INSERT INTO capital_sources(name, created_at, created_by) VALUES(?, ?, ?)').run(trimmed, now, actor)
+  return { id: Number(info.lastInsertRowid), name: trimmed }
+}
 
 function requireCapitalDay(value: unknown): string {
   const day = String(value ?? '')
@@ -1657,6 +1690,11 @@ export const capitalQueries = {
     return capitalQueries.getAll().find(entry => entry.id === id)
   },
 
+  // Sources registered by credit entries, for picking on the next one
+  getSources: (): CapitalSource[] => {
+    return db.prepare('SELECT * FROM capital_sources ORDER BY name COLLATE NOCASE ASC').all() as CapitalSource[]
+  },
+
   create: (input: CapitalEntryInput, actor: Actor = null): CapitalEntry => {
     const type = String(input.type ?? '')
     if (!(CAPITAL_ENTRY_TYPES as readonly string[]).includes(type)) throw new CapitalError('TYPE_INVALID')
@@ -1677,19 +1715,31 @@ export const capitalQueries = {
       if (!supplierId || !db.prepare('SELECT 1 FROM suppliers WHERE id = ?').get(supplierId)) throw new CapitalError('SUPPLIER_REQUIRED')
     }
 
+    // Goods and promises bring no money in on the day
+    const paymentMethod = isGoods || form === 'pledge' ? '' : String(input.payment_method || 'cash')
+    const onCredit = paymentMethod === 'credit'
+    if (onCredit && !allowsCredit(type, form)) throw new CapitalError('METHOD_INVALID')
+    if (onCredit && !String(input.source ?? '').trim()) throw new CapitalError('SOURCE_REQUIRED')
+
     const now = new Date().toISOString()
     const values = {
       type, form, amount, entry_date: date, supplier_id: supplierId,
       source: String(input.source ?? '').trim(),
-      // Goods and promises bring no money in on the day
-      payment_method: isGoods || form === 'pledge' ? '' : String(input.payment_method || 'cash'),
+      source_id: null as number | null,
+      payment_method: paymentMethod,
       description: String(input.description ?? '').trim()
     }
 
     const id = db.transaction(() => {
+      // On credit the source owes the money: pick the registered one, or register it
+      if (onCredit) {
+        const source = resolveCapitalSource(values.source, actor, now)
+        values.source = source.name
+        values.source_id = source.id
+      }
       const info = db.prepare(`
-        INSERT INTO capital_entries(type, form, source, supplier_id, amount, entry_date, payment_method, description, created_at, created_by, updated_at, updated_by)
-        VALUES(@type, @form, @source, @supplier_id, @amount, @entry_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
+        INSERT INTO capital_entries(type, form, source, source_id, supplier_id, amount, entry_date, payment_method, description, created_at, created_by, updated_at, updated_by)
+        VALUES(@type, @form, @source, @source_id, @supplier_id, @amount, @entry_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
       `).run({ ...values, created_at: now, created_by: actor, updated_at: now, updated_by: actor })
       const entryId = Number(info.lastInsertRowid)
       if (!isGoods) return entryId
@@ -1733,18 +1783,30 @@ export const capitalQueries = {
     const date = requireCapitalDay(input.entry_date ?? existing.entry_date)
     const isGoods = GOODS_FORMS.includes(existing.form)
     const amount = isGoods ? existing.amount : requireCapitalAmount(input.amount ?? existing.amount)
-    if (SETTLED_FORMS.includes(existing.form) && amount < (existing.settled ?? 0)) throw new CapitalError('BELOW_SETTLED')
+    const paymentMethod = isGoods || existing.form === 'pledge' ? '' : String(input.payment_method ?? existing.payment_method ?? 'cash')
+    const onCredit = paymentMethod === 'credit'
+    if (onCredit && !allowsCredit(existing.type, existing.form)) throw new CapitalError('METHOD_INVALID')
+    // Money already received against the credit would no longer belong to anything
+    if (!isSettleable({ form: existing.form, payment_method: paymentMethod }) && existing.settlements?.length) throw new CapitalError('HAS_SETTLEMENTS')
+    if (isSettleable({ form: existing.form, payment_method: paymentMethod }) && amount < (existing.settled ?? 0)) throw new CapitalError('BELOW_SETTLED')
+    let source = String(input.source ?? existing.source ?? '').trim()
+    if (onCredit && !source) throw new CapitalError('SOURCE_REQUIRED')
     const now = new Date().toISOString()
 
     db.transaction(() => {
+      let sourceId: number | null = null
+      if (onCredit) {
+        const registered = resolveCapitalSource(source, actor, now)
+        source = registered.name
+        sourceId = registered.id
+      }
       db.prepare(`
-        UPDATE capital_entries SET source = @source, amount = @amount, entry_date = @entry_date, payment_method = @payment_method,
+        UPDATE capital_entries SET source = @source, source_id = @source_id, amount = @amount, entry_date = @entry_date, payment_method = @payment_method,
           description = @description, updated_at = @updated_at, updated_by = @updated_by
         WHERE id = @id
       `).run({
-        id, amount, entry_date: date,
-        source: String(input.source ?? existing.source ?? '').trim(),
-        payment_method: isGoods || existing.form === 'pledge' ? '' : String(input.payment_method ?? existing.payment_method ?? 'cash'),
+        id, amount, entry_date: date, source, source_id: sourceId,
+        payment_method: paymentMethod,
         description: String(input.description ?? existing.description ?? '').trim(),
         updated_at: now, updated_by: actor
       })
@@ -1781,20 +1843,23 @@ export const capitalQueries = {
     })()
   },
 
-  // Loan repayment or payment in towards promised capital, up to what's still outstanding
+  // Loan repayment, or payment in towards promised capital or a credit entry, up to what's still outstanding
   settle: (entryId: number, input: CapitalSettlementInput, actor: Actor = null): CapitalEntry => {
     const entry = capitalQueries.getById(entryId)
     if (!entry) throw new CapitalError('NOT_FOUND')
-    if (!SETTLED_FORMS.includes(entry.form)) throw new CapitalError('NOT_SETTLEABLE')
+    if (!isSettleable(entry)) throw new CapitalError('NOT_SETTLEABLE')
     const amount = requireCapitalAmount(input.amount)
     if (amount > roundMoney(entry.amount - (entry.settled ?? 0))) throw new CapitalError('AMOUNT_TOO_HIGH')
+    // A payment is real money: it can't itself be on credit
+    const method = String(input.payment_method || 'cash')
+    if (method === 'credit') throw new CapitalError('METHOD_INVALID')
     const now = new Date().toISOString()
     db.prepare(`
       INSERT INTO capital_settlements(entry_id, amount, settlement_date, payment_method, notes, created_at, created_by, updated_at, updated_by)
       VALUES(@entry_id, @amount, @settlement_date, @payment_method, @notes, @now, @actor, @now, @actor)
     `).run({
       entry_id: entryId, amount, settlement_date: requireCapitalDay(input.settlement_date),
-      payment_method: String(input.payment_method || 'cash'), notes: String(input.notes ?? '').trim(), now, actor
+      payment_method: method, notes: String(input.notes ?? '').trim(), now, actor
     })
     return capitalQueries.getById(entryId)!
   },
@@ -2343,7 +2408,7 @@ export function restoreDatabase(data: any) {
     const keptTables = [
       ...(hasExpenses ? [] : ['expenses', 'expense_types']),
       ...(hasSavings ? [] : ['savings_transactions', 'savings_accounts']),
-      ...(hasCapital ? [] : ['capital_entries', 'capital_items', 'capital_settlements'])
+      ...(hasCapital ? [] : ['capital_entries', 'capital_items', 'capital_settlements', 'capital_sources'])
     ]
 
     // 1. Clear everything (purchases and GRNs reference suppliers, clients and products, which are always replaced)
@@ -2365,6 +2430,7 @@ export function restoreDatabase(data: any) {
       db.prepare('DELETE FROM capital_settlements').run()
       db.prepare('DELETE FROM capital_items').run()
       db.prepare('DELETE FROM capital_entries').run()
+      db.prepare('DELETE FROM capital_sources').run()
     }
     db.prepare('DELETE FROM sale_items').run()
     db.prepare('DELETE FROM sales').run()
@@ -2606,9 +2672,11 @@ export function restoreDatabase(data: any) {
     // 10. Restore capital and other income
     if (hasCapital) {
       const insertCapitalEntry = db.prepare(`
-        INSERT INTO capital_entries(id, type, form, source, supplier_id, purchase_id, amount, entry_date, payment_method, description, created_at, created_by, updated_at, updated_by)
-        VALUES(@id, @type, @form, @source, @supplier_id, @purchase_id, @amount, @entry_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
+        INSERT INTO capital_entries(id, type, form, source, source_id, supplier_id, purchase_id, amount, entry_date, payment_method, description, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @type, @form, @source, @source_id, @supplier_id, @purchase_id, @amount, @entry_date, @payment_method, @description, @created_at, @created_by, @updated_at, @updated_by)
       `)
+      // Backups hold the entries only: their credit sources are registered again from them
+      const insertCapitalSource = db.prepare('INSERT OR IGNORE INTO capital_sources(id, name, created_at, created_by) VALUES(@id, @name, @created_at, @created_by)')
       const insertCapitalItem = db.prepare(`
         INSERT INTO capital_items(id, entry_id, product_id, product_code, product_name, quantity, unit_cost)
         VALUES(@id, @entry_id, @product_id, @product_code, @product_name, @quantity, @unit_cost)
@@ -2619,8 +2687,10 @@ export function restoreDatabase(data: any) {
       `)
       // Stock and supplier accounts already reflect these entries, so they are inserted as-is
       for (const c of data.capitalEntries) {
+        const sourceId = c.source_id && c.source ? Number(c.source_id) : null
+        if (sourceId) insertCapitalSource.run({ id: sourceId, name: String(c.source).trim(), created_at: c.created_at || new Date().toISOString(), created_by: c.created_by ?? null })
         insertCapitalEntry.run({
-          id: c.id, type: c.type, form: c.form || 'money', source: c.source || '',
+          id: c.id, type: c.type, form: c.form || 'money', source: c.source || '', source_id: sourceId,
           supplier_id: c.supplier_id ?? null, purchase_id: c.purchase_id ?? null,
           amount: c.amount, entry_date: c.entry_date, payment_method: c.payment_method ?? 'cash', description: c.description || '',
           created_at: c.created_at || new Date().toISOString(), updated_at: c.updated_at ?? null, ...auditOf(c)
@@ -2682,6 +2752,7 @@ export function clearAll() {
     db.prepare('DELETE FROM capital_settlements').run()
     db.prepare('DELETE FROM capital_items').run()
     db.prepare('DELETE FROM capital_entries').run()
+    db.prepare('DELETE FROM capital_sources').run()
     db.prepare('DELETE FROM supplier_payments').run()
     db.prepare('DELETE FROM purchase_items').run()
     db.prepare('DELETE FROM purchase_orders').run()
