@@ -31,9 +31,10 @@ export function AccountView() {
     const { t, locale } = useTranslation()
     const params = useParams()
     const type = isAccountType(params.type) ? params.type : null
-    const id = parseId(params.id)
+    // Walk-in accounts are keyed by name, the others by record id
+    const id = type === 'walkin' ? params.id ?? null : parseId(params.id)
     const { accounts, loading, reload } = useAccounts()
-    const account = accounts.find(a => a.type === type && a.id === id)
+    const account = id === null ? undefined : accounts.find(a => a.type === type && String(a.id) === String(id))
 
     const [kind, setKind] = useState<'all' | LineKind>('all')
     const [search, setSearch] = useState('')
@@ -106,14 +107,14 @@ export function AccountView() {
     const openSupplierPayment = async () => {
         try {
             const [suppliers, orders, supplierAccount] = await Promise.all([
-                supplierService.getAll(), purchaseService.getAll(), supplierAccountService.get(account.id)
+                supplierService.getAll(), purchaseService.getAll(), supplierAccountService.get(Number(account.id))
             ])
             // Same preset as the Purchases accounts tab: advances held for open orders aren't refundable
             const available = supplierAccount.available
             setSupplierPayment({
                 suppliers,
-                orders: orders.filter(o => o.supplier_id === account.id),
-                preset: { supplierId: account.id, type: available > 0 ? 'refund' : 'payment', amount: available !== 0 ? Math.abs(available) : undefined }
+                orders: orders.filter(o => o.supplier_id === Number(account.id)),
+                preset: { supplierId: Number(account.id), type: available > 0 ? 'refund' : 'payment', amount: available !== 0 ? Math.abs(available) : undefined }
             })
         } catch (error) {
             console.error(error)
@@ -139,7 +140,7 @@ export function AccountView() {
                 backLabel={backLabel}
                 avatar={<ViewAvatar gradient={style.gradient}>{account.name.charAt(0).toUpperCase()}</ViewAvatar>}
                 title={account.name}
-                subtitle={account.info}
+                subtitle={account.info ?? (account.type === 'walkin' ? t('acct.walkinInfo') : undefined)}
                 badges={<AccountTypeBadge type={account.type} />}
             />
 
@@ -164,10 +165,12 @@ export function AccountView() {
                     <Download className="w-4 h-4" />
                     {t('acct.export')}
                 </button>
-                <ViewLink to={account.link.to} page={account.link.page} className={cn(buttonClass, "text-gray-600 dark:text-gray-300 hover:no-underline hover:bg-gray-100 dark:hover:bg-gray-700")}>
-                    <ExternalLink className="w-4 h-4" />
-                    {t('acct.openRecord', { type: t(typeLabel(account.type)) })}
-                </ViewLink>
+                {account.link && (
+                    <ViewLink to={account.link.to} page={account.link.page} className={cn(buttonClass, "text-gray-600 dark:text-gray-300 hover:no-underline hover:bg-gray-100 dark:hover:bg-gray-700")}>
+                        <ExternalLink className="w-4 h-4" />
+                        {t('acct.openRecord', { type: t(typeLabel(account.type)) })}
+                    </ViewLink>
+                )}
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -263,7 +266,7 @@ export function AccountView() {
                     isOpen
                     entries={repayment}
                     defaultKind={account.balance < 0 ? 'loan' : 'credit'}
-                    defaultSourceId={account.id}
+                    defaultSourceId={Number(account.id)}
                     onClose={() => setRepayment(null)}
                     onSaved={() => { setRepayment(null); reload() }}
                 />

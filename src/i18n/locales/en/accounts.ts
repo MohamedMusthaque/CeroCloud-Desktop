@@ -25,6 +25,8 @@ export const accounts: Record<keyof typeof es, string> = {
     'acct.type.all': 'All',
     'acct.type.supplier': 'Supplier',
     'acct.type.client': 'Client',
+    'acct.type.walkin': 'Walk-in',
+    'acct.walkinInfo': 'Walk-in seller or customer with no client record (grouped by name)',
     'acct.type.source': 'Capital & loans',
     'acct.type.savings': 'Savings',
     'acct.type.expense': 'Expenses',

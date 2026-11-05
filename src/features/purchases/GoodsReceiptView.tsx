@@ -18,6 +18,8 @@ import {
 import { useRecord, parseId } from '@/components/view/useRecord'
 import { purchaseErrorMessage } from './purchaseErrors'
 import { grnId } from './purchaseUi'
+import { AccountLink } from '@/features/accounts/AccountParts'
+import { walkInId } from '@/features/accounts/accountLedger'
 
 export function GoodsReceiptView() {
     const { t, locale } = useTranslation()
@@ -106,8 +108,8 @@ export function GoodsReceiptView() {
                         <ViewField
                             label={t('grnView.client')}
                             value={receipt.client_id
-                                ? <ViewLink to={`/clients/${receipt.client_id}`} page="clients">{receipt.client_name}</ViewLink>
-                                : `${receipt.client_name} (${t('grn.walkIn')})`}
+                                ? <span className="flex flex-wrap items-center gap-x-3"><ViewLink to={`/clients/${receipt.client_id}`} page="clients">{receipt.client_name}</ViewLink><AccountLink type="client" id={receipt.client_id} /></span>
+                                : <span className="flex flex-wrap items-center gap-x-3">{`${receipt.client_name} (${t('grn.walkIn')})`}<AccountLink type="walkin" id={walkInId(receipt.client_name)} /></span>}
                             icon={User}
                         />
                         <ViewField label={t('grnView.date')} value={formatDay(receipt.receipt_date)} icon={CalendarDays} />

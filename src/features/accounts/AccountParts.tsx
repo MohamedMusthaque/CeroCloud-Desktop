@@ -34,13 +34,13 @@ export function AccountBalance({ type, value, align = 'right', size = 'sm' }: { 
 }
 
 // "View account" link from a supplier, client or other record page (hidden without access)
-export function AccountLink({ type, id, className }: { type: AccountType; id?: number; className?: string }) {
+export function AccountLink({ type, id, className }: { type: AccountType; id?: number | string; className?: string }) {
     const { t } = useTranslation()
     const user = useAuthStore((state) => state.user)
     if (!id || !canAccessPage(user, 'accounts') || !canAccessPage(user, ACCOUNT_PAGES[type])) return null
     return (
         <Link
-            to={`/accounts/${type}/${id}`}
+            to={`/accounts/${type}/${encodeURIComponent(String(id))}`}
             className={cn("inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline whitespace-nowrap", className)}
         >
             <BookOpen className="w-4 h-4" />

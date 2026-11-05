@@ -16,13 +16,15 @@ import type {
 } from '@/types/database'
 
 // Everyone the business deals with, in one place
-export const ACCOUNT_TYPES = ['supplier', 'client', 'source', 'savings', 'expense'] as const
+// walkin = people without a client record (walk-in sellers on a GRN, named walk-in customers), grouped by name
+export const ACCOUNT_TYPES = ['supplier', 'client', 'walkin', 'source', 'savings', 'expense'] as const
 export type AccountType = typeof ACCOUNT_TYPES[number]
 
 // The page whose data each kind of account shows (the user needs access to it)
 export const ACCOUNT_PAGES: Record<AccountType, PageId> = {
     supplier: 'purchases',
     client: 'clients',
+    walkin: 'purchases',
     source: 'capital',
     savings: 'savings',
     expense: 'expenses'
@@ -34,7 +36,7 @@ export const ACCOUNT_PAGES: Record<AccountType, PageId> = {
 //   total  running total spent
 export type BalanceMode = 'party' | 'fund' | 'total'
 export const BALANCE_MODES: Record<AccountType, BalanceMode> = {
-    supplier: 'party', client: 'party', source: 'party', savings: 'fund', expense: 'total'
+    supplier: 'party', client: 'party', walkin: 'party', source: 'party', savings: 'fund', expense: 'total'
 }
 
 // What a line is; each has a label `acct.line.<kind>`
@@ -55,6 +57,7 @@ export type Bucket =
 export const BUCKETS: Record<AccountType, Bucket[]> = {
     supplier: ['goodsReceived', 'paid', 'refunded'],
     client: ['cashSales', 'creditSales', 'boughtFrom'],
+    walkin: ['boughtFrom', 'cashSales', 'creditSales'],
     source: ['received', 'onCredit', 'borrowed', 'repaid', 'collected', 'goods'],
     savings: ['deposits', 'withdrawals'],
     expense: ['spent']
@@ -84,12 +87,13 @@ export interface AccountLine {
 
 export interface Account {
     type: AccountType
-    id: number
+    // Record id; walk-in accounts use their name key (see walkInId)
+    id: number | string
     name: string
     // Phone, contact or category shown under the name
     info?: string
-    // The record's own page
-    link: { to: string; page: PageId }
+    // The record's own page (walk-in accounts have none)
+    link?: { to: string; page: PageId }
     lines: AccountLine[]
     balance: number
     lastDate: string | null
@@ -171,40 +175,75 @@ function supplierAccounts(suppliers: Supplier[], orders: Purchase[], payments: S
     })
 }
 
+// A sale: paid on the spot, or on credit (owed)
+function saleLine(sale: Sale): Line {
+    const cancelled = sale.status === 'cancelled'
+    const onCredit = sale.payment_method === 'credit'
+    return {
+        key: `sale-${sale.id}`, kind: cancelled ? 'saleCancelled' : onCredit ? 'creditSale' : 'sale',
+        date: localDay(sale.created_at), stamp: sale.created_at ?? '', order: 0,
+        amount: sale.total, effect: !cancelled && onCredit ? sale.total : 0,
+        cash: cancelled || onCredit ? null : 'in', bucket: cancelled ? undefined : onCredit ? 'creditSales' : 'cashSales',
+        ref: { text: `#${sale.id}` }, method: sale.payment_method, by: sale.created_by,
+        details: itemsSummary(sale.items), notes: sale.notes, cancelled
+    }
+}
+
+// Goods bought from the person (GRN), paid when received
+function grnLine(receipt: GoodsReceipt): Line {
+    const cancelled = receipt.status === 'cancelled'
+    return {
+        key: `grn-${receipt.id}`, kind: cancelled ? 'grnCancelled' : 'grn',
+        date: receipt.receipt_date, stamp: receipt.created_at ?? '', order: 1,
+        amount: receipt.total, effect: 0, cash: cancelled ? null : 'out', bucket: cancelled ? undefined : 'boughtFrom',
+        ref: { text: `GRN-${grnId(receipt.id)}`, to: `/purchases/grn/${receipt.id}`, page: 'purchases' },
+        method: receipt.payment_method, by: receipt.created_by, details: itemsSummary(receipt.items), notes: receipt.notes, cancelled
+    }
+}
+
 // Clients: sales (credit sales are owed), and goods bought from them (GRN)
 function clientAccounts(clients: Client[], sales: Sale[], receipts: GoodsReceipt[]): Account[] {
     return clients.filter(c => c.id).map(client => {
-        const lines: Line[] = []
         // Same rule as the client page: linked by id, or older sales under the client's name
         const own = sales.filter(s => s.client_id ? s.client_id === client.id : s.customer_name === client.name)
-        for (const sale of own) {
-            const cancelled = sale.status === 'cancelled'
-            const onCredit = sale.payment_method === 'credit'
-            lines.push({
-                key: `sale-${sale.id}`, kind: cancelled ? 'saleCancelled' : onCredit ? 'creditSale' : 'sale',
-                date: localDay(sale.created_at), stamp: sale.created_at ?? '', order: 0,
-                amount: sale.total, effect: !cancelled && onCredit ? sale.total : 0,
-                cash: cancelled || onCredit ? null : 'in', bucket: cancelled ? undefined : onCredit ? 'creditSales' : 'cashSales',
-                ref: { text: `#${sale.id}` }, method: sale.payment_method, by: sale.created_by,
-                details: itemsSummary(sale.items), notes: sale.notes, cancelled
-            })
-        }
-        for (const receipt of receipts.filter(r => r.client_id === client.id)) {
-            const cancelled = receipt.status === 'cancelled'
-            lines.push({
-                key: `grn-${receipt.id}`, kind: cancelled ? 'grnCancelled' : 'grn',
-                date: receipt.receipt_date, stamp: receipt.created_at ?? '', order: 1,
-                amount: receipt.total, effect: 0, cash: cancelled ? null : 'out', bucket: cancelled ? undefined : 'boughtFrom',
-                ref: { text: `GRN-${grnId(receipt.id)}`, to: `/purchases/grn/${receipt.id}`, page: 'purchases' },
-                method: receipt.payment_method, by: receipt.created_by, details: itemsSummary(receipt.items), notes: receipt.notes, cancelled
-            })
-        }
+        const lines: Line[] = [
+            ...own.map(saleLine),
+            ...receipts.filter(r => r.client_id === client.id).map(grnLine)
+        ]
         return makeAccount({
             type: 'client', id: client.id!, name: client.name,
             info: [client.phone, client.tax_id].filter(Boolean).join(' · ') || undefined,
             link: { to: `/clients/${client.id}`, page: 'clients' }
         }, lines)
     })
+}
+
+// Walk-in accounts are keyed by name, ignoring case and extra spaces
+export const walkInId = (name: string) => name.trim().replace(/\s+/g, ' ').toLowerCase()
+
+// People without a client record: walk-in sellers on a GRN, and named walk-in customers on sales
+// (a name that matches a registered client belongs to that client's account instead)
+function walkInAccounts(clients: Client[], sales: Sale[], receipts: GoodsReceipt[], withSales: boolean): Account[] {
+    const clientNames = new Set(clients.map(c => c.name))
+    const groups = new Map<string, { name: string; lines: Line[] }>()
+    const add = (rawName: string | undefined, line: Line) => {
+        const name = (rawName ?? '').trim().replace(/\s+/g, ' ')
+        if (!name) return
+        const key = walkInId(name)
+        const group = groups.get(key) ?? { name, lines: [] }
+        group.lines.push(line)
+        groups.set(key, group)
+    }
+    for (const receipt of receipts) {
+        if (!receipt.client_id) add(receipt.client_name, grnLine(receipt))
+    }
+    if (withSales) {
+        for (const sale of sales) {
+            if (!sale.client_id && sale.customer_name && !clientNames.has(sale.customer_name)) add(sale.customer_name, saleLine(sale))
+        }
+    }
+    // The name as first written on the newest record (GRNs and sales load newest first)
+    return [...groups.entries()].map(([key, group]) => makeAccount({ type: 'walkin', id: key, name: group.name }, group.lines))
 }
 
 // Capital sources and lenders: capital and income, credit owed, loans, promises, and their payments
@@ -282,9 +321,9 @@ export async function loadAccounts(user: AuthUser | null): Promise<Account[]> {
         can('supplier') ? supplierService.getAll() : none<Supplier>(),
         can('supplier') ? purchaseService.getAll() : none<Purchase>(),
         can('supplier') ? supplierPaymentService.getAll() : none<SupplierPayment>(),
-        can('client') ? clientService.getAll() : none<Client>(),
-        can('client') ? saleService.getAll() : none<Sale>(),
-        can('client') ? goodsReceiptService.getAll() : none<GoodsReceipt>(),
+        can('client') || can('walkin') ? clientService.getAll() : none<Client>(),
+        can('client') || can('walkin') ? saleService.getAll() : none<Sale>(),
+        can('client') || can('walkin') ? goodsReceiptService.getAll() : none<GoodsReceipt>(),
         can('supplier') || can('source') ? capitalService.getAll() : none<CapitalEntry>(),
         can('source') ? capitalService.getSources() : none<CapitalSource>(),
         can('savings') ? savingsAccountService.getAll() : none<SavingsAccount>(),
@@ -294,7 +333,9 @@ export async function loadAccounts(user: AuthUser | null): Promise<Account[]> {
     ])
     return [
         ...supplierAccounts(suppliers, orders, payments, entries),
-        ...clientAccounts(clients, sales, receipts),
+        ...(can('client') ? clientAccounts(clients, sales, receipts) : []),
+        // Walk-in sales only for users who can see sales or clients
+        ...(can('walkin') ? walkInAccounts(clients, sales, receipts, canAccessPage(user, 'sales') || can('client')) : []),
         ...sourceAccounts(sources, entries),
         ...savingsAccounts(savings, transactions),
         ...expenseAccounts(expenseTypes, expenses)
@@ -302,7 +343,7 @@ export async function loadAccounts(user: AuthUser | null): Promise<Account[]> {
 }
 
 export const accountKey = (account: Pick<Account, 'type' | 'id'>) => `${account.type}-${account.id}`
-export const accountPath = (account: Pick<Account, 'type' | 'id'>) => `/accounts/${account.type}/${account.id}`
+export const accountPath = (account: Pick<Account, 'type' | 'id'>) => `/accounts/${account.type}/${encodeURIComponent(String(account.id))}`
 export const isAccountType = (value: string | undefined): value is AccountType => ACCOUNT_TYPES.includes(value as AccountType)
 
 export const lineLabel = (kind: LineKind): TranslationKey => `acct.line.${kind}`
