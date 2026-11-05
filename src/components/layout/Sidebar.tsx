@@ -16,7 +16,8 @@ import {
     PiggyBank,
     ClipboardList,
     Landmark,
-    BookOpen
+    BookOpen,
+    HandHeart
 } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { motion } from 'framer-motion'
@@ -71,6 +72,7 @@ export function Sidebar() {
         { name: t('nav.savings'), href: '/savings', icon: PiggyBank, shortcut: 'H' },
         { name: t('nav.capital'), href: '/capital', icon: Landmark, shortcut: 'K' },
         { name: t('nav.accounts'), href: '/accounts', icon: BookOpen, shortcut: 'L' },
+        { name: t('nav.zakat'), href: '/zakat', icon: HandHeart, shortcut: 'Z' },
         { name: t('nav.reports'), href: '/reports', icon: FileText, shortcut: 'R' },
     ].filter(item => canAccessPath(user, item.href))
 

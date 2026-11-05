@@ -23,6 +23,7 @@ import { savings } from './es/savings'
 import { purchases } from './es/purchases'
 import { capital } from './es/capital'
 import { accounts } from './es/accounts'
+import { zakat } from './es/zakat'
 
 export const es = {
     ...common,
@@ -50,6 +51,7 @@ export const es = {
     ...purchases,
     ...capital,
     ...accounts,
+    ...zakat,
 
     // Navigation
     'nav.dashboard': 'Dashboard',
@@ -61,6 +63,7 @@ export const es = {
     'nav.savings': 'Ahorros',
     'nav.capital': 'Capital e Ingresos',
     'nav.accounts': 'Cuentas',
+    'nav.zakat': 'Zakat',
     'nav.purchases': 'Compras',
     'nav.reports': 'Reportes',
     'nav.settings': 'Configuración',

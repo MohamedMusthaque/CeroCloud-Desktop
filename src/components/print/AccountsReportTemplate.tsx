@@ -24,7 +24,8 @@ interface FrameProps {
     children: ReactNode
 }
 
-function ReportFrame({ settings, title, subtitle, filters, page, children }: FrameProps) {
+// Company header, title and page footer shared by the A4 reports
+export function ReportFrame({ settings, title, subtitle, filters, page, children }: FrameProps) {
     const { t, dateLocale } = useTranslation()
     return (
         <div className="w-[1000px] h-[1414px] bg-white p-12 text-gray-900 border-t-8 border-indigo-600 relative overflow-hidden flex flex-col">

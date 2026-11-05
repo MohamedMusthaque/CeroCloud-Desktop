@@ -25,6 +25,7 @@ import { PurchaseView } from '@/features/purchases/PurchaseView'
 import { GoodsReceiptView } from '@/features/purchases/GoodsReceiptView'
 import { Accounts } from '@/features/accounts/Accounts'
 import { AccountView } from '@/features/accounts/AccountView'
+import { Zakat } from '@/features/zakat/Zakat'
 import { SavingsAccountView } from '@/features/savings/SavingsAccountView'
 
 // Old supplier statement links open the supplier's account
@@ -57,6 +58,7 @@ export function AppRoutes() {
                 <Route path="capital/:id" element={<RequirePage page="capital"><CapitalView /></RequirePage>} />
                 <Route path="accounts" element={<RequirePage page="accounts"><Accounts /></RequirePage>} />
                 <Route path="accounts/:type/:id" element={<RequirePage page="accounts"><AccountView /></RequirePage>} />
+                <Route path="zakat" element={<RequirePage page="zakat"><Zakat /></RequirePage>} />
                 <Route path="reports" element={<RequirePage page="reports"><Reports /></RequirePage>} />
                 <Route path="users" element={<RequirePage page="users"><Users /></RequirePage>} />
                 <Route path="users/:id" element={<RequirePage page="users"><UserView /></RequirePage>} />

@@ -336,10 +336,12 @@ function expenseAccounts(types: ExpenseType[], expenses: Expense[]): Account[] {
 const none = <T,>(): Promise<T[]> => Promise.resolve([])
 
 // Every account the user may see, built from each module's records
-export async function loadAccounts(user: AuthUser | null): Promise<Account[]> {
-    const can = (type: AccountType) => canSeeAccountType(user, type)
-    const walkInGrns = can('walkin') && canAccessPage(user, 'purchases')
-    const walkInSales = can('walkin') && (canAccessPage(user, 'sales') || canAccessPage(user, 'clients'))
+// (allTypes: every account regardless of the user, for totals such as the zakat calculation)
+export async function loadAccounts(user: AuthUser | null, options?: { allTypes?: boolean }): Promise<Account[]> {
+    const all = !!options?.allTypes
+    const can = (type: AccountType) => all || canSeeAccountType(user, type)
+    const walkInGrns = can('walkin') && (all || canAccessPage(user, 'purchases'))
+    const walkInSales = can('walkin') && (all || canAccessPage(user, 'sales') || canAccessPage(user, 'clients'))
     const [
         suppliers, orders, payments, clients, sales, receipts, entries, sources, savings, transactions, expenseTypes, expenses
     ] = await Promise.all([
