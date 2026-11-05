@@ -144,4 +144,16 @@ export const accounts = {
     'acct.report.search': 'Búsqueda: {term}',
     'acct.report.summaryFile': 'reporte_cuentas',
     'acct.report.statementFile': 'estado_de_cuenta',
+    // Excel reports
+    'acct.excel.button': 'Reporte Excel',
+    'acct.excel.hint': 'Descargar las cuentas mostradas y todos sus movimientos en Excel',
+    'acct.excel.success': 'Archivo Excel descargado',
+    'acct.excel.error': 'No se pudo crear el archivo Excel',
+    'acct.excel.generated': 'Generado: {date}',
+    'acct.excel.filters': 'Filtros: {filters}',
+    'acct.excel.info': 'Datos',
+    'acct.excel.effect': 'Cambio en el saldo',
+    'acct.excel.balanceMeaning': 'Significado del saldo',
+    'acct.excel.accountsSheet': 'Cuentas',
+    'acct.excel.transactionsSheet': 'Movimientos',
 }

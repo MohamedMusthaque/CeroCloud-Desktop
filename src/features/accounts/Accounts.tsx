@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseISO } from 'date-fns'
 import { motion } from 'framer-motion'
-import { BookOpen, Search, ArrowDownLeft, ArrowUpRight, ListOrdered, Users, ChevronRight, CalendarRange, FileDown } from 'lucide-react'
+import { BookOpen, Search, ArrowDownLeft, ArrowUpRight, ListOrdered, Users, ChevronRight, CalendarRange, FileDown, FileSpreadsheet } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
@@ -11,6 +11,7 @@ import { ACCOUNT_TYPES, BALANCE_MODES, accountKey, accountName, accountPath, typ
 import { TYPE_STYLES, useAccounts } from './accountUi'
 import { AccountBalance, AccountTypeBadge } from './AccountParts'
 import { downloadAccountsSummary } from './accountReports'
+import { downloadAccountsExcel } from './accountExcel'
 
 type BalanceFilter = 'all' | 'owesYou' | 'youOwe' | 'settled' | 'active'
 type SortKey = 'name' | 'recent' | 'balance'
@@ -94,22 +95,24 @@ export function Accounts() {
 
     // PDF of the list exactly as filtered on screen
     const [exporting, setExporting] = useState(false)
+    // Filters in force, printed on the reports
+    const filterLabels = () => [
+        fromDate && toDate ? t('acct.report.range', { from: formatDay(fromDate), to: formatDay(toDate) })
+            : fromDate ? t('acct.report.from', { date: formatDay(fromDate) })
+                : toDate ? t('acct.report.until', { date: formatDay(toDate) }) : '',
+        type !== 'all' ? t(typeLabel(type)) : '',
+        balanceFilter !== 'all' ? t(`acct.filter.${balanceFilter}`) : '',
+        term ? t('acct.report.search', { term: search.trim() }) : ''
+    ].filter(Boolean)
+    const balanceLabel = toDate ? t('acct.col.balanceAsOf', { date: formatDay(toDate) }) : t('acct.col.balance')
+
+    // Excel workbook: the accounts as shown, and all their transactions in the period
+    const exportExcel = () => downloadAccountsExcel({ rows: shown, filters: filterLabels(), balanceLabel, fromDate, toDate })
+
     const exportPdf = async () => {
-        const filters = [
-            fromDate && toDate ? t('acct.report.range', { from: formatDay(fromDate), to: formatDay(toDate) })
-                : fromDate ? t('acct.report.from', { date: formatDay(fromDate) })
-                    : toDate ? t('acct.report.until', { date: formatDay(toDate) }) : '',
-            type !== 'all' ? t(typeLabel(type)) : '',
-            balanceFilter !== 'all' ? t(`acct.filter.${balanceFilter}`) : '',
-            term ? t('acct.report.search', { term: search.trim() }) : ''
-        ].filter(Boolean)
         setExporting(true)
         try {
-            await downloadAccountsSummary({
-                rows: shown,
-                filters,
-                balanceLabel: toDate ? t('acct.col.balanceAsOf', { date: formatDay(toDate) }) : t('acct.col.balance')
-            }).unwrap()
+            await downloadAccountsSummary({ rows: shown, filters: filterLabels(), balanceLabel }).unwrap()
         } catch (error) {
             console.error('Error generating accounts PDF:', error)
         } finally {
@@ -127,15 +130,26 @@ export function Accounts() {
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-1">{t('acct.subtitle')}</p>
                 </div>
-                <button
-                    onClick={exportPdf}
-                    disabled={loading || exporting || shown.length === 0}
-                    title={t('acct.report.pdfHint')}
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all font-semibold shadow-lg shadow-primary/20 active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <FileDown className="w-4 h-4" />
-                    {t('acct.report.pdf')}
-                </button>
+                <div className="flex flex-wrap gap-2 shrink-0">
+                    <button
+                        onClick={exportExcel}
+                        disabled={loading || shown.length === 0}
+                        title={t('acct.excel.hint')}
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 border border-emerald-600 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all font-semibold active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        {t('acct.excel.button')}
+                    </button>
+                    <button
+                        onClick={exportPdf}
+                        disabled={loading || exporting || shown.length === 0}
+                        title={t('acct.report.pdfHint')}
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all font-semibold shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <FileDown className="w-4 h-4" />
+                        {t('acct.report.pdf')}
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

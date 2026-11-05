@@ -146,4 +146,16 @@ export const accounts: Record<keyof typeof es, string> = {
     'acct.report.search': 'Search: {term}',
     'acct.report.summaryFile': 'accounts_report',
     'acct.report.statementFile': 'statement',
+    // Excel reports
+    'acct.excel.button': 'Excel report',
+    'acct.excel.hint': 'Download the accounts shown and all their transactions as an Excel file',
+    'acct.excel.success': 'Excel file downloaded',
+    'acct.excel.error': 'Could not create the Excel file',
+    'acct.excel.generated': 'Generated: {date}',
+    'acct.excel.filters': 'Filters: {filters}',
+    'acct.excel.info': 'Details',
+    'acct.excel.effect': 'Change to balance',
+    'acct.excel.balanceMeaning': 'Balance meaning',
+    'acct.excel.accountsSheet': 'Accounts',
+    'acct.excel.transactionsSheet': 'Transactions',
 }

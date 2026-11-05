@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { parseISO } from 'date-fns'
 import { saveAs } from 'file-saver'
 import { toast } from 'sonner'
-import { ArrowDownLeft, ArrowUpRight, Minus, Search, Download, Banknote, Receipt, Scale, ListOrdered, ExternalLink, ArrowLeftRight, Ban, FileDown } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Minus, Search, Download, Banknote, Receipt, Scale, ListOrdered, ExternalLink, ArrowLeftRight, Ban, FileDown, FileSpreadsheet } from 'lucide-react'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
@@ -23,6 +23,7 @@ import {
 import { TYPE_STYLES, useAccounts } from './accountUi'
 import { AccountBalance, AccountTypeBadge } from './AccountParts'
 import { downloadAccountStatement } from './accountReports'
+import { downloadAccountExcel } from './accountExcel'
 
 const inputClass = "px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
 const STAT_COLORS = ['bg-amber-500', 'bg-green-500', 'bg-purple-500', 'bg-cyan-500', 'bg-rose-500', 'bg-indigo-500']
@@ -135,28 +136,30 @@ export function AccountView() {
     }
 
     // PDF statement of the lines as filtered on screen
-    const exportPdf = async () => {
-        const filters = [
+    // What the reports show: the lines as filtered on screen, with the filters printed on them
+    const reportInput = () => ({
+        account,
+        rows: view.rows,
+        filters: [
             fromDate && toDate ? t('acct.report.range', { from: formatDay(fromDate), to: formatDay(toDate) })
                 : fromDate ? t('acct.report.from', { date: formatDay(fromDate) })
                     : toDate ? t('acct.report.until', { date: formatDay(toDate) }) : '',
             kind !== 'all' ? t(lineLabel(kind)) : '',
             term ? t('acct.report.search', { term: search.trim() }) : '',
             hideCancelled ? t('acct.hideCancelled') : ''
-        ].filter(Boolean)
-        const dated = !!fromDate || !!toDate
+        ].filter(Boolean),
+        opening: view.hasOpening ? view.opening : null,
+        openingDate: fromDate,
+        closing: filtered ? null : view.closing,
+        balance: fromDate || toDate ? view.closing : account.balance,
+        balanceLabel: toDate ? t('acct.col.balanceAsOf', { date: formatDay(toDate) }) : t('acct.col.balance')
+    })
+    const exportExcel = () => downloadAccountExcel(reportInput())
+
+    const exportPdf = async () => {
         setExporting(true)
         try {
-            await downloadAccountStatement({
-                account,
-                rows: view.rows,
-                filters,
-                opening: view.hasOpening ? view.opening : null,
-                openingDate: fromDate,
-                closing: filtered ? null : view.closing,
-                balance: dated ? view.closing : account.balance,
-                balanceLabel: toDate ? t('acct.col.balanceAsOf', { date: formatDay(toDate) }) : t('acct.col.balance')
-            }).unwrap()
+            await downloadAccountStatement(reportInput()).unwrap()
         } catch (error) {
             console.error('Error generating account PDF:', error)
         } finally {
@@ -197,6 +200,14 @@ export function AccountView() {
                 >
                     <FileDown className="w-4 h-4" />
                     {t('acct.report.pdf')}
+                </button>
+                <button
+                    onClick={exportExcel}
+                    disabled={view.rows.length === 0 && !view.hasOpening}
+                    className={cn(buttonClass, "border border-emerald-600 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-50 disabled:cursor-not-allowed")}
+                >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    {t('acct.excel.button')}
                 </button>
                 <button
                     onClick={exportCsv}
