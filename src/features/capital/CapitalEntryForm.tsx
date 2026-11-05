@@ -6,6 +6,7 @@ import { Save, Loader2, Info, CheckCircle2, PlusCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ModalHeader } from '@/components/ui/ModalHeader'
+import { CreatableCombobox } from '@/components/ui/CreatableCombobox'
 import { cn, formatCurrency } from '@/lib/utils'
 import { PAYMENT_METHODS } from '@/lib/paymentMethods'
 import { capitalService } from '@/services/capitalService'
@@ -39,7 +40,7 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
     const [method, setMethod] = useState<string>('cash')
     const [description, setDescription] = useState('')
     const [saving, setSaving] = useState(false)
-    // Sources already registered by credit entries
+    // Sources registered by earlier capital and income entries
     const [sources, setSources] = useState<CapitalSource[]>([])
 
     useEffect(() => {
@@ -68,9 +69,11 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
     const methods: string[] = creditAllowed ? [...PAYMENT_METHODS, 'credit'] : [...PAYMENT_METHODS]
     const effectiveMethod = method === 'credit' && !creditAllowed ? 'cash' : method
     const onCredit = takesMethod && effectiveMethod === 'credit'
+    // Capital and income pick a registered source or create one; withdrawals keep a plain note
+    const pickSource = type !== 'withdrawal' && effectiveForm !== 'supplier_credit'
     // The registered source the typed name picks (any case); none means a new one is created on save
-    const matchedSource = onCredit ? sources.find(s => s.name.toLowerCase() === source.trim().toLowerCase()) : undefined
-    const isNewSource = onCredit && !!source.trim() && !matchedSource
+    const matchedSource = pickSource ? sources.find(s => s.name.toLowerCase() === source.trim().toLowerCase()) : undefined
+    const isNewSource = pickSource && !!source.trim() && !matchedSource
 
     const suggestions = type === 'income'
         ? [t('cap.suggest.commission'), t('cap.suggest.rent'), t('cap.suggest.interest')]
@@ -78,11 +81,14 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
             ? [t('cap.suggest.personal')]
             : effectiveForm === 'loan' ? [t('cap.suggest.bankLoan')] : [t('cap.suggest.ownSavings'), t('cap.suggest.partner')]
     const sourceLabel = onCredit ? t('capForm.owedBy') : effectiveForm === 'loan' ? t('capForm.lender') : effectiveForm === 'pledge' ? t('capForm.promisedBy') : t('capForm.source')
-    const sourceOptions = onCredit ? sources.map(s => s.name) : suggestions
-    const sourcePlaceholder = effectiveForm === 'loan' ? t('capForm.lenderPlaceholder')
-        : type === 'income' ? t('capForm.sourcePlaceholder.income')
-            : type === 'withdrawal' ? t('capForm.sourcePlaceholder.withdrawal')
-                : t('capForm.sourcePlaceholder.capital')
+    const sourcePickPlaceholder = onCredit && !sources.length ? t('capForm.owedByPlaceholderEmpty')
+        : sources.length ? t('capForm.sourcePickPlaceholder') : sourcePlaceholderFor()
+    function sourcePlaceholderFor() {
+        return effectiveForm === 'loan' ? t('capForm.lenderPlaceholder')
+            : type === 'income' ? t('capForm.sourcePlaceholder.income')
+                : type === 'withdrawal' ? t('capForm.sourcePlaceholder.withdrawal')
+                    : t('capForm.sourcePlaceholder.capital')
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -93,7 +99,7 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
                     entry_date: date, source, description, payment_method: effectiveMethod,
                     ...(isGoods ? {} : { amount: Number(amount) })
                 })
-                toast.success(t('capForm.updated'))
+                toast.success(isNewSource ? t('capForm.updatedWithSource', { name: source.trim() }) : t('capForm.updated'))
             } else {
                 await capitalService.create({
                     type, form: effectiveForm, entry_date: date, source, description,
@@ -274,22 +280,36 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
                                 {effectiveForm !== 'supplier_credit' && (
                                     <div>
                                         <label htmlFor="capital-source" className={labelClass}>{sourceLabel}</label>
-                                        <input
-                                            id="capital-source"
-                                            type="text"
-                                            list="capital-source-suggestions"
-                                            required={effectiveForm === 'loan' || onCredit}
-                                            autoComplete="off"
-                                            value={source}
-                                            onChange={(e) => setSource(e.target.value)}
-                                            onBlur={() => { if (matchedSource) setSource(matchedSource.name) }}
-                                            placeholder={onCredit ? (sources.length ? t('capForm.owedByPlaceholder') : t('capForm.owedByPlaceholderEmpty')) : sourcePlaceholder}
-                                            aria-describedby={onCredit ? 'capital-source-status' : undefined}
-                                            className={inputClass}
-                                        />
-                                        <datalist id="capital-source-suggestions">
-                                            {sourceOptions.map(s => <option key={s} value={s} />)}
-                                        </datalist>
+                                        {pickSource ? (
+                                            <CreatableCombobox
+                                                id="capital-source"
+                                                value={source}
+                                                onChange={setSource}
+                                                options={sources.map(s => s.name)}
+                                                suggestions={suggestions}
+                                                suggestionLabel={t('capForm.sourceSuggested')}
+                                                createLabel={(name) => t('capForm.sourceCreate', { name })}
+                                                required={effectiveForm === 'loan' || onCredit}
+                                                placeholder={sourcePickPlaceholder}
+                                                aria-describedby="capital-source-status"
+                                                inputClassName={inputClass}
+                                            />
+                                        ) : (
+                                            <>
+                                                <input
+                                                    id="capital-source"
+                                                    type="text"
+                                                    list="capital-source-suggestions"
+                                                    value={source}
+                                                    onChange={(e) => setSource(e.target.value)}
+                                                    placeholder={sourcePlaceholderFor()}
+                                                    className={inputClass}
+                                                />
+                                                <datalist id="capital-source-suggestions">
+                                                    {suggestions.map(s => <option key={s} value={s} />)}
+                                                </datalist>
+                                            </>
+                                        )}
                                         {matchedSource && (
                                             <p id="capital-source-status" className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 mt-1.5">
                                                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />

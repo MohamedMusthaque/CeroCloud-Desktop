@@ -83,7 +83,9 @@ export const capital = {
     'capForm.lenderPlaceholder': 'p. ej. Banco, Juan Pérez',
     'capForm.promisedBy': 'Quién lo aporta (Opcional)',
     'capForm.owedBy': 'Adeudado por',
-    'capForm.owedByPlaceholder': 'Selecciona un origen o escribe uno nuevo',
+    'capForm.sourcePickPlaceholder': 'Selecciona un origen o escribe uno nuevo',
+    'capForm.sourceSuggested': 'Sugerido',
+    'capForm.sourceCreate': 'Crear origen "{name}"',
     'capForm.owedByPlaceholderEmpty': 'Quién lo debe, p. ej. Socio, Agente',
     'capForm.sourceExisting': 'Origen existente seleccionado',
     'capForm.sourceNew': 'Origen nuevo: "{name}" se creará al guardar',
@@ -102,6 +104,7 @@ export const capital = {
     'capForm.save': 'Guardar',
     'capForm.created': 'Registro guardado',
     'capForm.createdWithSource': 'Registro guardado y origen nuevo "{name}" creado',
+    'capForm.updatedWithSource': 'Registro actualizado y origen nuevo "{name}" creado',
     'capForm.updated': 'Registro actualizado',
 
     // Suggested sources

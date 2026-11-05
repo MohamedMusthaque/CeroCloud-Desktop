@@ -85,7 +85,9 @@ export const capital: Record<keyof typeof es, string> = {
     'capForm.lenderPlaceholder': 'e.g. Bank, John Smith',
     'capForm.promisedBy': 'Promised by (Optional)',
     'capForm.owedBy': 'Owed by',
-    'capForm.owedByPlaceholder': 'Select a source or type a new one',
+    'capForm.sourcePickPlaceholder': 'Select a source or type a new one',
+    'capForm.sourceSuggested': 'Suggested',
+    'capForm.sourceCreate': 'Create source "{name}"',
     'capForm.owedByPlaceholderEmpty': 'Who owes it, e.g. Partner, Agent',
     'capForm.sourceExisting': 'Existing source selected',
     'capForm.sourceNew': 'New source: "{name}" will be created when you save',
@@ -104,6 +106,7 @@ export const capital: Record<keyof typeof es, string> = {
     'capForm.save': 'Save',
     'capForm.created': 'Entry saved',
     'capForm.createdWithSource': 'Entry saved and new source "{name}" created',
+    'capForm.updatedWithSource': 'Entry updated and new source "{name}" created',
     'capForm.updated': 'Entry updated',
 
     // Suggested sources

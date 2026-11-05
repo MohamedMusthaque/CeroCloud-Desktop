@@ -554,6 +554,7 @@ function initSchema() {
   addColumnIfMissing('capital_entries', 'purchase_id', 'INTEGER')
   // Credit entries: the capital source that owes the money (no foreign key, like supplier_id)
   addColumnIfMissing('capital_entries', 'source_id', 'INTEGER')
+  linkCapitalSources()
   if (addColumnIfMissing('clients', 'credit_limit_enabled', 'INTEGER DEFAULT 0')) {
     // Existing clients were always limit-checked: keep enforcing it for them
     db.exec('UPDATE clients SET credit_limit_enabled = 1')
@@ -1628,6 +1629,26 @@ function isSettleable(entry: Pick<CapitalEntry, 'form' | 'payment_method'>): boo
   return SETTLED_FORMS.includes(entry.form) || entry.payment_method === 'credit'
 }
 
+// Capital and income name where they came from as a registered source (withdrawals and goods on credit don't)
+function registersSource(type: string, form: string): boolean {
+  return type !== 'withdrawal' && form !== 'supplier_credit'
+}
+
+// Registers the sources of entries that aren't linked to one yet (typed before sources existed, or restored
+// from an older backup) and links them, so every source used so far can be picked
+function linkCapitalSources() {
+  const unlinked = `
+    (source_id IS NULL OR source_id NOT IN (SELECT id FROM capital_sources))
+    AND type != 'withdrawal' AND form != 'supplier_credit' AND TRIM(COALESCE(source, '')) != ''`
+  db.exec(`
+    INSERT OR IGNORE INTO capital_sources(name, created_at, created_by)
+      SELECT TRIM(source), MIN(created_at), NULL FROM capital_entries WHERE ${unlinked}
+      GROUP BY TRIM(source) COLLATE NOCASE;
+    UPDATE capital_entries SET source_id = (SELECT s.id FROM capital_sources s WHERE s.name = TRIM(capital_entries.source))
+      WHERE ${unlinked};
+  `)
+}
+
 // The registered source with this name (any case), created when there's none yet
 function resolveCapitalSource(name: unknown, actor: Actor, now: string): { id: number; name: string } {
   const trimmed = String(name ?? '').trim()
@@ -1731,8 +1752,8 @@ export const capitalQueries = {
     }
 
     const id = db.transaction(() => {
-      // On credit the source owes the money: pick the registered one, or register it
-      if (onCredit) {
+      // Pick the registered source, or register a new one (on credit it's who owes the money)
+      if (registersSource(type, form) && values.source) {
         const source = resolveCapitalSource(values.source, actor, now)
         values.source = source.name
         values.source_id = source.id
@@ -1795,7 +1816,7 @@ export const capitalQueries = {
 
     db.transaction(() => {
       let sourceId: number | null = null
-      if (onCredit) {
+      if (registersSource(existing.type, existing.form) && source) {
         const registered = resolveCapitalSource(source, actor, now)
         source = registered.name
         sourceId = registered.id
@@ -2728,6 +2749,8 @@ export function restoreDatabase(data: any) {
     } else {
       recordOpeningStock()
     }
+
+    if (hasCapital) linkCapitalSources()
   })
 
   restoreTx()
