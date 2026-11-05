@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { AccountLink } from '@/features/accounts/AccountParts'
 import { parseISO } from 'date-fns'
 import { PiggyBank, Info, ArrowDownCircle, ArrowUpCircle, CalendarDays, ArrowLeftRight, Edit2, Trash2, Shapes } from 'lucide-react'
 import { toast } from 'sonner'
@@ -90,12 +91,13 @@ export function SavingsAccountView() {
                 avatar={<ViewAvatar gradient={style.gradient}><style.icon className="w-8 h-8" /></ViewAvatar>}
                 title={account.name}
                 subtitle={t('savView.subtitle', { category: categoryLabel(account.category, t), count: txCount })}
-                badges={
+                badges={<>
                     <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold", style.badge)}>
                         <style.icon className="w-3.5 h-3.5" />
                         {categoryLabel(account.category, t)}
                     </span>
-                }
+                    <AccountLink type="savings" id={account.id} className="ml-1" />
+                </>}
                 onEdit={() => setEditing(true)}
             />
 

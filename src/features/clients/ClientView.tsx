@@ -13,6 +13,7 @@ import {
 } from '@/components/view/ViewPage'
 import { useRecord, parseId } from '@/components/view/useRecord'
 import { ClientForm } from './ClientForm'
+import { AccountLink } from '@/features/accounts/AccountParts'
 import { grnId } from '@/features/purchases/purchaseUi'
 
 // Most recent purchases listed on the page; the stats still cover every purchase
@@ -71,6 +72,7 @@ export function ClientView() {
                     {hasCredit && <ViewBadge tone="green" icon={CreditCard}>{t('cli.creditLimit', { amount: formatCurrency(creditLimit) })}</ViewBadge>}
                     {!limitEnabled && <ViewBadge tone="green" icon={CreditCard}>{t('cli.creditUnlimited')}</ViewBadge>}
                     {client.nic_attachment && <ViewBadge tone="green" icon={Contact}>{t('nic.attached')}</ViewBadge>}
+                    <AccountLink type="client" id={client.id} className="ml-1" />
                 </>}
                 onEdit={() => setEditing(true)}
             />

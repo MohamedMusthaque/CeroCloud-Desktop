@@ -17,6 +17,7 @@ import {
 } from '@/components/view/ViewPage'
 import { useRecord, parseId } from '@/components/view/useRecord'
 import { SupplierForm } from './SupplierForm'
+import { AccountLink } from '@/features/accounts/AccountParts'
 import { AccountBalance } from '@/features/purchases/Purchases'
 import { STATUS_STYLES, statusLabel } from '@/features/purchases/purchaseUi'
 
@@ -130,7 +131,7 @@ export function SupplierView() {
                 <ViewSection
                     title={t('pur.acc.title')}
                     icon={Wallet}
-                    actions={<ViewLink to="/purchases" page="purchases">{t('nav.purchases')}</ViewLink>}
+                    actions={<AccountLink type="supplier" id={supplier.id} />}
                 >
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                         <AccountFigure label={t('pur.acc.paid')} value={formatCurrency(account.total_paid)} />

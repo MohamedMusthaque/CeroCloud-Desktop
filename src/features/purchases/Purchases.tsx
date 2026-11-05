@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { parseISO } from 'date-fns'
 import { motion } from 'framer-motion'
-import { Plus, Search, Eye, Edit2, Trash2, PackageCheck, ClipboardList, Wallet, Users, Clock, HandCoins, TrendingDown, Banknote, ArrowUpCircle, ArrowDownCircle, PackagePlus } from 'lucide-react'
+import { Plus, Search, Eye, Edit2, Trash2, PackageCheck, ClipboardList, Wallet, Users, Clock, HandCoins, TrendingDown, Banknote, ArrowUpCircle, ArrowDownCircle, PackagePlus, ListOrdered } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -16,6 +16,8 @@ import { clientService } from '@/services/clientService'
 import { companyService } from '@/services/companyService'
 import { pdfGenerator } from '@/services/pdfGenerator'
 import { cn, formatCurrency } from '@/lib/utils'
+import { canAccessPage } from '@/lib/permissions'
+import { useAuthStore } from '@/stores/authStore'
 import type { Client, GoodsReceipt, Product, Purchase, PurchaseStatus, Supplier, SupplierAccount, SupplierPayment, SupplierPaymentType } from '@/types/database'
 import { PurchaseForm } from './PurchaseForm'
 import { ReceiveGoodsDialog } from './ReceiveGoodsDialog'
@@ -29,6 +31,8 @@ type Section = 'orders' | 'grn' | 'payments' | 'accounts'
 
 export function Purchases() {
     const { t, locale } = useTranslation()
+    // The Transactions links open the central Accounts page
+    const canSeeAccounts = canAccessPage(useAuthStore((state) => state.user), 'accounts')
     const [section, setSection] = useState<Section>('orders')
     // Each tab remembers its own layout
     const [views, setViews] = useState<Record<Section, ViewMode>>({ orders: 'list', grn: 'list', payments: 'list', accounts: 'list' })
@@ -420,6 +424,7 @@ export function Purchases() {
                 <CardGrid>
                     {filteredAccounts.map(account => (
                         <AccountCard
+                            canSeeAccounts={canSeeAccounts}
                             key={account.supplier_id}
                             account={account}
                             name={supplierName(account.supplier_id)}
@@ -457,7 +462,15 @@ export function Purchases() {
                                 <td className="px-4 py-3 text-right whitespace-nowrap text-gray-600 dark:text-gray-300">{formatCurrency(account.total_received)}</td>
                                 <td className="px-4 py-3 text-right whitespace-nowrap text-gray-600 dark:text-gray-300">{formatCurrency(account.open_advances)}</td>
                                 <td className="px-4 py-3 text-right whitespace-nowrap"><AccountBalance account={account} /></td>
-                                <td className="px-4 py-3 text-right">
+                                <td className="px-4 py-3 text-right whitespace-nowrap">
+                                    {canSeeAccounts && <Link
+                                        to={`/accounts/supplier/${account.supplier_id}`}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors whitespace-nowrap"
+                                        title={t('stmt.openHint')}
+                                    >
+                                        <ListOrdered className="w-3.5 h-3.5" />
+                                        {t('stmt.open')}
+                                    </Link>}
                                     <button
                                         onClick={() => openPayment({
                                             supplierId: account.supplier_id,
@@ -674,7 +687,7 @@ function PaymentCard({ payment, formatDay, onDelete }: { payment: SupplierPaymen
     )
 }
 
-function AccountCard({ account, name, onRecordPayment }: { account: SupplierAccount; name: string; onRecordPayment: () => void }) {
+function AccountCard({ account, name, canSeeAccounts, onRecordPayment }: { account: SupplierAccount; name: string; canSeeAccounts: boolean; onRecordPayment: () => void }) {
     const { t } = useTranslation()
     const figures = [
         { label: t('pur.acc.paid'), value: account.total_paid },
@@ -699,10 +712,18 @@ function AccountCard({ account, name, onRecordPayment }: { account: SupplierAcco
                 </dl>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/50">
+            <div className={cn("mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/50 grid gap-2", canSeeAccounts ? "grid-cols-2" : "grid-cols-1")}>
+                {canSeeAccounts && <Link
+                    to={`/accounts/supplier/${account.supplier_id}`}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    title={t('stmt.openHint')}
+                >
+                    <ListOrdered className="w-4 h-4" />
+                    {t('stmt.open')}
+                </Link>}
                 <button
                     onClick={onRecordPayment}
-                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
                 >
                     <Banknote className="w-4 h-4" />
                     {t('pur.recordPayment')}

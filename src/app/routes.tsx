@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { RequirePage } from '@/components/auth/RequirePage'
 import { Dashboard } from '@/features/dashboard/Dashboard'
@@ -23,7 +23,14 @@ import { CapitalView } from '@/features/capital/CapitalView'
 import { Purchases } from '@/features/purchases/Purchases'
 import { PurchaseView } from '@/features/purchases/PurchaseView'
 import { GoodsReceiptView } from '@/features/purchases/GoodsReceiptView'
+import { Accounts } from '@/features/accounts/Accounts'
+import { AccountView } from '@/features/accounts/AccountView'
 import { SavingsAccountView } from '@/features/savings/SavingsAccountView'
+
+// Old supplier statement links open the supplier's account
+function SupplierAccountRedirect() {
+    return <Navigate to={`/accounts/supplier/${useParams().id}`} replace />
+}
 
 export function AppRoutes() {
     return (
@@ -37,6 +44,7 @@ export function AppRoutes() {
                 <Route path="suppliers" element={<RequirePage page="suppliers"><Suppliers /></RequirePage>} />
                 <Route path="suppliers/:id" element={<RequirePage page="suppliers"><SupplierView /></RequirePage>} />
                 <Route path="purchases" element={<RequirePage page="purchases"><Purchases /></RequirePage>} />
+                <Route path="purchases/accounts/:id" element={<SupplierAccountRedirect />} />
                 <Route path="purchases/grn/:id" element={<RequirePage page="purchases"><GoodsReceiptView /></RequirePage>} />
                 <Route path="purchases/:id" element={<RequirePage page="purchases"><PurchaseView /></RequirePage>} />
                 <Route path="clients" element={<RequirePage page="clients"><Clients /></RequirePage>} />
@@ -47,6 +55,8 @@ export function AppRoutes() {
                 <Route path="savings/:id" element={<RequirePage page="savings"><SavingsAccountView /></RequirePage>} />
                 <Route path="capital" element={<RequirePage page="capital"><Capital /></RequirePage>} />
                 <Route path="capital/:id" element={<RequirePage page="capital"><CapitalView /></RequirePage>} />
+                <Route path="accounts" element={<RequirePage page="accounts"><Accounts /></RequirePage>} />
+                <Route path="accounts/:type/:id" element={<RequirePage page="accounts"><AccountView /></RequirePage>} />
                 <Route path="reports" element={<RequirePage page="reports"><Reports /></RequirePage>} />
                 <Route path="users" element={<RequirePage page="users"><Users /></RequirePage>} />
                 <Route path="users/:id" element={<RequirePage page="users"><UserView /></RequirePage>} />

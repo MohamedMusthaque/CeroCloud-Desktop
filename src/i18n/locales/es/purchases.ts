@@ -232,4 +232,7 @@ export const purchases = {
     'grnView.last': 'Última nota',
     'grnView.searchPlaceholder': 'Buscar por número de nota, producto o fecha...',
     'grnView.historyEmptyDesc': 'No hay notas de recepción registradas para este cliente.',
+    // Link to the supplier's account
+    'stmt.open': 'Movimientos',
+    'stmt.openHint': 'Ver todos los movimientos',
 }

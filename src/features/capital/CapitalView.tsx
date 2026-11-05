@@ -20,6 +20,7 @@ import { CapitalSettlementForm } from './CapitalSettlementForm'
 import { RepaymentForm } from './RepaymentForm'
 import { printCapitalBill } from './capitalBill'
 import { FORM_ICONS, TYPE_STYLES, amountSign, billNumber, capitalErrorMessage, isBillable, dueBySource, formLabel, isCreditEntry, isGoodsForm, isSettledEntry, outstandingOf, repaymentKindOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
+import { AccountLink } from '@/features/accounts/AccountParts'
 
 interface CapitalRecord {
     entry: CapitalEntry
@@ -129,8 +130,8 @@ export function CapitalView() {
                         <ViewField label={t('cap.col.date')} value={formatDay(entry.entry_date)} icon={CalendarDays} />
                         <ViewField label={t('cap.col.amount')} value={formatCurrency(entry.amount)} icon={Banknote} />
                         {entry.form === 'supplier_credit'
-                            ? <ViewField label={t('capForm.supplier')} value={entry.supplier_id ? <ViewLink to={`/suppliers/${entry.supplier_id}`} page="suppliers">{entry.supplier_name}</ViewLink> : undefined} icon={Truck} />
-                            : <ViewField label={entry.form === 'loan' ? t('capForm.lender') : onCredit ? t('capForm.owedBy') : t('cap.col.source')} value={sourceOf(entry)} icon={User} />}
+                            ? <ViewField label={t('capForm.supplier')} value={entry.supplier_id ? <span className="flex flex-wrap items-center gap-x-3"><ViewLink to={`/suppliers/${entry.supplier_id}`} page="suppliers">{entry.supplier_name}</ViewLink><AccountLink type="supplier" id={entry.supplier_id} /></span> : undefined} icon={Truck} />
+                            : <ViewField label={entry.form === 'loan' ? t('capForm.lender') : onCredit ? t('capForm.owedBy') : t('cap.col.source')} value={sourceOf(entry) ? <span className="flex flex-wrap items-center gap-x-3">{sourceOf(entry)}<AccountLink type="source" id={entry.source_id ?? undefined} /></span> : undefined} icon={User} />}
                         <ViewField label={t('cap.col.payment')} value={entry.payment_method ? paymentMethodLabel(entry.payment_method) : undefined} icon={Banknote} />
                         <ViewField label={t('view.description')} value={entry.description} wide />
                     </ViewFields>

@@ -23,6 +23,7 @@ import { views } from './en/views'
 import { savings } from './en/savings'
 import { purchases } from './en/purchases'
 import { capital } from './en/capital'
+import { accounts } from './en/accounts'
 
 export const en: Record<TranslationKey, string> = {
     ...common,
@@ -49,6 +50,7 @@ export const en: Record<TranslationKey, string> = {
     ...savings,
     ...purchases,
     ...capital,
+    ...accounts,
 
     // Navigation
     'nav.dashboard': 'Dashboard',
@@ -59,6 +61,7 @@ export const en: Record<TranslationKey, string> = {
     'nav.expenses': 'Expenses',
     'nav.savings': 'Savings',
     'nav.capital': 'Capital & Income',
+    'nav.accounts': 'Accounts',
     'nav.purchases': 'Purchases',
     'nav.reports': 'Reports',
     'nav.settings': 'Settings',

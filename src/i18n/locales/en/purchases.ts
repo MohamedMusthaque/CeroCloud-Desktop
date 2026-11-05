@@ -234,4 +234,7 @@ export const purchases: Record<keyof typeof es, string> = {
     'grnView.last': 'Last GRN',
     'grnView.searchPlaceholder': 'Search by GRN number, product or date...',
     'grnView.historyEmptyDesc': 'No Goods Received Notes are recorded for this client.',
+    // Link to the supplier's account
+    'stmt.open': 'Transactions',
+    'stmt.openHint': 'View all transactions',
 }

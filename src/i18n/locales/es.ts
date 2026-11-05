@@ -22,6 +22,7 @@ import { views } from './es/views'
 import { savings } from './es/savings'
 import { purchases } from './es/purchases'
 import { capital } from './es/capital'
+import { accounts } from './es/accounts'
 
 export const es = {
     ...common,
@@ -48,6 +49,7 @@ export const es = {
     ...savings,
     ...purchases,
     ...capital,
+    ...accounts,
 
     // Navigation
     'nav.dashboard': 'Dashboard',
@@ -58,6 +60,7 @@ export const es = {
     'nav.expenses': 'Gastos',
     'nav.savings': 'Ahorros',
     'nav.capital': 'Capital e Ingresos',
+    'nav.accounts': 'Cuentas',
     'nav.purchases': 'Compras',
     'nav.reports': 'Reportes',
     'nav.settings': 'Configuración',
