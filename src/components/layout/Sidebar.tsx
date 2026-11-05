@@ -137,14 +137,15 @@ export function Sidebar() {
             </button>
 
             {/* Main Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
+            {/* Compact rows so every page fits; on very short windows it still scrolls, without a visible bar */}
+            <nav className="flex-1 min-h-0 px-3 py-3 space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-hide">
                 {navigation.map((item) => (
                     <NavLink
                         key={item.name}
                         to={item.href}
                         className={({ isActive }) =>
                             cn(
-                                'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+                                'group relative flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
                                 isActive
                                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20 font-medium'
                                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50',
@@ -191,14 +192,14 @@ export function Sidebar() {
             </nav>
 
             {/* Secondary Navigation */}
-            <div className="px-3 py-4 space-y-1 border-t border-gray-800">
+            <div className="px-3 py-2 space-y-0.5 border-t border-gray-800 shrink-0">
                 {secondaryNavigation.map((item) => (
                     <NavLink
                         key={item.name}
                         to={item.href}
                         className={({ isActive }) =>
                             cn(
-                                'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+                                'group relative flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
                                 isActive
                                     ? 'bg-gray-800 text-gray-200 font-medium'
                                     : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50',
@@ -234,7 +235,7 @@ export function Sidebar() {
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="pt-4 mt-4 border-t border-gray-800"
+                        className="pt-2 mt-2 border-t border-gray-800"
                     >
                         <p className="text-[10px] text-gray-600 text-center font-mono">
                             v{pkg.version} RELEASE
