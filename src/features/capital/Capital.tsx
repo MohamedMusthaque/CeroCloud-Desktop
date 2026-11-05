@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import { motion } from 'framer-motion'
-import { Search, Edit2, Trash2, Eye, Landmark, Coins, PlusCircle, Info, HandCoins, ArrowUpFromLine, ArrowLeftRight, FileDown, CheckCircle2 } from 'lucide-react'
+import { Search, Edit2, Trash2, Eye, Landmark, Coins, PlusCircle, Info, HandCoins, ArrowUpFromLine, ArrowLeftRight, FileDown, CheckCircle2, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -20,7 +20,8 @@ import { CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, type CapitalEntry, type CapitalEntr
 import { CapitalEntryForm } from './CapitalEntryForm'
 import { CapitalSettlementForm } from './CapitalSettlementForm'
 import { RepaymentForm } from './RepaymentForm'
-import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, formLabel, isCapitalType, isCreditEntry, isGoodsForm, isPaidOut, isSettledEntry, outstandingOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
+import { printCapitalBill } from './capitalBill'
+import { FORM_ICONS, TYPE_STYLES, amountSign, billNumber, capitalErrorMessage, isBillable, formLabel, isCapitalType, isCreditEntry, isGoodsForm, isPaidOut, isSettledEntry, outstandingOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
 
 export function Capital() {
     const { t, locale } = useTranslation()
@@ -166,6 +167,11 @@ export function Capital() {
             )}
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                 <Link to={`/capital/${entry.id}`} className={iconButton} title={t('view.view')}><Eye className="w-4 h-4" /></Link>
+                {isBillable(entry) && (
+                    <button onClick={() => printCapitalBill(entry)} className={iconButton} title={`${t('cap.printBill')} · ${billNumber(entry)}`}>
+                        <Printer className="w-4 h-4" />
+                    </button>
+                )}
                 <button onClick={() => { setEditing(entry); setFormOpen(true) }} className={iconButton} title={t('common.edit')}>
                     <Edit2 className="w-4 h-4" />
                 </button>

@@ -72,6 +72,7 @@ export const capital: Record<keyof typeof es, string> = {
     'cap.payIn': 'Record payment in',
     'cap.receive': 'Record repayment',
     'cap.paySupplier': 'Pay supplier',
+    'cap.printBill': 'Print bill',
     'cap.itemsCount': '{count} products',
     'cap.itemsCountOne': '1 product',
 
@@ -109,6 +110,7 @@ export const capital: Record<keyof typeof es, string> = {
     'capForm.description': 'Description (Optional)',
     'capForm.save': 'Save',
     'capForm.created': 'Entry saved',
+    'capForm.billCreated': 'Bill {number} generated',
     'capForm.createdWithSource': 'Entry saved and new source "{name}" created',
     'capForm.updatedWithSource': 'Entry updated and new source "{name}" created',
     'capForm.updated': 'Entry updated',
@@ -180,6 +182,7 @@ export const capital: Record<keyof typeof es, string> = {
 
     // Entry detail page
     'capView.title': '{type} #{id}',
+    'capView.billNo': 'Bill No.',
     'capView.repaid': 'Repaid',
     'capView.paidIn': 'Paid in',
     'capView.paidToSupplier': 'Paid to supplier',

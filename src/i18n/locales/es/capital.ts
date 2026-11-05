@@ -70,6 +70,7 @@ export const capital = {
     'cap.payIn': 'Registrar aporte',
     'cap.receive': 'Registrar cobro',
     'cap.paySupplier': 'Pagar al proveedor',
+    'cap.printBill': 'Imprimir comprobante',
     'cap.itemsCount': '{count} productos',
     'cap.itemsCountOne': '1 producto',
 
@@ -107,6 +108,7 @@ export const capital = {
     'capForm.description': 'Descripción (Opcional)',
     'capForm.save': 'Guardar',
     'capForm.created': 'Registro guardado',
+    'capForm.billCreated': 'Comprobante {number} generado',
     'capForm.createdWithSource': 'Registro guardado y origen nuevo "{name}" creado',
     'capForm.updatedWithSource': 'Registro actualizado y origen nuevo "{name}" creado',
     'capForm.updated': 'Registro actualizado',
@@ -178,6 +180,7 @@ export const capital = {
 
     // Entry detail page
     'capView.title': '{type} #{id}',
+    'capView.billNo': 'N.º de comprobante',
     'capView.repaid': 'Pagado',
     'capView.paidIn': 'Aportado',
     'capView.paidToSupplier': 'Pagado al proveedor',

@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createRoot } from 'react-dom/client'
-import { Sale, CompanySettings, GoodsReceipt } from '@/types/database'
+import { Sale, CompanySettings, GoodsReceipt, CapitalEntry, Supplier } from '@/types/database'
 import { InvoiceTemplate } from '@/components/print/InvoiceTemplate'
 import { GoodsReceiptTemplate } from '@/components/print/GoodsReceiptTemplate'
+import { CapitalBillTemplate } from '@/components/print/CapitalBillTemplate'
+import { billNumber } from '@/features/capital/capitalUi'
 import { ReportTemplate } from '@/components/print/ReportTemplate'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 import { clientService } from './clientService'
+import { supplierService } from './supplierService'
 import { t, getLocale } from '@/i18n'
 
 export const pdfGenerator = {
@@ -138,6 +141,54 @@ export const pdfGenerator = {
             pdf.save(`${t('export.file.grn')}_${receipt.id}_${receipt.receipt_date}.pdf`)
         } catch (error) {
             console.error('Error generating GRN PDF:', error)
+            throw error
+        } finally {
+            root.unmount()
+            if (document.body.contains(container)) document.body.removeChild(container)
+        }
+    },
+
+    // Bill for anything taken or given on credit (capital entries), same paper size as the invoice
+    generateCapitalBill: async (entry: CapitalEntry, settings: CompanySettings) => {
+        let supplier: Supplier | undefined
+        if (entry.form === 'supplier_credit' && entry.supplier_id) {
+            try {
+                supplier = await supplierService.getById(entry.supplier_id)
+            } catch (error) {
+                console.warn('Error fetching supplier details:', error)
+            }
+        }
+
+        const container = document.createElement('div')
+        container.style.position = 'absolute'
+        container.style.left = '-9999px'
+        container.style.top = '0'
+        document.body.appendChild(container)
+
+        const root = createRoot(container)
+        try {
+            await new Promise<void>((resolve) => {
+                root.render(
+                    <div className="pdf-container">
+                        <CapitalBillTemplate entry={entry} settings={settings} supplier={supplier} />
+                    </div>
+                )
+                // Give it a moment to paint and load images
+                setTimeout(resolve, 800)
+            })
+
+            const element = container.querySelector('#capital-bill-template') as HTMLElement
+            if (!element) throw new Error('Template element not found')
+
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+            const isTicket = settings.invoice?.paperSize === 'ticket80mm'
+            const pdfWidth = isTicket ? 80 : 210
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: isTicket ? [pdfWidth, pdfHeight] : 'a4' })
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight)
+            pdf.save(`${billNumber(entry)}_${entry.entry_date}.pdf`)
+        } catch (error) {
+            console.error('Error generating capital bill PDF:', error)
             throw error
         } finally {
             root.unmount()

@@ -100,6 +100,24 @@ export function allocateRepayment(entries: CapitalEntry[], amount: number): Map<
 export const settleActionKey = (entry: CapitalEntry): TranslationKey =>
     entry.form === 'loan' ? 'cap.repay' : entry.form === 'supplier_credit' ? 'cap.paySupplier' : isCreditEntry(entry) ? 'cap.receive' : 'cap.payIn'
 
+// Anything taken or given on credit gets a bill: goods on credit, borrowed money, promised capital,
+// and capital or income on credit
+export const isBillable = (entry: CapitalEntry) => isSettledEntry(entry)
+
+// The bill number follows the entry: CB-000042
+export const billNumber = (entry: Pick<CapitalEntry, 'id'>) => `CB-${String(entry.id ?? '').padStart(6, '0')}`
+
+export type BillKind = 'supplier_credit' | 'loan' | 'pledge' | 'credit_capital' | 'credit_income'
+
+export const billKindOf = (entry: CapitalEntry): BillKind =>
+    entry.form === 'supplier_credit' ? 'supplier_credit'
+        : entry.form === 'loan' ? 'loan'
+            : entry.form === 'pledge' ? 'pledge'
+                : entry.type === 'income' ? 'credit_income' : 'credit_capital'
+
+// The business pays this bill (goods on credit, loans) rather than collects it
+export const isPayableBill = (kind: BillKind) => kind === 'supplier_credit' || kind === 'loan'
+
 export const outstandingOf = (entry: CapitalEntry) => Math.max(Math.round((entry.amount - (entry.settled ?? 0)) * 100) / 100, 0)
 
 // Money in (+) or out (−) shown next to the amount

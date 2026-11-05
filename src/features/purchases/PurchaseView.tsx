@@ -154,6 +154,32 @@ export function PurchaseView() {
                 <ViewStat label={t('pur.col.items')} value={order.items?.length ?? 0} icon={Package} color="bg-orange-500" />
             </div>
 
+            {/* Payments first: the advance and the payment made when the goods arrive are what's checked most */}
+            <ViewSection
+                title={t('purView.payments')}
+                icon={Banknote}
+                actions={order.status !== 'cancelled' && (
+                    <button
+                        onClick={() => setPaymentPreset({ supplierId: order.supplier_id, purchaseId: order.id, type: 'payment' })}
+                        className="px-3 py-1.5 rounded-lg text-sm font-bold text-primary hover:bg-primary/10 transition-colors"
+                    >
+                        {t('pur.recordPayment')}
+                    </button>
+                )}
+            >
+                <ViewTable
+                    columns={[
+                        { label: t('pur.col.date') }, { label: t('supPay.col.type') }, { label: t('supPay.col.order') }, { label: t('supPay.col.method') },
+                        { label: t('supPay.col.notes') }, { label: t('supPay.col.recordedBy') }, { label: t('supPay.col.amount'), align: 'right' }, { label: '' }
+                    ]}
+                    empty={payments.length === 0 ? t('purView.noPayments') : undefined}
+                >
+                    {payments.map(payment => (
+                        <PaymentRow key={payment.id} payment={payment} formatDay={formatDay} onDelete={() => setPaymentToDelete(payment)} />
+                    ))}
+                </ViewTable>
+            </ViewSection>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <ViewSection title={t('view.details')} icon={Info} className="lg:col-span-2">
                     <ViewFields>
@@ -192,31 +218,6 @@ export function PurchaseView() {
                             </tr>
                         )
                     })}
-                </ViewTable>
-            </ViewSection>
-
-            <ViewSection
-                title={t('purView.payments')}
-                icon={Banknote}
-                actions={order.status !== 'cancelled' && (
-                    <button
-                        onClick={() => setPaymentPreset({ supplierId: order.supplier_id, purchaseId: order.id, type: 'payment' })}
-                        className="px-3 py-1.5 rounded-lg text-sm font-bold text-primary hover:bg-primary/10 transition-colors"
-                    >
-                        {t('pur.recordPayment')}
-                    </button>
-                )}
-            >
-                <ViewTable
-                    columns={[
-                        { label: t('pur.col.date') }, { label: t('supPay.col.type') }, { label: t('supPay.col.order') }, { label: t('supPay.col.method') },
-                        { label: t('supPay.col.notes') }, { label: t('supPay.col.recordedBy') }, { label: t('supPay.col.amount'), align: 'right' }, { label: '' }
-                    ]}
-                    empty={payments.length === 0 ? t('purView.noPayments') : undefined}
-                >
-                    {payments.map(payment => (
-                        <PaymentRow key={payment.id} payment={payment} formatDay={formatDay} onDelete={() => setPaymentToDelete(payment)} />
-                    ))}
                 </ViewTable>
             </ViewSection>
 

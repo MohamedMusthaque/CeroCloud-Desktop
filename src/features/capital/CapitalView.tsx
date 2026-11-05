@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { parseISO } from 'date-fns'
 import { useParams } from 'react-router-dom'
-import { Info, Package, Banknote, CalendarDays, Truck, CheckCircle2, Hourglass, Trash2, ClipboardList, User } from 'lucide-react'
+import { Info, Package, Banknote, CalendarDays, Truck, CheckCircle2, Hourglass, Trash2, ClipboardList, User, Printer, Receipt } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
@@ -18,7 +18,8 @@ import { useRecord, parseId } from '@/components/view/useRecord'
 import { CapitalEntryForm } from './CapitalEntryForm'
 import { CapitalSettlementForm } from './CapitalSettlementForm'
 import { RepaymentForm } from './RepaymentForm'
-import { FORM_ICONS, TYPE_STYLES, amountSign, capitalErrorMessage, dueBySource, formLabel, isCreditEntry, isGoodsForm, isSettledEntry, outstandingOf, repaymentKindOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
+import { printCapitalBill } from './capitalBill'
+import { FORM_ICONS, TYPE_STYLES, amountSign, billNumber, capitalErrorMessage, isBillable, dueBySource, formLabel, isCreditEntry, isGoodsForm, isSettledEntry, outstandingOf, repaymentKindOf, settleActionKey, sourceOf, typeLabel } from './capitalUi'
 
 interface CapitalRecord {
     entry: CapitalEntry
@@ -99,6 +100,18 @@ export function CapitalView() {
                 onEdit={() => setEditing(true)}
             />
 
+            {isBillable(entry) && (
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        onClick={() => printCapitalBill(entry)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-colors"
+                    >
+                        <Printer className="w-4 h-4" />
+                        {t('cap.printBill')} · {billNumber(entry)}
+                    </button>
+                </div>
+            )}
+
             {isSettled && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <ViewStat label={t('cap.col.amount')} value={formatCurrency(entry.amount)} icon={FormIcon} color="bg-indigo-500" />
@@ -110,6 +123,7 @@ export function CapitalView() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <ViewSection title={t('view.details')} icon={Info} className="lg:col-span-2">
                     <ViewFields>
+                        {isBillable(entry) && <ViewField label={t('capView.billNo')} value={billNumber(entry)} icon={Receipt} />}
                         <ViewField label={t('cap.col.type')} value={typeLabel(entry.type, t)} icon={style.icon} />
                         <ViewField label={t('cap.col.form')} value={formLabel(entry.form, t)} icon={FormIcon} />
                         <ViewField label={t('cap.col.date')} value={formatDay(entry.entry_date)} icon={CalendarDays} />

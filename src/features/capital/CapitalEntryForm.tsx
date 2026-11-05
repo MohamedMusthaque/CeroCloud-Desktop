@@ -14,8 +14,9 @@ import { companyService } from '@/services/companyService'
 import { CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, type CapitalEntry, type CapitalEntryType, type CapitalForm, type CapitalSource, type Product, type Supplier } from '@/types/database'
 import { GoodsItemsEditor } from '@/features/purchases/GoodsItemsEditor'
 import { emptyGoodsRow, goodsInput, goodsTotal, type GoodsRow } from '@/features/purchases/goodsRows'
-import { FORM_ICONS, TYPE_STYLES, allowsCredit, capitalErrorMessage, formLabel, isCapitalType, isGoodsForm, typeLabel } from './capitalUi'
+import { FORM_ICONS, TYPE_STYLES, allowsCredit, billNumber, capitalErrorMessage, isBillable, formLabel, isCapitalType, isGoodsForm, typeLabel } from './capitalUi'
 import { AmountInput } from '@/components/ui/AmountInput'
+import { printCapitalBill } from './capitalBill'
 
 interface CapitalEntryFormProps {
     isOpen: boolean
@@ -102,14 +103,24 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
                 })
                 toast.success(isNewSource ? t('capForm.updatedWithSource', { name: source.trim() }) : t('capForm.updated'))
             } else {
-                await capitalService.create({
+                const created = await capitalService.create({
                     type, form: effectiveForm, entry_date: date, source, description,
                     payment_method: takesMethod ? effectiveMethod : '',
                     ...(isGoods
                         ? { items: goodsInput(rows), update_costs: updateCosts, supplier_id: effectiveForm === 'supplier_credit' ? Number(supplierId) : null }
                         : { amount: Number(amount) })
                 })
-                toast.success(isNewSource ? t('capForm.createdWithSource', { name: source.trim() }) : t('capForm.created'))
+                const saved = isNewSource ? t('capForm.createdWithSource', { name: source.trim() }) : t('capForm.created')
+                if (isBillable(created)) {
+                    // Taken or given on credit: its bill is ready to print straight away
+                    toast.success(t('capForm.billCreated', { number: billNumber(created) }), {
+                        description: saved,
+                        action: { label: t('cap.printBill'), onClick: () => printCapitalBill(created) },
+                        duration: 10000
+                    })
+                } else {
+                    toast.success(saved)
+                }
             }
             onSaved()
             onClose()
