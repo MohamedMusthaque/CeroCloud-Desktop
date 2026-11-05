@@ -17,8 +17,8 @@ import type { CapitalEntry, Purchase, Supplier } from '@/types/database'
 import { SupplierPaymentForm, type SupplierPaymentPreset } from '@/features/purchases/SupplierPaymentForm'
 import { RepaymentForm } from '@/features/capital/RepaymentForm'
 import {
-    BALANCE_MODES, BUCKETS, bucketLabel, bucketTotals, cashTotals, isAccountType, lineLabel, typeLabel,
-    type AccountLine, type LineKind
+    BALANCE_MODES, BUCKETS, accountName, bucketLabel, bucketTotals, cashTotals, isAccountType, lineLabel, typeLabel,
+    UNNAMED_WALK_IN, type AccountLine, type LineKind
 } from './accountLedger'
 import { TYPE_STYLES, useAccounts } from './accountUi'
 import { AccountBalance, AccountTypeBadge } from './AccountParts'
@@ -79,6 +79,7 @@ export function AccountView() {
     if (!account || !type) return <ViewNotFound backTo="/accounts" backLabel={backLabel} />
 
     const style = TYPE_STYLES[account.type]
+    const name = accountName(account, t)
     const totals = bucketTotals(account.lines)
     const buckets = BUCKETS[account.type].filter(bucket => totals[bucket])
     const hasCancelled = account.lines.some(line => line.cancelled)
@@ -100,7 +101,7 @@ export function AccountView() {
             ])
         ]
         const csv = lines.map(line => line.map(quote).join(',')).join('\n')
-        const safeName = account.name.replace(/[\\/:*?"<>|]+/g, '').trim() || String(account.id)
+        const safeName = name.replace(/[\\/:*?"<>|]+/g, '').trim() || String(account.id)
         saveAs(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }), `${safeName}_${t('acct.file')}_${new Date().toISOString().split('T')[0]}.csv`)
     }
 
@@ -138,9 +139,9 @@ export function AccountView() {
             <ViewHeader
                 backTo="/accounts"
                 backLabel={backLabel}
-                avatar={<ViewAvatar gradient={style.gradient}>{account.name.charAt(0).toUpperCase()}</ViewAvatar>}
-                title={account.name}
-                subtitle={account.info ?? (account.type === 'walkin' ? t('acct.walkinInfo') : undefined)}
+                avatar={<ViewAvatar gradient={style.gradient}>{name.charAt(0).toUpperCase()}</ViewAvatar>}
+                title={name}
+                subtitle={account.info ?? (account.type === 'walkin' ? t(account.id === UNNAMED_WALK_IN ? 'acct.walkinUnnamedInfo' : 'acct.walkinInfo') : undefined)}
                 badges={<AccountTypeBadge type={account.type} />}
             />
 

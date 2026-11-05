@@ -7,7 +7,7 @@ import { useTranslation } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
-import { ACCOUNT_TYPES, BALANCE_MODES, accountKey, accountPath, typeLabel, type Account, type AccountType } from './accountLedger'
+import { ACCOUNT_TYPES, BALANCE_MODES, accountKey, accountName, accountPath, typeLabel, type Account, type AccountType } from './accountLedger'
 import { TYPE_STYLES, useAccounts } from './accountUi'
 import { AccountBalance, AccountTypeBadge } from './AccountParts'
 
@@ -66,7 +66,7 @@ export function Accounts() {
             // With dates set, only accounts that had transactions in the period
             (!dated || count > 0) &&
             (type === 'all' || a.type === type) &&
-            (!term || a.name.toLowerCase().includes(term) || (a.info ?? '').toLowerCase().includes(term)) &&
+            (!term || accountName(a, t).toLowerCase().includes(term) || (a.info ?? '').toLowerCase().includes(term)) &&
             (balanceFilter === 'all' ||
                 (balanceFilter === 'active' && count > 0) ||
                 (balanceFilter === 'owesYou' && isParty(a) && balance > 0) ||
@@ -74,10 +74,10 @@ export function Accounts() {
                 (balanceFilter === 'settled' && isParty(a) && balance === 0))
         )
         return list.sort((a, b) =>
-            sort === 'name' ? a.account.name.localeCompare(b.account.name)
-                : sort === 'balance' ? Math.abs(b.balance) - Math.abs(a.balance) || a.account.name.localeCompare(b.account.name)
-                    : (b.lastDate ?? '').localeCompare(a.lastDate ?? '') || a.account.name.localeCompare(b.account.name))
-    }, [periods, dated, type, term, balanceFilter, sort])
+            sort === 'name' ? accountName(a.account, t).localeCompare(accountName(b.account, t))
+                : sort === 'balance' ? Math.abs(b.balance) - Math.abs(a.balance) || accountName(a.account, t).localeCompare(accountName(b.account, t))
+                    : (b.lastDate ?? '').localeCompare(a.lastDate ?? '') || accountName(a.account, t).localeCompare(accountName(b.account, t)))
+    }, [periods, dated, type, term, balanceFilter, sort, t])
 
     const hasFilters = type !== 'all' || !!term || balanceFilter !== 'all' || dated
     const clearFilters = () => { setType('all'); setSearch(''); setBalanceFilter('all'); setFromDate(''); setToDate('') }
@@ -184,7 +184,7 @@ export function Accounts() {
                                     className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700/30 transition-colors"
                                 >
                                     <td className="px-4 py-3">
-                                        <p className="font-bold text-gray-900 dark:text-white">{account.name}</p>
+                                        <p className="font-bold text-gray-900 dark:text-white">{accountName(account, t)}</p>
                                         {account.info && <p className="text-xs text-gray-500 truncate max-w-xs">{account.info}</p>}
                                     </td>
                                     <td className="px-4 py-3"><AccountTypeBadge type={account.type} /></td>

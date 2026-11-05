@@ -90,6 +90,8 @@ export interface Account {
     // Record id; walk-in accounts use their name key (see walkInId)
     id: number | string
     name: string
+    // Shown instead of `name` when set (the unnamed walk-in customer, in the current language)
+    nameKey?: TranslationKey
     // Phone, contact or category shown under the name
     info?: string
     // The record's own page (walk-in accounts have none)
@@ -220,30 +222,51 @@ function clientAccounts(clients: Client[], sales: Sale[], receipts: GoodsReceipt
 
 // Walk-in accounts are keyed by name, ignoring case and extra spaces
 export const walkInId = (name: string) => name.trim().replace(/\s+/g, ' ').toLowerCase()
+// Sales made without a customer name share one "Walk-in customer" account
+export const UNNAMED_WALK_IN = '~'
 
-// People without a client record: walk-in sellers on a GRN, and named walk-in customers on sales
-// (a name that matches a registered client belongs to that client's account instead)
-function walkInAccounts(clients: Client[], sales: Sale[], receipts: GoodsReceipt[], withSales: boolean): Account[] {
+// People without a client record: walk-in sellers on a GRN, and walk-in customers on sales
+// (a sale under a registered client's name belongs to that client's account instead)
+function walkInAccounts(clients: Client[], sales: Sale[], receipts: GoodsReceipt[], withGrns: boolean, withSales: boolean): Account[] {
+    const clientIds = new Set(clients.map(c => c.id))
     const clientNames = new Set(clients.map(c => c.name))
     const groups = new Map<string, { name: string; lines: Line[] }>()
-    const add = (rawName: string | undefined, line: Line) => {
+    const add = (rawName: string | undefined | null, line: Line) => {
         const name = (rawName ?? '').trim().replace(/\s+/g, ' ')
-        if (!name) return
-        const key = walkInId(name)
+        const key = name ? walkInId(name) : UNNAMED_WALK_IN
         const group = groups.get(key) ?? { name, lines: [] }
         group.lines.push(line)
         groups.set(key, group)
     }
-    for (const receipt of receipts) {
-        if (!receipt.client_id) add(receipt.client_name, grnLine(receipt))
+    if (withGrns) {
+        for (const receipt of receipts) {
+            if (!receipt.client_id || !clientIds.has(receipt.client_id)) add(receipt.client_name, grnLine(receipt))
+        }
     }
     if (withSales) {
         for (const sale of sales) {
-            if (!sale.client_id && sale.customer_name && !clientNames.has(sale.customer_name)) add(sale.customer_name, saleLine(sale))
+            // Linked to a client that still exists, or under a client's exact name: the client's account has it
+            if (sale.client_id && clientIds.has(sale.client_id)) continue
+            if (!sale.client_id && sale.customer_name && clientNames.has(sale.customer_name)) continue
+            add(sale.customer_name, saleLine(sale))
         }
     }
     // The name as first written on the newest record (GRNs and sales load newest first)
-    return [...groups.entries()].map(([key, group]) => makeAccount({ type: 'walkin', id: key, name: group.name }, group.lines))
+    return [...groups.entries()].map(([key, group]) => makeAccount({
+        type: 'walkin', id: key, name: group.name,
+        nameKey: key === UNNAMED_WALK_IN ? 'common.walkInCustomer' : undefined
+    }, group.lines))
+}
+
+// Name to show for an account
+export const accountName = (account: Pick<Account, 'name' | 'nameKey'>, t: (key: TranslationKey) => string) =>
+    account.nameKey ? t(account.nameKey) : account.name
+
+// Walk-in accounts come from GRNs (Purchases) and sales (Sales or Clients); the others from their own page
+export function canSeeAccountType(user: AuthUser | null | undefined, type: AccountType): boolean {
+    if (!canAccessPage(user, 'accounts')) return false
+    if (type === 'walkin') return canAccessPage(user, 'purchases') || canAccessPage(user, 'sales') || canAccessPage(user, 'clients')
+    return canAccessPage(user, ACCOUNT_PAGES[type])
 }
 
 // Capital sources and lenders: capital and income, credit owed, loans, promises, and their payments
@@ -314,7 +337,9 @@ const none = <T,>(): Promise<T[]> => Promise.resolve([])
 
 // Every account the user may see, built from each module's records
 export async function loadAccounts(user: AuthUser | null): Promise<Account[]> {
-    const can = (type: AccountType) => canAccessPage(user, 'accounts') && canAccessPage(user, ACCOUNT_PAGES[type])
+    const can = (type: AccountType) => canSeeAccountType(user, type)
+    const walkInGrns = can('walkin') && canAccessPage(user, 'purchases')
+    const walkInSales = can('walkin') && (canAccessPage(user, 'sales') || canAccessPage(user, 'clients'))
     const [
         suppliers, orders, payments, clients, sales, receipts, entries, sources, savings, transactions, expenseTypes, expenses
     ] = await Promise.all([
@@ -322,8 +347,8 @@ export async function loadAccounts(user: AuthUser | null): Promise<Account[]> {
         can('supplier') ? purchaseService.getAll() : none<Purchase>(),
         can('supplier') ? supplierPaymentService.getAll() : none<SupplierPayment>(),
         can('client') || can('walkin') ? clientService.getAll() : none<Client>(),
-        can('client') || can('walkin') ? saleService.getAll() : none<Sale>(),
-        can('client') || can('walkin') ? goodsReceiptService.getAll() : none<GoodsReceipt>(),
+        can('client') || walkInSales ? saleService.getAll() : none<Sale>(),
+        can('client') || walkInGrns ? goodsReceiptService.getAll() : none<GoodsReceipt>(),
         can('supplier') || can('source') ? capitalService.getAll() : none<CapitalEntry>(),
         can('source') ? capitalService.getSources() : none<CapitalSource>(),
         can('savings') ? savingsAccountService.getAll() : none<SavingsAccount>(),
@@ -334,8 +359,7 @@ export async function loadAccounts(user: AuthUser | null): Promise<Account[]> {
     return [
         ...supplierAccounts(suppliers, orders, payments, entries),
         ...(can('client') ? clientAccounts(clients, sales, receipts) : []),
-        // Walk-in sales only for users who can see sales or clients
-        ...(can('walkin') ? walkInAccounts(clients, sales, receipts, canAccessPage(user, 'sales') || can('client')) : []),
+        ...(can('walkin') ? walkInAccounts(clients, sales, receipts, walkInGrns, walkInSales) : []),
         ...sourceAccounts(sources, entries),
         ...savingsAccounts(savings, transactions),
         ...expenseAccounts(expenseTypes, expenses)

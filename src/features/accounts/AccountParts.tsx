@@ -2,9 +2,8 @@ import { Link } from 'react-router-dom'
 import { BookOpen } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
-import { canAccessPage } from '@/lib/permissions'
 import { useAuthStore } from '@/stores/authStore'
-import { ACCOUNT_PAGES, BALANCE_MODES, balanceState, typeLabel, type AccountType } from './accountLedger'
+import { BALANCE_MODES, balanceState, canSeeAccountType, typeLabel, type AccountType } from './accountLedger'
 import { TYPE_STYLES } from './accountUi'
 
 export function AccountTypeBadge({ type }: { type: AccountType }) {
@@ -37,7 +36,7 @@ export function AccountBalance({ type, value, align = 'right', size = 'sm' }: { 
 export function AccountLink({ type, id, className }: { type: AccountType; id?: number | string; className?: string }) {
     const { t } = useTranslation()
     const user = useAuthStore((state) => state.user)
-    if (!id || !canAccessPage(user, 'accounts') || !canAccessPage(user, ACCOUNT_PAGES[type])) return null
+    if (!id || !canSeeAccountType(user, type)) return null
     return (
         <Link
             to={`/accounts/${type}/${encodeURIComponent(String(id))}`}

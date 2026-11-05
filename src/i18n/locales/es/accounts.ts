@@ -25,6 +25,7 @@ export const accounts = {
     'acct.type.client': 'Cliente',
     'acct.type.walkin': 'Sin registro',
     'acct.walkinInfo': 'Vendedor o cliente ocasional, sin ficha de cliente (agrupado por nombre)',
+    'acct.walkinUnnamedInfo': 'Ventas registradas sin nombre de cliente',
     'acct.type.source': 'Capital y préstamos',
     'acct.type.savings': 'Ahorros',
     'acct.type.expense': 'Gastos',
