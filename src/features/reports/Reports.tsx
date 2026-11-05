@@ -52,7 +52,7 @@ import { ReportPeriodFilter } from './ReportPeriodFilter'
 import { filterSalesByPeriod, filterExpensesByPeriod, filterByDayPeriod, periodLabel, type ReportPeriod } from '@/lib/reportPeriod'
 import { useTranslation, paymentMethodLabel, t as translateNow } from '@/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
-import { cn, getImageSrc } from '@/lib/utils'
+import { cn, getImageSrc, formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
@@ -352,21 +352,21 @@ export function Reports() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <MetricCard
                                     title={t('rep.salesToday')}
-                                    value={`${settings.currencySymbol}${totalSalesToday.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+                                    value={`${formatCurrency(totalSalesToday, settings.currencySymbol)}`}
                                     subtitle={t('rep.transactionsCount', { count: salesToday.length })}
                                     icon={DollarSign}
                                     color="green"
                                 />
                                 <MetricCard
                                     title={t('rep.totalSales')}
-                                    value={`${settings.currencySymbol}${totalSales.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+                                    value={`${formatCurrency(totalSales, settings.currencySymbol)}`}
                                     subtitle={t('rep.cumulative')}
                                     icon={TrendingUp}
                                     color="blue"
                                 />
                                 <MetricCard
                                     title={t('rep.avgTicket')}
-                                    value={`${settings.currencySymbol}${sales.length > 0 ? (totalSales / sales.length).toFixed(2) : '0.00'}`}
+                                    value={formatCurrency(sales.length > 0 ? totalSales / sales.length : 0, settings.currencySymbol)}
                                     subtitle={t('rep.perSale')}
                                     icon={Activity}
                                     color="purple"
@@ -400,7 +400,7 @@ export function Reports() {
                                                 axisLine={false}
                                                 tickLine={false}
                                                 tick={{ fill: '#9ca3af', fontSize: 12 }}
-                                                tickFormatter={(value) => `${settings.currencySymbol}${value}`}
+                                                tickFormatter={(value) => `${settings.currencySymbol}${Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
                                                 dx={-10}
                                             />
                                             <Tooltip
@@ -415,7 +415,7 @@ export function Reports() {
                                                 itemStyle={{ color: '#e5e7eb' }}
                                                 labelStyle={{ color: '#9ca3af', marginBottom: '0.5rem', fontSize: '0.875rem' }}
                                                 formatter={(value: number, name: string) => [
-                                                    name === 'sales' ? `${settings.currencySymbol}${Number(value).toLocaleString()}` : value,
+                                                    name === 'sales' ? formatCurrency(Number(value), settings.currencySymbol) : value,
                                                     name === 'sales' ? t('rep.chartSales') : t('rep.chartTransactions')
                                                 ]}
                                             />
@@ -448,7 +448,7 @@ export function Reports() {
                                                 axisLine={false}
                                                 tickLine={false}
                                                 tick={{ fill: '#9ca3af', fontSize: 11 }}
-                                                tickFormatter={(value) => `${settings.currencySymbol}${value}`}
+                                                tickFormatter={(value) => `${settings.currencySymbol}${Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
                                                 dx={-10}
                                             />
                                             <Tooltip
@@ -464,7 +464,7 @@ export function Reports() {
                                                 itemStyle={{ color: '#e5e7eb' }}
                                                 labelStyle={{ color: '#9ca3af', marginBottom: '0.5rem', fontSize: '0.875rem' }}
                                                 formatter={(value: number, name: string) => [
-                                                    name === 'sales' ? `${settings.currencySymbol}${Number(value).toLocaleString()}` : value,
+                                                    name === 'sales' ? formatCurrency(Number(value), settings.currencySymbol) : value,
                                                     name === 'sales' ? t('rep.chartSales') : t('rep.chartTransactions')
                                                 ]}
                                             />
@@ -506,7 +506,7 @@ export function Reports() {
                                 />
                                 <MetricCard
                                     title={t('rep.inventoryValue')}
-                                    value={`${settings.currencySymbol}${inventoryValue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+                                    value={`${formatCurrency(inventoryValue, settings.currencySymbol)}`}
                                     subtitle={t('rep.estimatedCost')}
                                     icon={DollarSign}
                                     color="green"
@@ -561,7 +561,7 @@ export function Reports() {
                                                             color: '#fff',
                                                             padding: '12px'
                                                         }}
-                                                        formatter={(value: number) => [`${settings.currencySymbol}${value.toLocaleString()}`, t('rep.totalValue')]}
+                                                        formatter={(value: number) => [`${formatCurrency(value, settings.currencySymbol)}`, t('rep.totalValue')]}
                                                         itemStyle={{ color: '#fff', fontWeight: 600 }}
                                                     />
                                                 </PieChart>
@@ -593,7 +593,7 @@ export function Reports() {
                                                         </div>
                                                         <div className="text-right">
                                                             <div className="text-sm font-bold text-gray-900 dark:text-white">
-                                                                {settings.currencySymbol}{value.toLocaleString('es-MX', { maximumFractionDigits: 0 })}
+                                                                {formatCurrency(value, settings.currencySymbol)}
                                                             </div>
                                                             <div className="text-[10px] text-gray-400 font-medium">
                                                                 {((value / inventoryValue) * 100).toFixed(1)}%
@@ -626,7 +626,7 @@ export function Reports() {
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="font-bold text-sm text-indigo-600 dark:text-indigo-400">
-                                                            {settings.currencySymbol}{(product.price * product.stock).toLocaleString()}
+                                                            {formatCurrency((product.price * product.stock), settings.currencySymbol)}
                                                         </p>
                                                         <p className="text-[10px] text-gray-400">{t('rep.totalValueLower')}</p>
                                                     </div>
@@ -638,7 +638,7 @@ export function Reports() {
                                             <span className="text-gray-500">{t('rep.avgValuePerItem')}</span>
                                             <span className="font-mono font-bold text-gray-700 dark:text-gray-300">
                                                 {products.length > 0
-                                                    ? `${settings.currencySymbol}${(inventoryValue / products.length).toFixed(2)}`
+                                                    ? `${formatCurrency((inventoryValue / products.length), settings.currencySymbol)}`
                                                     : `${settings.currencySymbol}0.00`
                                                 }
                                             </span>
@@ -711,10 +711,10 @@ export function Reports() {
                                                     {/* Price */}
                                                     <div className="col-span-2 text-right">
                                                         <p className="font-bold text-gray-900 dark:text-white text-sm">
-                                                            {settings.currencySymbol}{p.price.toFixed(2)}
+                                                            {formatCurrency(p.price, settings.currencySymbol)}
                                                         </p>
                                                         <p className="text-[10px] text-gray-400">
-                                                            {t('rep.costLabel', { amount: `${settings.currencySymbol}${p.cost.toFixed(2)}` })}
+                                                            {t('rep.costLabel', { amount: `${formatCurrency(p.cost, settings.currencySymbol)}` })}
                                                         </p>
                                                     </div>
 
@@ -888,7 +888,7 @@ export function Reports() {
                                                 "font-bold text-base",
                                                 sale.status === 'cancelled' ? "text-gray-400 line-through decoration-red-500" : "text-gray-900 dark:text-white"
                                             )}>
-                                                {settings.currencySymbol}{sale.total.toFixed(2)}
+                                                {formatCurrency(sale.total, settings.currencySymbol)}
                                             </div>
                                         </div>
 
@@ -1067,7 +1067,7 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
                     previewData={filteredSales.slice(0, 3).map(s => (
                         <div key={s.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="text-gray-500">#{s.id}</span>
-                            <span className="font-medium text-gray-900 dark:text-white">{settings.currencySymbol}{s.total.toFixed(2)}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(s.total, settings.currencySymbol)}</span>
                         </div>
                     ))}
                 />
@@ -1085,7 +1085,7 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
                     previewData={filteredExpenses.slice(0, 3).map(e => (
                         <div key={e.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="truncate max-w-[150px] text-gray-500">{e.expense_type_name}</span>
-                            <span className="font-medium text-gray-900 dark:text-white">{settings.currencySymbol}{e.amount.toFixed(2)}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(e.amount, settings.currencySymbol)}</span>
                         </div>
                     ))}
                 />
@@ -1103,7 +1103,7 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
                     previewData={filteredSupplierPayments.slice(0, 3).map(p => (
                         <div key={p.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="truncate max-w-[150px] text-gray-500">{p.supplier_name}</span>
-                            <span className="font-medium text-gray-900 dark:text-white">{p.type === 'payment' ? '-' : '+'}{settings.currencySymbol}{p.amount.toFixed(2)}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{p.type === 'payment' ? '-' : '+'}{formatCurrency(p.amount, settings.currencySymbol)}</span>
                         </div>
                     ))}
                 />
@@ -1121,7 +1121,7 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
                     previewData={filteredCapital.slice(0, 3).map(c => (
                         <div key={c.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="truncate max-w-[150px] text-gray-500">{t(`cap.type.${c.type}`)}</span>
-                            <span className="font-medium text-gray-900 dark:text-white">{c.type === 'withdrawal' ? '-' : ''}{settings.currencySymbol}{c.amount.toFixed(2)}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{c.type === 'withdrawal' ? '-' : ''}{formatCurrency(c.amount, settings.currencySymbol)}</span>
                         </div>
                     ))}
                 />
@@ -1139,7 +1139,7 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
                     previewData={filteredReceipts.slice(0, 3).map(r => (
                         <div key={r.id} className="flex justify-between text-xs py-1 border-b border-dashed border-gray-100 dark:border-gray-700 last:border-0">
                             <span className="truncate max-w-[150px] text-gray-500">{r.client_name}</span>
-                            <span className={cn("font-medium", r.status === 'cancelled' ? "text-gray-400 line-through" : "text-gray-900 dark:text-white")}>{settings.currencySymbol}{r.total.toFixed(2)}</span>
+                            <span className={cn("font-medium", r.status === 'cancelled' ? "text-gray-400 line-through" : "text-gray-900 dark:text-white")}>{formatCurrency(r.total, settings.currencySymbol)}</span>
                         </div>
                     ))}
                 />
@@ -1213,9 +1213,11 @@ function ExportSection({ sales, expenses, supplierPayments, capitalEntries, good
                         <div className="text-right">
                             <div className="text-xs text-gray-400 uppercase font-bold">{t('rep.export.salesTodayLabel')}</div>
                             <div className="text-xl font-black text-gray-900 dark:text-white">
-                                {settings.currencySymbol}
-                                {sales.filter(s => new Date(s.created_at!).toDateString() === new Date().toDateString())
-                                    .reduce((acc, s) => acc + s.total, 0).toFixed(2)}
+                                {formatCurrency(
+                                    sales.filter(s => new Date(s.created_at!).toDateString() === new Date().toDateString())
+                                        .reduce((acc, s) => acc + s.total, 0),
+                                    settings.currencySymbol
+                                )}
                             </div>
                         </div>
                     }
@@ -1262,7 +1264,7 @@ function NewExportCard({ title, description, count, total, currencySymbol, icon:
                 {customMetric ? customMetric : (total !== undefined && (
                     <div className="text-right">
                         <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">{t('rep.total')}</div>
-                        <div className="text-xl font-black text-gray-900 dark:text-white">{currencySymbol}{total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
+                        <div className="text-xl font-black text-gray-900 dark:text-white">{formatCurrency(total, currencySymbol)}</div>
                     </div>
                 ))}
             </div>

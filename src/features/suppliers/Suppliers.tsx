@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { SupplierForm } from './SupplierForm'
-import { cn, getImageSrc } from '@/lib/utils'
+import { cn, getImageSrc, formatCurrency } from '@/lib/utils'
 import { companyService } from '@/services/companyService'
 import { useTranslation, unitLabel, t as translateNow } from '@/i18n'
 
@@ -456,7 +456,7 @@ function ProductsListModal({ supplier, products, onClose, currencySymbol }: { su
                                 </div>
                                 <div className="text-right">
                                     <div className="font-bold text-indigo-600 dark:text-indigo-400">
-                                        {currencySymbol}{product.price.toFixed(2)}
+                                        {formatCurrency(product.price, currencySymbol)}
                                     </div>
                                     <div className={cn("text-xs font-medium", product.stock > product.min_stock ? "text-green-500" : "text-red-500")}>
                                         {product.stock} {unitLabel(product.unit)}

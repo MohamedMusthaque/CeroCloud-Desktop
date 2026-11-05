@@ -3,6 +3,7 @@ import { saveAs } from 'file-saver'
 import jsPDF from 'jspdf'
 import { companyService } from './companyService'
 import { t, getLocale, paymentMethodLabel, unitLabel } from '@/i18n'
+import { formatAmount } from '@/lib/utils'
 
 export const exportService = {
     // Export products to CSV
@@ -169,8 +170,8 @@ export const exportService = {
         sale.items.forEach((item) => {
             doc.text(item.product_name.substring(0, 30), 20, yPos)
             doc.text(item.quantity.toString(), 110, yPos)
-            doc.text(`$${item.unit_price.toFixed(2)}`, 140, yPos)
-            doc.text(`$${item.subtotal.toFixed(2)}`, 170, yPos)
+            doc.text(`$${formatAmount(item.unit_price)}`, 140, yPos)
+            doc.text(`$${formatAmount(item.subtotal)}`, 170, yPos)
             yPos += 8
         })
 
@@ -180,23 +181,23 @@ export const exportService = {
         yPos += 8
 
         doc.text(t('export.subtotalLabel'), 140, yPos)
-        doc.text(`$${sale.subtotal.toFixed(2)}`, 170, yPos)
+        doc.text(`$${formatAmount(sale.subtotal)}`, 170, yPos)
         yPos += 6
 
         if (sale.discount > 0) {
             doc.text(t('export.discountLabel'), 140, yPos)
-            doc.text(`-$${sale.discount.toFixed(2)}`, 170, yPos)
+            doc.text(`-$${formatAmount(sale.discount)}`, 170, yPos)
             yPos += 6
         }
 
         doc.text(t('export.taxLabel'), 140, yPos)
-        doc.text(`$${sale.tax.toFixed(2)}`, 170, yPos)
+        doc.text(`$${formatAmount(sale.tax)}`, 170, yPos)
         yPos += 8
 
         doc.setFontSize(12)
         doc.setFont('helvetica', 'bold')
         doc.text(t('export.totalLabel'), 140, yPos)
-        doc.text(`$${sale.total.toFixed(2)}`, 170, yPos)
+        doc.text(`$${formatAmount(sale.total)}`, 170, yPos)
 
         // Footer
         doc.setFontSize(8)
@@ -231,15 +232,15 @@ export const exportService = {
 
         doc.setFontSize(11)
         doc.text(t('export.totalSalesCount', { count: sales.length }), 20, 70)
-        doc.text(t('export.totalRevenue', { amount: `$${total.toFixed(2)}` }), 20, 78)
+        doc.text(t('export.totalRevenue', { amount: `$${formatAmount(total)}` }), 20, 78)
 
         doc.text(t('export.byPaymentMethod'), 20, 95)
         doc.setFontSize(10)
-        doc.text(`${t('payment.cash')}: $${cash.toFixed(2)}`, 30, 103)
-        doc.text(`${t('payment.card')}: $${card.toFixed(2)}`, 30, 111)
-        doc.text(`${t('payment.transfer')}: $${transfer.toFixed(2)}`, 30, 119)
-        doc.text(`${t('payment.cheque')}: $${cheque.toFixed(2)}`, 30, 127)
-        doc.text(`${t('payment.credit')}: $${credit.toFixed(2)}`, 30, 135)
+        doc.text(`${t('payment.cash')}: $${formatAmount(cash)}`, 30, 103)
+        doc.text(`${t('payment.card')}: $${formatAmount(card)}`, 30, 111)
+        doc.text(`${t('payment.transfer')}: $${formatAmount(transfer)}`, 30, 119)
+        doc.text(`${t('payment.cheque')}: $${formatAmount(cheque)}`, 30, 127)
+        doc.text(`${t('payment.credit')}: $${formatAmount(credit)}`, 30, 135)
 
         // Table
         doc.setFontSize(10)
@@ -266,7 +267,7 @@ export const exportService = {
             doc.text(time, 40, yPos)
             doc.text((sale.customer_name || t('common.na')).substring(0, 15), 70, yPos)
             doc.text(sale.items.length.toString(), 120, yPos)
-            doc.text(`$${sale.total.toFixed(2)}`, 150, yPos)
+            doc.text(`$${formatAmount(sale.total)}`, 150, yPos)
             doc.text(paymentMethodLabel(sale.payment_method), 175, yPos)
 
             yPos += 7
@@ -401,9 +402,9 @@ export const exportService = {
 
             doc.text(product.code.substring(0, 12), 22, yPos)
             doc.text(product.name.substring(0, 25), 52, yPos)
-            doc.text(`$${product.price.toFixed(2)}`, 122, yPos)
+            doc.text(`$${formatAmount(product.price)}`, 122, yPos)
             doc.text(`${product.stock} ${unitLabel(product.unit)}`, 147, yPos)
-            doc.text(`$${(product.price * product.stock).toFixed(2)}`, 172, yPos)
+            doc.text(`$${formatAmount(product.price * product.stock)}`, 172, yPos)
 
             doc.setTextColor(0, 0, 0)
             yPos += 6
@@ -550,7 +551,7 @@ export const exportService = {
             doc.text((sale.customer_name || t('common.na')).substring(0, 20), 72, yPos)
             doc.text(sale.items.length.toString(), 117, yPos)
             doc.setFont('helvetica', 'bold')
-            doc.text(`$${sale.total.toFixed(2)}`, 142, yPos)
+            doc.text(`$${formatAmount(sale.total)}`, 142, yPos)
             doc.setFont('helvetica', 'normal')
             doc.text(paymentMethodLabel(sale.payment_method), 172, yPos)
 

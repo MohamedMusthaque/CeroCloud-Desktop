@@ -12,6 +12,7 @@ import { capitalService, type RepaymentKind } from '@/services/capitalService'
 import { companyService } from '@/services/companyService'
 import type { CapitalEntry } from '@/types/database'
 import { allocateRepayment, capitalErrorMessage, dueBySource, outstandingOf, typeLabel } from './capitalUi'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 const KINDS: { kind: RepaymentKind; icon: React.ElementType }[] = [
     { kind: 'credit', icon: ArrowDownToLine },
@@ -187,17 +188,14 @@ export function RepaymentForm({ isOpen, entries, defaultKind, defaultSourceId, o
                                         <label htmlFor="repay-amount" className={labelClass}>{t(`capRepay.amount.${kind}`)}</label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                                            <input
+                                            <AmountInput
                                                 id="repay-amount"
-                                                type="number"
-                                                inputMode="decimal"
                                                 min="0.01"
                                                 max={due?.outstanding}
-                                                step="0.01"
                                                 required
                                                 disabled={!due}
                                                 value={amount}
-                                                onChange={(e) => setAmount(e.target.value)}
+                                                onChange={setAmount}
                                                 className={`${inputClass} pl-8 disabled:opacity-50`}
                                             />
                                         </div>

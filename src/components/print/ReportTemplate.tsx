@@ -7,6 +7,7 @@ import { grnId } from '@/features/purchases/purchaseUi'
 import { movementLabel, movementReference, movementTotals } from '@/lib/stockMovements'
 import { format, parseISO } from 'date-fns'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
+import { formatCurrency } from '@/lib/utils'
 
 interface ReportTemplateProps {
     title: string
@@ -45,7 +46,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                             <td className="py-3 px-4 truncate max-w-[150px] align-top">{sale.customer_name || t('print.counter')}</td>
                             {/* <td className="py-2 px-4 text-center">{sale.items.length}</td> */}
                             <td className="py-3 px-4 text-center capitalize align-top">{paymentMethodLabel(sale.payment_method)}</td>
-                            <td className="py-3 px-4 text-right font-bold align-top">{settings.currencySymbol}{sale.total.toFixed(2)}</td>
+                            <td className="py-3 px-4 text-right font-bold align-top">{formatCurrency(sale.total, settings.currencySymbol)}</td>
                         </tr>
                         {/* Detail Row - Improved readability */}
                         <tr key={`${i}-detail`} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
@@ -95,8 +96,8 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         <td className="py-2 px-4 font-mono text-xs text-gray-500">{product.code}</td>
                         <td className="py-2 px-4 font-medium truncate max-w-[200px]">{product.name}</td>
                         <td className="py-2 px-4 text-xs text-gray-500">{product.category}</td>
-                        <td className="py-2 px-4 text-right text-gray-500">{settings.currencySymbol}{product.cost?.toFixed(2)}</td>
-                        <td className="py-2 px-4 text-right font-medium">{settings.currencySymbol}{product.price.toFixed(2)}</td>
+                        <td className="py-2 px-4 text-right text-gray-500">{formatCurrency(product.cost ?? 0, settings.currencySymbol)}</td>
+                        <td className="py-2 px-4 text-right font-medium">{formatCurrency(product.price, settings.currencySymbol)}</td>
                         <td className="py-2 px-4 text-center">
                             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${product.stock <= (settings.inventory?.lowStockThreshold ?? product.min_stock)
                                 ? 'bg-red-100 text-red-600'
@@ -106,7 +107,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                             </span>
                         </td>
                         <td className="py-2 px-4 text-right text-gray-700 font-bold">
-                            {settings.currencySymbol}{(product.price * product.stock).toFixed(2)}
+                            {formatCurrency((product.price * product.stock), settings.currencySymbol)}
                         </td>
                     </tr>
                 ))}
@@ -134,7 +135,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         <td className="py-2 px-4 text-gray-600 truncate max-w-[260px]">{expense.description || '-'}</td>
                         <td className="py-2 px-4 text-center">{paymentMethodLabel(expense.payment_method)}</td>
                         <td className="py-2 px-4 text-gray-500">{expense.created_by || '-'}</td>
-                        <td className="py-2 px-4 text-right font-bold">{settings.currencySymbol}{expense.amount.toFixed(2)}</td>
+                        <td className="py-2 px-4 text-right font-bold">{formatCurrency(expense.amount, settings.currencySymbol)}</td>
                     </tr>
                 ))}
             </tbody>
@@ -164,7 +165,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         <td className="py-2 px-4 text-center">{paymentMethodLabel(payment.payment_method)}</td>
                         <td className="py-2 px-4 text-gray-600 truncate max-w-[200px]">{payment.notes || '-'}</td>
                         <td className={`py-2 px-4 text-right font-bold ${payment.type === 'payment' ? 'text-red-600' : 'text-green-600'}`}>
-                            {payment.type === 'payment' ? '-' : '+'}{settings.currencySymbol}{payment.amount.toFixed(2)}
+                            {payment.type === 'payment' ? '-' : '+'}{formatCurrency(payment.amount, settings.currencySymbol)}
                         </td>
                     </tr>
                 ))}
@@ -193,7 +194,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         <td className="py-2 px-4 text-gray-600 truncate max-w-[220px]">{(entry.form === 'supplier_credit' ? entry.supplier_name : entry.source) || '-'}</td>
                         <td className="py-2 px-4 text-center">{entry.payment_method ? paymentMethodLabel(entry.payment_method) : '-'}</td>
                         <td className={`py-2 px-4 text-right font-bold ${entry.type === 'withdrawal' ? 'text-red-600' : 'text-gray-900'}`}>
-                            {entry.type === 'withdrawal' ? '-' : ''}{settings.currencySymbol}{entry.amount.toFixed(2)}
+                            {entry.type === 'withdrawal' ? '-' : ''}{formatCurrency(entry.amount, settings.currencySymbol)}
                         </td>
                     </tr>
                 ))}
@@ -224,12 +225,12 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                             <td className="py-2 px-4 text-center">{paymentMethodLabel(receipt.payment_method)}</td>
                             <td className={`py-2 px-4 text-center ${receipt.status === 'cancelled' ? 'text-red-600 font-bold' : 'text-green-600'}`}>{t(`grn.status.${receipt.status}`)}</td>
                             <td className={`py-2 px-4 text-right font-bold ${receipt.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                                {settings.currencySymbol}{receipt.total.toFixed(2)}
+                                {formatCurrency(receipt.total, settings.currencySymbol)}
                             </td>
                         </tr>
                         <tr className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td colSpan={6} className="px-4 pb-2 pt-0 text-xs text-gray-500">
-                                {(receipt.items ?? []).map(item => `${item.quantity} × ${item.product_name} @ ${settings.currencySymbol}${item.unit_cost.toFixed(2)}`).join(' · ')}
+                                {(receipt.items ?? []).map(item => `${item.quantity} × ${item.product_name} @ ${formatCurrency(item.unit_cost, settings.currencySymbol)}`).join(' · ')}
                             </td>
                         </tr>
                     </Fragment>
@@ -352,11 +353,11 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalSales')}</p>
-                            <p className="text-3xl font-black text-indigo-600">{settings.currencySymbol}{stats.total?.toLocaleString()}</p>
+                            <p className="text-3xl font-black text-indigo-600">{formatCurrency(stats.total ?? 0, settings.currencySymbol)}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.cash')}</p>
-                            <p className="text-3xl font-black text-green-600">{settings.currencySymbol}{stats.cash?.toLocaleString()}</p>
+                            <p className="text-3xl font-black text-green-600">{formatCurrency(stats.cash ?? 0, settings.currencySymbol)}</p>
                         </div>
                     </>
                 )}
@@ -369,7 +370,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalExpenses')}</p>
-                            <p className="text-3xl font-black text-orange-600">{settings.currencySymbol}{stats.total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-3xl font-black text-orange-600">{formatCurrency(stats.total ?? 0, settings.currencySymbol)}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.topType')}</p>
@@ -382,15 +383,15 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                     <>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.capitalIn')}</p>
-                            <p className="text-3xl font-black text-indigo-600">{settings.currencySymbol}{stats.capitalIn?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-3xl font-black text-indigo-600">{formatCurrency(stats.capitalIn ?? 0, settings.currencySymbol)}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.otherIncome')}</p>
-                            <p className="text-3xl font-black text-green-600">{settings.currencySymbol}{stats.otherIncome?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-3xl font-black text-green-600">{formatCurrency(stats.otherIncome ?? 0, settings.currencySymbol)}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.withdrawals')}</p>
-                            <p className="text-3xl font-black text-red-600">{settings.currencySymbol}{stats.withdrawals?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-3xl font-black text-red-600">{formatCurrency(stats.withdrawals ?? 0, settings.currencySymbol)}</p>
                         </div>
                     </>
                 )}
@@ -403,11 +404,11 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalPaidSuppliers')}</p>
-                            <p className="text-3xl font-black text-red-600">{settings.currencySymbol}{stats.paid?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-3xl font-black text-red-600">{formatCurrency(stats.paid ?? 0, settings.currencySymbol)}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalRefunds')}</p>
-                            <p className="text-3xl font-black text-green-600">{settings.currencySymbol}{stats.refunds?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-3xl font-black text-green-600">{formatCurrency(stats.refunds ?? 0, settings.currencySymbol)}</p>
                         </div>
                     </>
                 )}
@@ -437,7 +438,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.totalPaidClients')}</p>
-                            <p className="text-3xl font-black text-emerald-600">{settings.currencySymbol}{stats.paid?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-3xl font-black text-emerald-600">{formatCurrency(stats.paid ?? 0, settings.currencySymbol)}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.cancelledCount')}</p>
@@ -454,7 +455,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(({
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-xs font-bold text-gray-500 uppercase">{t('print.inventoryValue')}</p>
-                            <p className="text-3xl font-black text-indigo-600">{settings.currencySymbol}{stats.totalValue?.toLocaleString()}</p>
+                            <p className="text-3xl font-black text-indigo-600">{formatCurrency(stats.totalValue ?? 0, settings.currencySymbol)}</p>
                         </div>
                     </>
                 )}

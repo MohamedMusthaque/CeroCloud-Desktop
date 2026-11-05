@@ -9,6 +9,7 @@ import { companyService } from '@/services/companyService'
 import { useTranslation } from '@/i18n'
 import { ModalHeader } from '@/components/ui/ModalHeader'
 import { NicAttachmentField } from '@/components/attachments/NicAttachmentField'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 interface ClientFormProps {
     isOpen: boolean
@@ -215,12 +216,10 @@ export function ClientForm({ isOpen, onClose, onSuccess, clientToEdit }: ClientF
                                                 <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
                                                     {t('cliForm.creditLimit')} ({companyService.getSettings().currencySymbol})
                                                 </label>
-                                                <input
-                                                    type="number"
+                                                <AmountInput
                                                     min="0"
-                                                    step="0.01"
                                                     value={formData.credit_limit ?? 0}
-                                                    onChange={(e) => setFormData({ ...formData, credit_limit: Math.max(0, Number(e.target.value) || 0) })}
+                                                    onChange={(value) => setFormData({ ...formData, credit_limit: Math.max(0, Number(value) || 0) })}
                                                     className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                                                 />
                                                 <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{t('cliForm.creditLimitHint')}</p>

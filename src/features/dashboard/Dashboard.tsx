@@ -29,7 +29,7 @@ import { Product, Sale } from '@/types/database'
 import { format, subDays, startOfDay } from 'date-fns'
 import { useTranslation } from '@/i18n'
 import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 export function Dashboard() {
     const [products, setProducts] = useState<Product[]>([])
@@ -199,10 +199,10 @@ export function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <KPICard
                     title={t('dash.totalRevenue')}
-                    value={`${settings.currencySymbol}${totalRevenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+                    value={`${formatCurrency(totalRevenue, settings.currencySymbol)}`}
                     icon={DollarSign}
                     trend={revenueToday > 0 ? "+Hoy" : "Neutral"}
-                    trendValue={revenueToday > 0 ? `${settings.currencySymbol}${revenueToday.toFixed(2)}` : "-"}
+                    trendValue={revenueToday > 0 ? `${formatCurrency(revenueToday, settings.currencySymbol)}` : "-"}
                     color="blue"
                 />
 
@@ -226,7 +226,7 @@ export function Dashboard() {
 
                 <KPICard
                     title={t('dash.avgTicket')}
-                    value={`${settings.currencySymbol}${totalSales > 0 ? (totalRevenue / totalSales).toFixed(2) : "0.00"}`}
+                    value={formatCurrency(totalSales > 0 ? totalRevenue / totalSales : 0, settings.currencySymbol)}
                     icon={TrendingUp}
                     trend="Estable"
                     trendValue={t('dash.general')}
@@ -268,7 +268,7 @@ export function Dashboard() {
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fill: '#6B7280', fontSize: 12 }}
-                                    tickFormatter={(value) => `${settings.currencySymbol}${value}`}
+                                    tickFormatter={(value) => `${settings.currencySymbol}${Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
                                 />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'var(--tooltip-bg, #fff)' }}
@@ -329,7 +329,7 @@ export function Dashboard() {
                                                 </div>
                                                 <div className="text-right flex flex-col items-end">
                                                     <span className="text-sm font-black text-gray-900 dark:text-white">
-                                                        {settings.currencySymbol}{product.sales.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        {formatCurrency(product.sales, settings.currencySymbol)}
                                                     </span>
                                                     <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
                                                         {t('dash.unitsSold', { count: product.quantity })}

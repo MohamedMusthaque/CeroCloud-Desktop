@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ClientForm } from './ClientForm'
 import { ClientHistoryModal } from './ClientHistoryModal'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { useTranslation, t as translateNow } from '@/i18n'
@@ -325,7 +325,7 @@ function ClientCard({ client, viewMode, onEdit, onDelete, onHistory }: ClientCar
                             <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md w-fit">
                                 <CreditCard className="w-3 h-3" />
                                 {client.credit_limit_enabled
-                                    ? t('cli.creditLimit', { amount: `${currencySymbol}${client.credit_limit!.toFixed(2)}` })
+                                    ? t('cli.creditLimit', { amount: `${formatCurrency(client.credit_limit!, currencySymbol)}` })
                                     : t('cli.creditUnlimited')}
                             </p>
                         )}

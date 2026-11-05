@@ -12,6 +12,7 @@ import { capitalService } from '@/services/capitalService'
 import { companyService } from '@/services/companyService'
 import type { CapitalEntry } from '@/types/database'
 import { capitalErrorMessage, outstandingOf, sourceOf } from './capitalUi'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 interface CapitalSettlementFormProps {
     // Loan, promised capital or credit entry being settled; null closes the form
@@ -94,17 +95,14 @@ export function CapitalSettlementForm({ entry, onClose, onSaved }: CapitalSettle
                                     <label htmlFor="settle-amount" className={labelClass}>{t('capSettle.amount')}</label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                                        <input
+                                        <AmountInput
                                             id="settle-amount"
-                                            type="number"
-                                            inputMode="decimal"
                                             min="0.01"
                                             max={outstanding}
-                                            step="0.01"
                                             required
                                             autoFocus
                                             value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
+                                            onChange={setAmount}
                                             className={`${inputClass} pl-8`}
                                         />
                                     </div>

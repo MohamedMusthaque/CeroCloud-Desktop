@@ -12,6 +12,7 @@ import { companyService } from '@/services/companyService'
 import { SAVINGS_CATEGORIES, type SavingsAccount, type SavingsTransaction, type SavingsTransactionType } from '@/types/database'
 import { savingsErrorMessage } from './savingsErrors'
 import { PAYMENT_METHODS, categoryLabel, signedAmount } from './savingsUi'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 interface SavingsTransactionFormProps {
     isOpen: boolean
@@ -173,16 +174,13 @@ export function SavingsTransactionForm({ isOpen, transaction, accounts, preset, 
                                     <label htmlFor="savings-tx-amount" className={labelClass}>{t('savTxForm.amount')}</label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                                        <input
+                                        <AmountInput
                                             id="savings-tx-amount"
-                                            type="number"
-                                            inputMode="decimal"
                                             min="0.01"
-                                            step="0.01"
                                             required
                                             autoFocus
                                             value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
+                                            onChange={setAmount}
                                             placeholder="0.00"
                                             className={`${inputClass} pl-8`}
                                         />

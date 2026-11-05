@@ -27,7 +27,7 @@ import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { ImportWizard } from '@/components/inventory/ImportWizard'
 import { useUIStore } from '@/stores/uiStore'
 import { motion, AnimatePresence } from 'framer-motion'
-import { cn, getImageSrc } from '@/lib/utils'
+import { cn, getImageSrc, formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ProductCardSkeleton, TableRowSkeleton } from '@/components/ui/Skeleton'
@@ -574,7 +574,7 @@ function ProductCard({ product, settings, onEdit, onDelete }: { product: Product
                 <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center gap-2">
                         <span className="text-lg font-black text-primary">
-                            {settings?.currencySymbol || '$'}{product.price.toFixed(2)}
+                            {formatCurrency(product.price, settings?.currencySymbol || '$')}
                         </span>
                     </div>
 
@@ -639,10 +639,10 @@ function ProductRow({ product, settings, onEdit, onDelete, virtualStyle }: { pro
             {/* Price */}
             <div>
                 <p className="font-bold text-gray-900 dark:text-white">
-                    {settings?.currencySymbol || '$'}{product.price.toFixed(2)}
+                    {formatCurrency(product.price, settings?.currencySymbol || '$')}
                 </p>
                 {product.cost && (
-                    <p className="text-xs text-gray-500">{t('inv.cost', { amount: `${settings?.currencySymbol || '$'}${product.cost.toFixed(2)}` })}</p>
+                    <p className="text-xs text-gray-500">{t('inv.cost', { amount: `${formatCurrency(product.cost, settings?.currencySymbol || '$')}` })}</p>
                 )}
             </div>
 

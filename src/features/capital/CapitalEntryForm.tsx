@@ -15,6 +15,7 @@ import { CAPITAL_ENTRY_TYPES, CAPITAL_FORMS, type CapitalEntry, type CapitalEntr
 import { GoodsItemsEditor } from '@/features/purchases/GoodsItemsEditor'
 import { emptyGoodsRow, goodsInput, goodsTotal, type GoodsRow } from '@/features/purchases/goodsRows'
 import { FORM_ICONS, TYPE_STYLES, allowsCredit, capitalErrorMessage, formLabel, isCapitalType, isGoodsForm, typeLabel } from './capitalUi'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 interface CapitalEntryFormProps {
     isOpen: boolean
@@ -258,16 +259,13 @@ export function CapitalEntryForm({ isOpen, entry, defaultType = 'capital', produ
                                         <label htmlFor="capital-amount" className={labelClass}>{t('capForm.amount')}</label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                                            <input
+                                            <AmountInput
                                                 id="capital-amount"
-                                                type="number"
-                                                inputMode="decimal"
                                                 min="0.01"
-                                                step="0.01"
                                                 required
                                                 autoFocus
                                                 value={amount}
-                                                onChange={(e) => setAmount(e.target.value)}
+                                                onChange={setAmount}
                                                 placeholder="0.00"
                                                 className={`${inputClass} pl-8`}
                                             />

@@ -14,6 +14,7 @@ import type { Product, Purchase, Supplier } from '@/types/database'
 import { purchaseErrorMessage } from './purchaseErrors'
 import { GoodsItemsEditor } from './GoodsItemsEditor'
 import { emptyGoodsRow, goodsInput, goodsRow, goodsTotal, type GoodsRow } from './goodsRows'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 interface PurchaseFormProps {
     isOpen: boolean
@@ -153,14 +154,12 @@ export function PurchaseForm({ isOpen, purchase, suppliers, products, defaultSup
                                                 <label htmlFor="purchase-advance" className={labelClass}>{t('purForm.advanceAmount')}</label>
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                                                    <input
+                                                    <AmountInput
                                                         id="purchase-advance"
-                                                        type="number"
                                                         min="0.01"
-                                                        step="0.01"
                                                         required
                                                         value={advanceAmount}
-                                                        onChange={(e) => setAdvanceAmount(e.target.value)}
+                                                        onChange={setAdvanceAmount}
                                                         className={cn(inputClass, "pl-7")}
                                                     />
                                                 </div>

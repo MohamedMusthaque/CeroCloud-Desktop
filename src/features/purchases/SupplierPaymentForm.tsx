@@ -13,6 +13,7 @@ import { companyService } from '@/services/companyService'
 import type { Purchase, Supplier, SupplierAccount, SupplierPaymentType } from '@/types/database'
 import { purchaseErrorMessage } from './purchaseErrors'
 import { statusLabel } from './purchaseUi'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 export interface SupplierPaymentPreset {
     supplierId?: number
@@ -186,16 +187,13 @@ export function SupplierPaymentForm({ isOpen, suppliers, orders, preset, onClose
                                     <label htmlFor="sup-pay-amount" className={labelClass}>{t('supPay.amount')}</label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                                        <input
+                                        <AmountInput
                                             id="sup-pay-amount"
-                                            type="number"
-                                            inputMode="decimal"
                                             min="0.01"
-                                            step="0.01"
                                             required
                                             autoFocus
                                             value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
+                                            onChange={setAmount}
                                             placeholder="0.00"
                                             className={`${inputClass} pl-8`}
                                         />

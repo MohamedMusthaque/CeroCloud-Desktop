@@ -249,7 +249,7 @@ export function ProfitReport({ sales, expenses, products, purchases, supplierPay
                     <BarChart data={trend} barGap={2} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" strokeOpacity={0.2} />
                         <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} dy={10} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} tickFormatter={(value: number) => value.toLocaleString()} width={70} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} tickFormatter={(value: number) => value.toLocaleString('en-US')} width={70} />
                         <ReferenceLine y={0} stroke="#9ca3af" strokeOpacity={0.5} />
                         <Tooltip
                             cursor={{ fill: '#9ca3af', fillOpacity: 0.1 }}

@@ -3,6 +3,7 @@ import { format, parseISO } from 'date-fns'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import type { Client, CompanySettings, GoodsReceipt } from '@/types/database'
 import { grnId } from '@/features/purchases/purchaseUi'
+import { formatCurrency } from '@/lib/utils'
 
 interface GoodsReceiptTemplateProps {
     receipt: GoodsReceipt
@@ -17,7 +18,7 @@ export const GoodsReceiptTemplate = forwardRef<HTMLDivElement, GoodsReceiptTempl
     const isTicket = settings.invoice?.paperSize === 'ticket80mm'
     const items = receipt.items ?? []
     const cancelled = receipt.status === 'cancelled'
-    const money = (amount: number) => `${settings.currencySymbol}${amount.toFixed(2)}`
+    const money = (amount: number) => `${formatCurrency(amount, settings.currencySymbol)}`
 
     // Recorded at (date and time, like the bill); the goods may have arrived on another day
     const recordedAt = receipt.created_at ? new Date(receipt.created_at) : parseISO(receipt.receipt_date)

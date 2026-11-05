@@ -26,12 +26,13 @@ import { pdfGenerator } from '@/services/pdfGenerator'
 import { Product, CartItem, Sale, SaleItem } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
-import { cn, getImageSrc, roundQuantity } from '@/lib/utils'
+import { cn, getImageSrc, roundQuantity, formatCurrency, formatAmount } from '@/lib/utils'
 import { useCartStore, PAYMENT_METHODS } from '@/stores/cartStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { clientService, type Client } from '@/services/clientService'
 import { LazyImage } from '@/components/ui/LazyImage'
 import { useTranslation } from '@/i18n'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 export function Sales() {
     // Data State
@@ -321,7 +322,7 @@ export function Sales() {
             : !clientCredit ? null // still loading
                 : !clientCredit.limitEnabled ? null
                     : clientCredit.limit <= 0 ? t('pos.creditNoLimit')
-                        : total > availableCredit ? t('pos.creditExceeded', { amount: `${settings.currencySymbol}${availableCredit.toFixed(2)}` })
+                        : total > availableCredit ? t('pos.creditExceeded', { amount: `${formatCurrency(availableCredit, settings.currencySymbol)}` })
                             : null
     const canConfirmCredit = !isCredit || (!!clientCredit && !creditError)
 
@@ -370,8 +371,8 @@ export function Sales() {
             toast.success(t('pos.saleCompleted'), {
                 icon: <Check className="w-5 h-5 text-green-500" />,
                 description: activeTab.paymentMethod === 'cash'
-                    ? t('pos.changeDue', { amount: `${settings.currencySymbol}${change.toFixed(2)}` })
-                    : t('pos.totalAmount', { amount: `${settings.currencySymbol}${total.toFixed(2)}` }),
+                    ? t('pos.changeDue', { amount: `${formatCurrency(change, settings.currencySymbol)}` })
+                    : t('pos.totalAmount', { amount: `${formatCurrency(total, settings.currencySymbol)}` }),
                 action: {
                     label: t('pos.printTicket'),
                     onClick: () => pdfGenerator.generateInvoice(newSale, settings)
@@ -733,7 +734,7 @@ export function Sales() {
                             {isCredit && clientCredit && (
                                 <p className={cn("text-xs font-medium px-1", creditError ? "text-red-500" : "text-gray-500 dark:text-gray-400")}>
                                     {creditError ?? (clientCredit.limitEnabled
-                                        ? t('pos.creditAvailable', { amount: `${settings.currencySymbol}${availableCredit.toFixed(2)}` })
+                                        ? t('pos.creditAvailable', { amount: `${formatCurrency(availableCredit, settings.currencySymbol)}` })
                                         : t('pos.creditUnlimited'))}
                                 </p>
                             )}
@@ -744,25 +745,25 @@ export function Sales() {
                             <div className="space-y-1.5">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500 dark:text-gray-400">{t('pos.subtotal')}</span>
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">{settings.currencySymbol}{subtotal.toFixed(2)}</span>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(subtotal, settings.currencySymbol)}</span>
                                 </div>
                                 {activeTab.discount > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-red-500 flex items-center gap-1"><Percent className="w-3 h-3" /> {t('pos.discount')}</span>
-                                        <span className="font-medium text-red-500">-{settings.currencySymbol}{discountAmount.toFixed(2)}</span>
+                                        <span className="font-medium text-red-500">-{formatCurrency(discountAmount, settings.currencySymbol)}</span>
                                     </div>
                                 )}
                                 {settings.enableTax && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-500 dark:text-gray-400">{t('pos.tax', { rate: settings.taxRate })}</span>
-                                        <span className="font-medium text-gray-700 dark:text-gray-300">{settings.currencySymbol}{tax.toFixed(2)}</span>
+                                        <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(tax, settings.currencySymbol)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between items-end pt-2 mt-1 border-t border-gray-200 dark:border-gray-700/50">
                                     <span className="text-base font-bold text-gray-900 dark:text-white">{t('pos.totalDue')}</span>
                                     <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
                                         <span className="text-lg text-gray-400 font-normal mr-1">{settings.currencySymbol}</span>
-                                        {total.toFixed(2)}
+                                        {formatAmount(total)}
                                     </span>
                                 </div>
                             </div>
@@ -815,7 +816,7 @@ export function Sales() {
                                 <div className="text-center">
                                     <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">{t('pos.totalDue')}</p>
                                     <div className="text-5xl font-black text-gray-900 dark:text-white tracking-tight">
-                                        {settings.currencySymbol}{total.toFixed(2)}
+                                        {formatCurrency(total, settings.currencySymbol)}
                                     </div>
                                 </div>
 
@@ -827,11 +828,10 @@ export function Sales() {
                                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xl group-focus-within:text-primary transition-colors">
                                                     {settings.currencySymbol}
                                                 </div>
-                                                <input
+                                                <AmountInput
                                                     ref={receivedAmountInputRef}
-                                                    type="number"
                                                     value={receivedAmount}
-                                                    onChange={(e) => setReceivedAmount(e.target.value)}
+                                                    onChange={setReceivedAmount}
                                                     onKeyDown={(e) => { if (e.key === 'Enter') processSale() }}
                                                     className="w-full pl-10 pr-4 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-2xl font-bold text-gray-900 dark:text-white focus:border-primary focus:ring-0 transition-all shadow-sm"
                                                     placeholder="0.00"
@@ -844,7 +844,7 @@ export function Sales() {
                                                         onClick={() => setReceivedAmount(amt.toString())}
                                                         className="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-xs font-bold text-gray-600 dark:text-gray-300 transition-colors"
                                                     >
-                                                        {settings.currencySymbol}{amt}
+                                                        {formatCurrency(amt, settings.currencySymbol)}
                                                     </button>
                                                 ))}
                                             </div>
@@ -857,7 +857,7 @@ export function Sales() {
                                                 : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
                                         )}>
                                             <span className="font-bold">{t('pos.yourChange')}</span>
-                                            <span className="text-2xl font-black">{settings.currencySymbol}{change.toFixed(2)}</span>
+                                            <span className="text-2xl font-black">{formatCurrency(change, settings.currencySymbol)}</span>
                                         </div>
                                     </div>
                                 ) : isCredit ? (
@@ -866,18 +866,18 @@ export function Sales() {
                                             <div className="flex justify-between">
                                                 <span className="text-gray-500">{t('pos.creditLimit')}</span>
                                                 <span className="font-bold text-gray-900 dark:text-white">
-                                                    {clientCredit && !clientCredit.limitEnabled ? t('pos.creditNoLimitValue') : `${settings.currencySymbol}${(clientCredit?.limit ?? 0).toFixed(2)}`}
+                                                    {clientCredit && !clientCredit.limitEnabled ? t('pos.creditNoLimitValue') : `${formatCurrency((clientCredit?.limit ?? 0), settings.currencySymbol)}`}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-500">{t('pos.creditBalance')}</span>
-                                                <span className="font-bold text-gray-900 dark:text-white">{settings.currencySymbol}{(clientCredit?.balance ?? 0).toFixed(2)}</span>
+                                                <span className="font-bold text-gray-900 dark:text-white">{formatCurrency((clientCredit?.balance ?? 0), settings.currencySymbol)}</span>
                                             </div>
                                             {clientCredit?.limitEnabled !== false && (
                                                 <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                                                     <span className="text-gray-500">{t('pos.creditAfterSale')}</span>
                                                     <span className={cn("font-black", creditError ? "text-red-600" : "text-green-600")}>
-                                                        {settings.currencySymbol}{(availableCredit - total).toFixed(2)}
+                                                        {formatCurrency((availableCredit - total), settings.currencySymbol)}
                                                     </span>
                                                 </div>
                                             )}
@@ -974,7 +974,7 @@ function ProductCard({ product, settings, onClick }: { product: Product; setting
                 <p className="text-xs text-gray-500 line-clamp-1">{product.code}</p>
             </div>
             <div className="mt-2 text-primary font-bold">
-                {settings?.currencySymbol || '$'}{product.price.toFixed(2)}
+                {formatCurrency(product.price, settings?.currencySymbol || '$')}
             </div>
         </motion.div>
     )
@@ -1004,7 +1004,7 @@ function CartItemRow({ item, onUpdate, onSetQuantity, onRemove, currencySymbol }
             </div>
             <div className="flex-1 min-w-0">
                 <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">{item.product.name}</h4>
-                <div className="text-xs text-gray-500">{currencySymbol}{item.product.price.toFixed(2)} x {item.quantity}</div>
+                <div className="text-xs text-gray-500">{formatCurrency(item.product.price, currencySymbol)} x {item.quantity}</div>
             </div>
             <div className="flex items-center gap-2">
                 <button onClick={() => onUpdate(item.product.id!, -1)} className="w-7 h-7 flex items-center justify-center bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-gray-100 border border-gray-200 dark:border-gray-600">
@@ -1017,7 +1017,7 @@ function CartItemRow({ item, onUpdate, onSetQuantity, onRemove, currencySymbol }
             </div>
             <div className="text-right min-w-[60px]">
                 <div className="font-bold text-sm text-gray-900 dark:text-white">
-                    {currencySymbol}{lineTotal(item.product.price, item.quantity).toFixed(2)}
+                    {formatCurrency(lineTotal(item.product.price, item.quantity), currencySymbol)}
                 </div>
                 <button onClick={() => onRemove(item.product.id!)} className="p-1 text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
                     <Trash2 className="w-3 h-3" />

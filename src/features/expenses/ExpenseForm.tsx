@@ -12,6 +12,7 @@ import type { Expense, ExpenseType } from '@/types/database'
 import { expenseErrorMessage } from './expenseErrors'
 import { ExpenseTypeForm } from './ExpenseTypes'
 import { PAYMENT_METHODS } from '@/lib/paymentMethods'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 interface ExpenseFormProps {
     isOpen: boolean
@@ -114,16 +115,13 @@ export function ExpenseForm({ isOpen, expense, types, onClose, onSaved, onTypeCr
                                     <label htmlFor="expense-amount" className={labelClass}>{t('expForm.amount')}</label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                                        <input
+                                        <AmountInput
                                             id="expense-amount"
-                                            type="number"
-                                            inputMode="decimal"
                                             min="0.01"
-                                            step="0.01"
                                             required
                                             autoFocus
                                             value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
+                                            onChange={setAmount}
                                             placeholder="0.00"
                                             className={`${inputClass} pl-8`}
                                         />

@@ -11,11 +11,12 @@ import { Product, Supplier, Category } from '@/types/database'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn, getImageSrc } from '@/lib/utils'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { productSchema, type ProductFormValues } from '@/lib/validators'
 import { useTranslation, type TranslationKey } from '@/i18n'
 import { ModalHeader } from '@/components/ui/ModalHeader'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 interface ProductFormProps {
     product: Product | null
@@ -36,6 +37,7 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
 
     const {
         register,
+        control,
         handleSubmit,
         setValue,
         getValues,
@@ -324,27 +326,43 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('productForm.cost')}</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        {...register('cost')}
-                                        className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                    <Controller
+                                        control={control}
+                                        name="cost"
+                                        render={({ field }) => (
+                                            <AmountInput
+                                                ref={field.ref}
+                                                name={field.name}
+                                                min="0"
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                onBlur={field.onBlur}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                            />
+                                        )}
                                     />
                                     {errors.cost && <p className="text-red-500 text-xs mt-1">{errorText(errors.cost.message)}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-primary uppercase tracking-wider mb-1">{t('productForm.price')}</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        {...register('price')}
-                                        className={cn(
-                                            "w-full px-4 py-2.5 rounded-xl bg-primary/5 dark:bg-primary/10 border text-primary font-bold focus:ring-2 transition-all outline-none",
-                                            errors.price
-                                                ? "border-red-300 focus:border-red-500"
-                                                : "border-primary/20 dark:border-primary/30 focus:ring-primary/20 focus:border-primary"
+                                    <Controller
+                                        control={control}
+                                        name="price"
+                                        render={({ field }) => (
+                                            <AmountInput
+                                                ref={field.ref}
+                                                name={field.name}
+                                                min="0"
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                onBlur={field.onBlur}
+                                                className={cn(
+                                                    "w-full px-4 py-2.5 rounded-xl bg-primary/5 dark:bg-primary/10 border text-primary font-bold focus:ring-2 transition-all outline-none",
+                                                    errors.price
+                                                        ? "border-red-300 focus:border-red-500"
+                                                        : "border-primary/20 dark:border-primary/30 focus:ring-primary/20 focus:border-primary"
+                                                )}
+                                            />
                                         )}
                                     />
                                     {errors.price && <p className="text-red-500 text-xs mt-1">{errorText(errors.price.message)}</p>}

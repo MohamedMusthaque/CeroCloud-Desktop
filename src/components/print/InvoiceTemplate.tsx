@@ -2,6 +2,7 @@ import { forwardRef } from 'react'
 import { Sale, CompanySettings, Client } from '@/types/database'
 import { format } from 'date-fns'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
+import { formatCurrency } from '@/lib/utils'
 
 interface InvoiceTemplateProps {
     sale: Sale
@@ -64,7 +65,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                 </td>
                                 <td className="py-1 text-center">{item.quantity}</td>
                                 <td className="py-1 text-right whitespace-nowrap">
-                                    {settings.currencySymbol}{item.subtotal.toFixed(2)}
+                                    {formatCurrency(item.subtotal, settings.currencySymbol)}
                                 </td>
                             </tr>
                         ))}
@@ -74,12 +75,12 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                 <div className="border-t border-black border-dashed my-2 pt-2">
                     <div className="flex justify-between font-bold text-sm">
                         <span>{t('print.totalUpper')}</span>
-                        <span>{settings.currencySymbol}{sale.total.toFixed(2)}</span>
+                        <span>{formatCurrency(sale.total, settings.currencySymbol)}</span>
                     </div>
                     {sale.discount > 0 && (
                         <div className="flex justify-between">
                             <span>{t('print.savings')}</span>
-                            <span>{settings.currencySymbol}{sale.discount.toFixed(2)}</span>
+                            <span>{formatCurrency(sale.discount, settings.currencySymbol)}</span>
                         </div>
                     )}
                     <div className="flex justify-between mt-1">
@@ -200,10 +201,10 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                                     </td>
                                     <td className="py-4 text-center font-medium text-gray-600">{item.quantity}</td>
                                     <td className="py-4 text-right font-medium text-gray-600">
-                                        {settings.currencySymbol}{item.unit_price.toFixed(2)}
+                                        {formatCurrency(item.unit_price, settings.currencySymbol)}
                                     </td>
                                     <td className="py-4 text-right font-bold text-gray-900">
-                                        {settings.currencySymbol}{item.subtotal.toFixed(2)}
+                                        {formatCurrency(item.subtotal, settings.currencySymbol)}
                                     </td>
                                 </tr>
                             ))}
@@ -216,21 +217,21 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, InvoiceTemplateProps>(
                     <div className="w-1/3">
                         <div className="flex justify-between py-2 text-gray-500">
                             <span>{t('print.subtotal')}</span>
-                            <span>{settings.currencySymbol}{sale.subtotal.toFixed(2)}</span>
+                            <span>{formatCurrency(sale.subtotal, settings.currencySymbol)}</span>
                         </div>
                         {sale.discount > 0 && (
                             <div className="flex justify-between py-2 text-green-600">
                                 <span>{t('print.discount')}</span>
-                                <span>-{settings.currencySymbol}{sale.discount.toFixed(2)}</span>
+                                <span>-{formatCurrency(sale.discount, settings.currencySymbol)}</span>
                             </div>
                         )}
                         <div className="flex justify-between py-2 text-gray-500 border-b border-gray-100 pb-4">
                             <span>{t('print.taxes', { rate: settings.taxRate })}</span>
-                            <span>{settings.currencySymbol}{sale.tax.toFixed(2)}</span>
+                            <span>{formatCurrency(sale.tax, settings.currencySymbol)}</span>
                         </div>
                         <div className="flex justify-between py-4 text-2xl font-black text-gray-900">
                             <span>{t('print.total')}</span>
-                            <span>{settings.currencySymbol}{sale.total.toFixed(2)}</span>
+                            <span>{formatCurrency(sale.total, settings.currencySymbol)}</span>
                         </div>
                     </div>
                 </div>

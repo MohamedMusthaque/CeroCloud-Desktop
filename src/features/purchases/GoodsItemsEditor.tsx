@@ -5,6 +5,7 @@ import { cn, formatCurrency } from '@/lib/utils'
 import { companyService } from '@/services/companyService'
 import type { Product } from '@/types/database'
 import { emptyGoodsRow, goodsTotal, type GoodsRow } from './goodsRows'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 interface GoodsItemsEditorProps {
     rows: GoodsRow[]
@@ -80,14 +81,12 @@ export function GoodsItemsEditor({ rows, onChange, products, supplierId, totalLa
                         />
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                            <input
-                                type="number"
+                            <AmountInput
                                 min="0"
-                                step="0.01"
                                 required
                                 aria-label={t('purForm.unitCost')}
                                 value={row.unitCost}
-                                onChange={(e) => updateRow(row.key, { unitCost: e.target.value })}
+                                onChange={(unitCost) => updateRow(row.key, { unitCost })}
                                 placeholder="0.00"
                                 className={cn(inputClass, "pl-7")}
                             />

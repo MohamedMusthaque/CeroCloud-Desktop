@@ -13,6 +13,7 @@ import { companyService } from '@/services/companyService'
 import type { Purchase, SupplierAccount } from '@/types/database'
 import { purchaseErrorMessage } from './purchaseErrors'
 import { roundMoney, settlementFor } from './purchaseUi'
+import { AmountInput } from '@/components/ui/AmountInput'
 
 interface ReceiveGoodsDialogProps {
     purchaseId: number | null
@@ -193,14 +194,12 @@ export function ReceiveGoodsDialog({ purchaseId, onClose, onReceived }: ReceiveG
                                                     <td className="px-3 py-2 w-36">
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                                                            <input
-                                                                type="number"
+                                                            <AmountInput
                                                                 min="0"
-                                                                step="0.01"
                                                                 required
                                                                 aria-label={t('purForm.unitCost')}
                                                                 value={item.unitCost}
-                                                                onChange={(e) => updateItem(item.id, { unitCost: e.target.value })}
+                                                                onChange={(unitCost) => updateItem(item.id, { unitCost })}
                                                                 className={cn(inputClass, "pl-7")}
                                                             />
                                                         </div>
@@ -260,16 +259,14 @@ export function ReceiveGoodsDialog({ purchaseId, onClose, onReceived }: ReceiveG
                                                     <label htmlFor="receive-amount" className={labelClass}>{t('purRecv.amount')}</label>
                                                     <div className="relative">
                                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
-                                                        <input
+                                                        <AmountInput
                                                             id="receive-amount"
-                                                            type="number"
                                                             min="0.01"
-                                                            step="0.01"
                                                             // A refund can't be more than what was overpaid
                                                             max={excess > 0 ? excess : undefined}
                                                             required
                                                             value={amount}
-                                                            onChange={(e) => { setAmount(e.target.value); setAmountEdited(true) }}
+                                                            onChange={(value) => { setAmount(value); setAmountEdited(true) }}
                                                             className={cn(inputClass, "pl-7")}
                                                         />
                                                     </div>

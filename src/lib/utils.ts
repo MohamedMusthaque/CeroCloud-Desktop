@@ -15,15 +15,18 @@ export function getImageSrc(imagePath?: string) {
     return `nexoracloud-image://${cleanPath}`
 }
 
-// Uses the currency symbol configured in Settings, like the rest of the UI
 // Quantities can be decimal (kg, litres...): kept to 3 decimals so sums don't drift (0.1 + 0.2)
 export function roundQuantity(value: number) {
     return Math.round(value * 1000) / 1000 + 0
 }
 
-export function formatCurrency(amount: number) {
-    const { currencySymbol } = companyService.getSettings()
-    const formatted = Math.abs(amount).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+// Amount with thousands separators and 2 decimals: 1250000 -> '1,250,000.00' (no symbol, no sign)
+export function formatAmount(amount: number, decimals = 2) {
+    return Math.abs(Number(amount) || 0).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+}
+
+// Uses the currency symbol configured in Settings, like the rest of the UI (printouts pass their own)
+export function formatCurrency(amount: number, currencySymbol = companyService.getSettings().currencySymbol) {
     // Sign before the symbol: -$5.00 (losses); amounts that round to zero carry no sign
-    return `${amount <= -0.005 ? '-' : ''}${currencySymbol}${formatted}`
+    return `${amount <= -0.005 ? '-' : ''}${currencySymbol}${formatAmount(amount)}`
 }
