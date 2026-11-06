@@ -46,6 +46,7 @@ export function downloadZakatExcel(report: ZakatReport) {
             [company.name],
             [t('zakat.report.title')],
             [t('acct.excel.generated', { date: new Date().toLocaleString() })],
+            [report.period],
             [],
             [t('zakat.report.col.step'), t('zakat.report.col.item'), t('zakat.report.col.source'), t('zakat.report.col.counted'), t('zakat.report.col.amount')]
         ]
@@ -72,7 +73,7 @@ export function downloadZakatExcel(report: ZakatReport) {
             [t('zakat.report.price'), report.nisab.price],
             [t('zakat.nisabValue'), '', '', '', result.hasPrice ? result.nisab : null],
             [t('zakat.yearType'), report.year],
-            [t('zakat.hawlStart'), report.hawl],
+            [t('zakat.period.label'), report.hawl],
             [],
             [report.status],
             [t('zakat.due', { rate: report.rate }), '', '', '', result.due]

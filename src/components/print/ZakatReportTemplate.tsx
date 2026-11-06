@@ -17,7 +17,7 @@ export function ZakatStatementPage({ settings, report, page }: PageProps) {
     const money = (value: number) => formatCurrency(value, currency)
     const { result } = report
     return (
-        <ReportFrame settings={settings} title={t('zakat.report.title')} subtitle={t('zakat.report.subtitle')} filters={[report.year]} page={page}>
+        <ReportFrame settings={settings} title={t('zakat.report.title')} subtitle={t('zakat.report.subtitle')} filters={[report.period, report.year]} page={page}>
             {/* Result */}
             <div className="grid grid-cols-4 gap-3 mb-5">
                 <Box label={t('zakat.totalAssets')} value={money(result.assets)} />
@@ -76,7 +76,7 @@ export function ZakatStatementPage({ settings, report, page }: PageProps) {
                 <Pair label={t('zakat.report.price')} value={report.nisab.price} />
                 <Pair label={t('zakat.nisabValue')} value={report.nisab.value} />
                 <Pair label={t('zakat.yearType')} value={report.year} />
-                <div className="col-span-2"><Pair label={t('zakat.hawlStart')} value={report.hawl} /></div>
+                <div className="col-span-2"><Pair label={t('zakat.period.label')} value={report.hawl} /></div>
             </div>
         </ReportFrame>
     )

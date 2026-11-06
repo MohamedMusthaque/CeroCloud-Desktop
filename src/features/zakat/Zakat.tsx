@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { parseISO } from 'date-fns'
+import { addDays, format, parseISO, subDays } from 'date-fns'
 import {
     HandHeart, Coins, Scale, CalendarClock, Info, RefreshCw, RotateCcw, CheckCircle2, AlertCircle, Package, Landmark,
-    Wallet, Banknote, BookOpen, Ban, HandCoins, Gem, Database, FileDown, FileSpreadsheet
+    Wallet, Banknote, BookOpen, Ban, HandCoins, Gem, Database, FileDown, FileSpreadsheet, CalendarRange
 } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { AmountInput } from '@/components/ui/AmountInput'
+import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
+import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import {
     DEFAULT_SETTINGS, LUNAR_YEAR_DAYS, NISAB_GRAMS, SOVEREIGN_GRAMS, ZAKAT_RATES,
-    autoValue, calculate, loadFigures, loadSettings, saveSettings,
-    type AutoAsset, type AutoLiability, type ManualAsset, type ManualLiability, type ZakatFigures, type ZakatSettings
+    autoValue, calculate, computeFigures, loadRecords, loadSettings, saveSettings,
+    type AutoAsset, type AutoLiability, type ManualAsset, type ManualLiability, type ZakatRecords, type ZakatSettings
 } from './zakatCalc'
 import { buildZakatReport } from './zakatReportData'
 import { downloadZakatExcel, downloadZakatPdf } from './zakatReports'
 
+const filterInputClass = "px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
 const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
 const percent = (rate: number) => `${(rate * 100).toFixed(rate === ZAKAT_RATES.lunar ? 1 : 3)}%`
 
@@ -22,14 +25,14 @@ const percent = (rate: number) => `${(rate * 100).toFixed(rate === ZAKAT_RATES.l
 export function Zakat() {
     const { t, locale } = useTranslation()
     const [settings, setSettings] = useState<ZakatSettings>(loadSettings)
-    const [figures, setFigures] = useState<ZakatFigures | null>(null)
+    const [records, setRecords] = useState<ZakatRecords | null>(null)
     const [loading, setLoading] = useState(true)
     const [failed, setFailed] = useState(false)
 
     const refresh = useCallback(async () => {
         setLoading(true)
         try {
-            setFigures(await loadFigures())
+            setRecords(await loadRecords())
             setFailed(false)
         } catch (error) {
             console.error('Error loading zakat figures:', error)
@@ -46,10 +49,15 @@ export function Zakat() {
     const toggle = (key: AutoAsset | AutoLiability) => (checked: boolean) => update({ include: { ...settings.include, [key]: checked } })
     const setAsset = (key: ManualAsset) => (value: string) => update({ manualAssets: { ...settings.manualAssets, [key]: value } })
     const setDebt = (key: ManualLiability) => (value: string) => update({ manualLiabilities: { ...settings.manualLiabilities, [key]: value } })
+    // Every figure as it stood on the zakat day (To), for the zakat year that starts on From
+    const figures = useMemo(
+        () => records ? computeFigures(records, { from: settings.hawlStart, to: settings.zakatDate }) : null,
+        [records, settings.hawlStart, settings.zakatDate]
+    )
     const result = useMemo(() => calculate(settings, figures), [settings, figures])
     const formatDay = (day: string) => parseISO(day).toLocaleDateString(locale)
     const unitLabel = settings.priceUnit === 'sovereign' ? t('zakat.unit.sovereign') : t('zakat.unit.gram')
-    const reset = () => setSettings({ ...DEFAULT_SETTINGS, goldPrice: settings.goldPrice, silverPrice: settings.silverPrice, priceUnit: settings.priceUnit, basis: settings.basis, hawlStart: settings.hawlStart, year: settings.year })
+    const reset = () => setSettings({ ...DEFAULT_SETTINGS, goldPrice: settings.goldPrice, silverPrice: settings.silverPrice, priceUnit: settings.priceUnit, basis: settings.basis, hawlStart: settings.hawlStart, zakatDate: settings.zakatDate, year: settings.year })
 
     // Shared props for a figure taken from the records
     const auto = (key: AutoAsset | AutoLiability) => ({
@@ -59,6 +67,22 @@ export function Zakat() {
         onToggle: toggle(key)
     })
     const cash = figures?.cashFlow
+
+    // The zakat year filter: From = start of the hawl, To = the zakat day (today when empty)
+    const yearDays = settings.year === 'lunar' ? LUNAR_YEAR_DAYS : 365
+    const dated = !!settings.hawlStart || !!settings.zakatDate
+    const setPeriod = (from: string, to: string) => update({ hawlStart: from, zakatDate: to })
+    const fullYear = () => {
+        const day = (date: Date) => format(date, 'yyyy-MM-dd')
+        if (settings.hawlStart) setPeriod(settings.hawlStart, day(addDays(parseISO(settings.hawlStart), yearDays)))
+        else {
+            const end = settings.zakatDate ? parseISO(settings.zakatDate) : new Date()
+            setPeriod(day(subDays(end, yearDays)), day(end))
+        }
+    }
+    const periodFlow = figures?.periodFlow
+    const periodIn = periodFlow ? periodFlow.salesCollected + periodFlow.otherIncome + periodFlow.capitalAdded + periodFlow.refundsFromSuppliers : 0
+    const periodOut = periodFlow ? periodFlow.expensesPaid + periodFlow.paidToSuppliers + periodFlow.paidToClients + periodFlow.ownerWithdrawals + periodFlow.loanRepayments : 0
 
     // Reports of the calculation exactly as shown
     const [exporting, setExporting] = useState(false)
@@ -109,6 +133,47 @@ export function Zakat() {
                         <RotateCcw className="w-4 h-4" />
                         {t('zakat.reset')}
                     </button>
+                </div>
+            </div>
+
+            {/* The zakat year, like the date filters on the other pages */}
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-3">
+                <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-center gap-3">
+                    <span className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white">
+                        <CalendarRange className="w-4 h-4 text-emerald-600" />
+                        {t('zakat.period.label')}
+                    </span>
+                    <DateRangeInputs
+                        value={{ from: settings.hawlStart || undefined, to: settings.zakatDate || undefined }}
+                        onChange={(range) => setPeriod(range.from ?? '', range.to ?? '')}
+                        inputClassName={filterInputClass}
+                        showClear={false}
+                    />
+                    <button
+                        onClick={fullYear}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+                        title={t('zakat.period.fullYearHint', { days: yearDays })}
+                    >
+                        <CalendarClock className="w-4 h-4" />
+                        {t(settings.year === 'lunar' ? 'zakat.period.fullLunar' : 'zakat.period.fullSolar')}
+                    </button>
+                    <ClearFiltersButton visible={dated} onClick={() => setPeriod('', '')} />
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1">
+                    <p>{t('zakat.period.valuedOn', { date: formatDay(figures?.asOf ?? format(new Date(), 'yyyy-MM-dd')) })}</p>
+                    {result.hawl ? (
+                        <p className={cn("font-semibold", result.hawl.complete ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400")}>
+                            {t('zakat.period.length', { from: formatDay(result.hawl.start), to: formatDay(result.hawl.asOf), days: result.hawl.days })}{' '}
+                            {result.hawl.days < 0 ? t('zakat.period.reversed')
+                                : result.hawl.complete ? t(settings.year === 'lunar' ? 'zakat.period.completeLunar' : 'zakat.period.completeSolar')
+                                    : t('zakat.period.incomplete', { days: result.hawl.days, yearDays: result.hawl.yearDays, date: formatDay(result.hawl.dueOn) })}
+                        </p>
+                    ) : (
+                        <p className="text-gray-500 dark:text-gray-400">{t('zakat.period.noStart')}</p>
+                    )}
+                    {periodFlow && (
+                        <p className="text-gray-500 dark:text-gray-400">{t('zakat.period.flow', { in: formatCurrency(periodIn), out: formatCurrency(periodOut) })}</p>
+                    )}
                 </div>
             </div>
 
@@ -298,9 +363,6 @@ export function Zakat() {
                                     ))}
                                 </div>
                             </Field>
-                            <Field label={t('zakat.hawlStart')} hint={t('zakat.hawlStartHint')}>
-                                <input type="date" value={settings.hawlStart} onChange={(e) => update({ hawlStart: e.target.value })} className={inputClass} />
-                            </Field>
                         </div>
                     </Step>
                 </div>
@@ -335,7 +397,10 @@ export function Zakat() {
                                         : "bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-300"
                             )}>
                                 {result.hasPrice && result.meetsNisab ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                                <span>{!result.hasPrice ? t('zakat.status.noPrice') : result.meetsNisab ? t('zakat.status.meets') : t('zakat.status.below')}</span>
+                                <span>{!result.hasPrice ? t('zakat.status.noPrice')
+                                    : !result.meetsNisab ? t('zakat.status.below')
+                                        : result.hawl && !result.hawl.complete ? t('zakat.status.notYet', { date: formatDay(result.hawl.dueOn) })
+                                            : t('zakat.status.meets')}</span>
                             </div>
 
                             <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 text-center">
@@ -344,20 +409,14 @@ export function Zakat() {
                                 {result.meetsNisab && <p className="text-[11px] opacity-90 mt-1">{t('zakat.dueFormula', { net: formatCurrency(result.net), rate: percent(result.rate) })}</p>}
                             </div>
 
-                            {result.hawl ? (
-                                <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
-                                    <CalendarClock className="w-4 h-4 shrink-0 mt-0.5" />
-                                    <span>
-                                        {t('zakat.hawl.period', { start: formatDay(result.hawl.start), end: formatDay(result.hawl.end) })}{' '}
-                                        <strong>{result.hawl.daysLeft > 0 ? t('zakat.hawl.daysLeft', { days: result.hawl.daysLeft }) : result.hawl.daysLeft === 0 ? t('zakat.hawl.today') : t('zakat.hawl.passed', { days: -result.hawl.daysLeft })}</strong>
-                                    </span>
-                                </div>
-                            ) : (
-                                <p className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                    <CalendarClock className="w-4 h-4 shrink-0 mt-0.5" />
-                                    {t('zakat.hawl.none', { days: LUNAR_YEAR_DAYS })}
-                                </p>
-                            )}
+                            <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                                <CalendarClock className="w-4 h-4 shrink-0 mt-0.5" />
+                                <span>
+                                    {result.hawl
+                                        ? t('zakat.period.length', { from: formatDay(result.hawl.start), to: formatDay(result.hawl.asOf), days: result.hawl.days })
+                                        : t('zakat.period.valuedOn', { date: formatDay(figures?.asOf ?? format(new Date(), 'yyyy-MM-dd')) })}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <p className="text-[11px] text-gray-500 dark:text-gray-400 px-1">{t('zakat.savedNote')}</p>

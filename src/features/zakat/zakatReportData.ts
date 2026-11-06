@@ -2,7 +2,7 @@ import { format, parseISO } from 'date-fns'
 import type { TranslationKey } from '@/i18n'
 import { formatCurrency } from '@/lib/utils'
 import {
-    LUNAR_YEAR_DAYS, NISAB_GRAMS, SOVEREIGN_GRAMS, ZAKAT_RATES, autoValue, isCounted,
+    NISAB_GRAMS, SOVEREIGN_GRAMS, ZAKAT_RATES, autoValue, isCounted,
     type AutoAsset, type AutoLiability, type Group, type ManualAsset, type ManualLiability,
     type ZakatFigures, type ZakatResult, type ZakatSettings
 } from './zakatCalc'
@@ -34,6 +34,8 @@ export interface ZakatReport {
     rate: string
     nisab: { basis: string; grams: number; price: string; value: string }
     year: string
+    // The zakat year and the day everything is valued on
+    period: string
     hawl: string
     status: string
     // Money from the records, line by line (empty when the counted balance is used)
@@ -99,10 +101,18 @@ export function buildZakatReport(settings: ZakatSettings, figures: ZakatFigures 
             value: result.hasPrice ? formatCurrency(result.nisab) : '—'
         },
         year: `${t(`zakat.year.${settings.year}`)} · ${percent(result.rate)}`,
+        period: result.hawl
+            ? t('zakat.report.period', { from: formatDay(result.hawl.start), to: formatDay(result.hawl.asOf) })
+            : t('zakat.report.valuedOn', { date: formatDay(figures?.asOf ?? format(new Date(), 'yyyy-MM-dd')) }),
         hawl: result.hawl
-            ? `${t('zakat.hawl.period', { start: formatDay(result.hawl.start), end: formatDay(result.hawl.end) })} ${result.hawl.daysLeft > 0 ? t('zakat.hawl.daysLeft', { days: result.hawl.daysLeft }) : result.hawl.daysLeft === 0 ? t('zakat.hawl.today') : t('zakat.hawl.passed', { days: -result.hawl.daysLeft })}`
-            : t('zakat.hawl.none', { days: LUNAR_YEAR_DAYS }),
-        status: !result.hasPrice ? t('zakat.status.noPrice') : result.meetsNisab ? t('zakat.status.meets') : t('zakat.status.below'),
+            ? `${t('zakat.period.length', { from: formatDay(result.hawl.start), to: formatDay(result.hawl.asOf), days: result.hawl.days })} ${result.hawl.complete
+                ? t(settings.year === 'lunar' ? 'zakat.period.completeLunar' : 'zakat.period.completeSolar')
+                : t('zakat.period.incomplete', { days: result.hawl.days, yearDays: result.hawl.yearDays, date: formatDay(result.hawl.dueOn) })}`
+            : t('zakat.period.noStart'),
+        status: !result.hasPrice ? t('zakat.status.noPrice')
+            : !result.meetsNisab ? t('zakat.status.below')
+                : result.hawl && !result.hawl.complete ? t('zakat.status.notYet', { date: formatDay(result.hawl.dueOn) })
+                    : t('zakat.status.meets'),
         moneyFlow: settings.moneySource === 'records' && cash ? [
             { label: t('zakat.flow.sales'), amount: cash.salesCollected },
             { label: t('zakat.flow.income'), amount: cash.otherIncome },

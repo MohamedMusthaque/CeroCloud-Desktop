@@ -4,7 +4,9 @@ import { saleService } from '@/services/saleService'
 import { expenseService } from '@/services/expenseService'
 import { capitalService } from '@/services/capitalService'
 import { goodsReceiptService, purchaseService, supplierPaymentService } from '@/services/purchaseService'
-import { computeCashFlow, type CashFlowSummary } from '@/lib/profit'
+import { inventoryLogService } from '@/services/inventoryLogService'
+import { computeCashFlow, saleDay, type CashFlowSummary } from '@/lib/profit'
+import type { CapitalEntry, Expense, GoodsReceipt, InventoryLog, Product, Purchase, Sale, SupplierPayment } from '@/types/database'
 import { loadAccounts, type Account } from '@/features/accounts/accountLedger'
 
 // Zakat on a business (zakat al-tijarah), as the four schools set it out:
@@ -50,8 +52,10 @@ export interface ZakatSettings {
     silverPrice: string
     priceUnit: 'gram' | 'sovereign'
     year: YearType
-    // Day the hawl started (wealth first reached the nisab, or last zakat date)
+    // The zakat year: From = the day the hawl started (wealth reached the nisab, or the last zakat date),
+    // To = the zakat day, when everything is valued (empty: today)
     hawlStart: string
+    zakatDate: string
     // Money from the records (every sale, payment and expense), or the cash and bank balances counted on the day
     moneySource: 'records' | 'counted'
     // Trade goods at market (selling) value, as most scholars hold, or at cost
@@ -70,6 +74,7 @@ export const DEFAULT_SETTINGS: ZakatSettings = {
     priceUnit: 'gram',
     year: 'lunar',
     hawlStart: '',
+    zakatDate: '',
     moneySource: 'records',
     inventoryValue: 'price',
     include: {
@@ -110,9 +115,13 @@ export function saveSettings(settings: ZakatSettings) {
 }
 
 export interface ZakatFigures {
-    // Money the records say the business holds: everything received less everything paid, since the first record
+    // The zakat day every figure is valued on
+    asOf: string
+    // Money the records say the business holds on that day: everything received less everything paid, since the first record
     money: number
     cashFlow: CashFlowSummary
+    // Money in and out during the zakat year itself (when a From date is set)
+    periodFlow: CashFlowSummary | null
     inventoryCost: number
     inventoryPrice: number
     inventoryItems: number
@@ -127,38 +136,89 @@ export interface ZakatFigures {
 }
 
 const round = (value: number) => Math.round(value * 100) / 100 + 0
-const sumBalances = (accounts: Account[], sign: 1 | -1) => round(accounts.reduce((sum, a) => sum + Math.max(sign * a.balance, 0), 0))
 
-// The whole business from the records: money, stock, what's owed to it and what it owes
-export async function loadFigures(): Promise<ZakatFigures> {
-    const [products, accounts, sales, expenses, purchases, payments, capital, receipts] = await Promise.all([
-        productService.getAll(), loadAccounts(null, { allTypes: true }),
+export interface ZakatRecords {
+    products: Product[]
+    logs: InventoryLog[]
+    accounts: Account[]
+    sales: Sale[]
+    expenses: Expense[]
+    purchases: Purchase[]
+    payments: SupplierPayment[]
+    capital: CapitalEntry[]
+    receipts: GoodsReceipt[]
+}
+
+// Every record of the business, loaded once; the figures are then worked out for any zakat day
+export async function loadRecords(): Promise<ZakatRecords> {
+    const [products, logs, accounts, sales, expenses, purchases, payments, capital, receipts] = await Promise.all([
+        productService.getAll(), inventoryLogService.getAll(), loadAccounts(null, { allTypes: true }),
         saleService.getAll(), expenseService.getAll(), purchaseService.getAll(), supplierPaymentService.getAll(),
         capitalService.getAll(), goodsReceiptService.getAll()
     ])
-    // No period: every record since the business started
-    const cashFlow = computeCashFlow(sales, expenses, purchases, payments, capital, receipts)
-    const inStock = products.filter(p => p.stock > 0)
+    return { products, logs, accounts, sales, expenses, purchases, payments, capital, receipts }
+}
+
+const localDay = (timestamp?: string | null) => {
+    if (!timestamp) return ''
+    const date = new Date(timestamp)
+    return isNaN(date.getTime()) ? timestamp.slice(0, 10) : format(date, 'yyyy-MM-dd')
+}
+const isDay = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
+
+// The whole business as it stood at the end of the zakat day `to` (today when empty):
+// money, stock, what's owed to it and what it owes
+export function computeFigures(records: ZakatRecords, period: { from?: string; to?: string }, today = new Date()): ZakatFigures {
+    const asOf = period.to && isDay(period.to) ? period.to : format(today, 'yyyy-MM-dd')
+    const from = period.from && isDay(period.from) ? period.from : ''
+    const { products, logs, accounts, sales, expenses, purchases, payments, capital, receipts } = records
+
+    // Money held: every record from the start up to the zakat day
+    const cashFlow = computeCashFlow(sales, expenses, purchases, payments, capital, receipts, { to: asOf })
+    const periodFlow = from ? computeCashFlow(sales, expenses, purchases, payments, capital, receipts, { from, to: asOf }) : null
+
+    // Stock on the zakat day: today's stock less the movements made after it
+    const laterMoves = new Map<number, number>()
+    for (const log of logs) {
+        if (localDay(log.created_at) > asOf) laterMoves.set(log.product_id, (laterMoves.get(log.product_id) ?? 0) + log.quantity)
+    }
+    const stockOn = products
+        .map(p => ({ product: p, stock: Math.max(p.stock - (p.id ? laterMoves.get(p.id) ?? 0 : 0), 0) }))
+        .filter(row => row.stock > 0)
+
+    // Account balances on the zakat day: the balance after the last line up to it
+    const balanceOn = (account: Account) => {
+        let balance = 0
+        for (const line of account.lines) {
+            if (line.date > asOf) break
+            balance = line.balance
+        }
+        return balance
+    }
+    const sumOn = (list: Account[], sign: 1 | -1) => round(list.reduce((sum, a) => sum + Math.max(sign * balanceOn(a), 0), 0))
     const of = (type: Account['type']) => accounts.filter(a => a.type === type)
+
     return {
+        asOf,
         money: round(Math.max(cashFlow.netCashFlow, 0)),
         cashFlow,
-        inventoryCost: round(inStock.reduce((sum, p) => sum + p.stock * (p.cost ?? 0), 0)),
-        inventoryPrice: round(inStock.reduce((sum, p) => sum + p.stock * p.price, 0)),
-        inventoryItems: inStock.length,
-        clientCredit: sumBalances([...of('client'), ...of('walkin')], 1),
-        supplierCredit: sumBalances(of('supplier'), 1),
-        sourceCredit: sumBalances(of('source'), 1),
-        savings: sumBalances(of('savings'), 1),
-        supplierOwed: sumBalances(of('supplier'), -1),
-        loans: sumBalances(of('source'), -1),
+        periodFlow,
+        inventoryCost: round(stockOn.reduce((sum, row) => sum + row.stock * (row.product.cost ?? 0), 0)),
+        inventoryPrice: round(stockOn.reduce((sum, row) => sum + row.stock * row.product.price, 0)),
+        inventoryItems: stockOn.length,
+        clientCredit: sumOn([...of('client'), ...of('walkin')], 1),
+        supplierCredit: sumOn(of('supplier'), 1),
+        sourceCredit: sumOn(of('source'), 1),
+        savings: sumOn(of('savings'), 1),
+        supplierOwed: sumOn(of('supplier'), -1),
+        loans: sumOn(of('source'), -1),
         coverage: {
-            sales: sales.filter(s => s.status !== 'cancelled').length,
-            products: products.length,
+            sales: sales.filter(s => s.status !== 'cancelled' && !!s.created_at && saleDay(s) <= asOf).length,
+            products: stockOn.length,
             suppliers: of('supplier').length,
             clients: of('client').length + of('walkin').length,
-            capital: capital.length,
-            expenses: expenses.length
+            capital: capital.filter(c => c.entry_date <= asOf).length,
+            expenses: expenses.filter(e => e.expense_date <= asOf).length
         }
     }
 }
@@ -194,10 +254,22 @@ export interface ZakatResult {
     meetsNisab: boolean
     rate: number
     due: number
-    hawl: { start: string; end: string; daysLeft: number } | null
+    // The zakat year: from its start to the zakat day, and when a full year completes
+    hawl: {
+        start: string
+        asOf: string
+        // Days between the two dates, and whether a full year (354 lunar / 365 solar) has passed
+        days: number
+        yearDays: number
+        complete: boolean
+        // The day the full year completes, and days from today until then
+        dueOn: string
+        daysToDue: number
+    } | null
 }
 
 export function calculate(settings: ZakatSettings, figures: ZakatFigures | null, today = new Date()): ZakatResult {
+    const asOf = figures?.asOf ?? (isDay(settings.zakatDate) ? settings.zakatDate : format(today, 'yyyy-MM-dd'))
     const groups: Record<Group, number> = { money: 0, goods: 0, receivables: 0, other: 0, debts: 0 }
     if (figures) {
         for (const key of [...AUTO_ASSETS, ...AUTO_LIABILITIES]) {
@@ -220,9 +292,15 @@ export function calculate(settings: ZakatSettings, figures: ZakatFigures | null,
     const rate = ZAKAT_RATES[settings.year]
 
     let hawl: ZakatResult['hawl'] = null
-    if (/^\d{4}-\d{2}-\d{2}$/.test(settings.hawlStart)) {
-        const end = addDays(parseISO(settings.hawlStart), settings.year === 'lunar' ? LUNAR_YEAR_DAYS : 365)
-        hawl = { start: settings.hawlStart, end: format(end, 'yyyy-MM-dd'), daysLeft: differenceInCalendarDays(end, today) }
+    if (isDay(settings.hawlStart)) {
+        const yearDays = settings.year === 'lunar' ? LUNAR_YEAR_DAYS : 365
+        const start = parseISO(settings.hawlStart)
+        const dueOn = addDays(start, yearDays)
+        const days = differenceInCalendarDays(parseISO(asOf), start)
+        hawl = {
+            start: settings.hawlStart, asOf, days, yearDays, complete: days >= yearDays,
+            dueOn: format(dueOn, 'yyyy-MM-dd'), daysToDue: differenceInCalendarDays(dueOn, today)
+        }
     }
 
     return { groups, assets, liabilities, net, pricePerGram, nisab, hasPrice, meetsNisab, rate, due: meetsNisab ? round(net * rate) : 0, hawl }

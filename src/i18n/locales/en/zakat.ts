@@ -127,8 +127,6 @@ export const zakat: Record<keyof typeof es, string> = {
     'zakat.yearType': 'Year used',
     'zakat.year.lunar': 'Lunar (Hijri)',
     'zakat.year.solar': 'Solar (Gregorian)',
-    'zakat.hawlStart': 'Zakat year (hawl) start',
-    'zakat.hawlStartHint': 'The day your wealth reached the nisab, or the date of your last zakat',
 
     // Result
     'zakat.resultTitle': 'Zakat on the whole business',
@@ -140,11 +138,6 @@ export const zakat: Record<keyof typeof es, string> = {
     'zakat.status.below': 'Your wealth is below the nisab: no zakat is due.',
     'zakat.due': 'Zakat due ({rate})',
     'zakat.dueFormula': '{net} × {rate}',
-    'zakat.hawl.period': 'Year: {start} – {end}.',
-    'zakat.hawl.daysLeft': '{days} days to go.',
-    'zakat.hawl.today': 'Due today.',
-    'zakat.hawl.passed': 'Due {days} days ago.',
-    'zakat.hawl.none': 'Enter the year start (step F) to see when zakat falls due (lunar year of {days} days).',
     // Reports
     'zakat.report.pdf': 'PDF report',
     'zakat.report.excel': 'Excel report',
@@ -173,4 +166,20 @@ export const zakat: Record<keyof typeof es, string> = {
     'zakat.report.sheet.money': 'Money',
     'zakat.report.sheet.rulings': 'Rulings',
     'zakat.report.file': 'business_zakat',
+    // The zakat year (date filter)
+    'zakat.period.label': 'Zakat year',
+    'zakat.period.fullLunar': 'Full lunar year',
+    'zakat.period.fullSolar': 'Full solar year',
+    'zakat.period.fullYearHint': 'Sets the dates to one full year of {days} days',
+    'zakat.period.valuedOn': 'Everything is valued as it stood on {date} (the zakat day): money, stock, what is owed to you and your debts.',
+    'zakat.period.length': '{from} – {to}: {days} days.',
+    'zakat.period.completeLunar': 'A full lunar year (hawl) has passed.',
+    'zakat.period.completeSolar': 'A full solar year has passed.',
+    'zakat.period.incomplete': 'Not a full year yet ({days} of {yearDays} days): zakat falls due on {date}.',
+    'zakat.period.reversed': 'The end date is before the start date.',
+    'zakat.period.noStart': 'Set "From" to the start of your zakat year (when your wealth reached the nisab, or your last zakat date) and "To" to the zakat day.',
+    'zakat.period.flow': 'During the year: {in} came in and {out} went out. Zakat is not on what passed through, but on what is held at the end.',
+    'zakat.status.notYet': 'The nisab is reached, but the year is not complete: zakat falls due on {date} if the wealth is still above the nisab.',
+    'zakat.report.period': 'Zakat year: {from} – {to}',
+    'zakat.report.valuedOn': 'Valued on {date}',
 }
