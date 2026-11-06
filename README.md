@@ -274,7 +274,7 @@ npm run build:mac     # .dmg
 npm run build:linux   # AppImage and .deb
 ```
 
-Output goes to `release/`. Releases are automated with semantic-release from Conventional Commit messages (`feat:`, `fix:`, `chore:` …); see [docs/RELEASE_GUIDE.md](docs/RELEASE_GUIDE.md).
+Output goes to `release/`. If the previous build's files are locked (VS Code, OneDrive or a running copy of the app can keep `release/win-unpacked/resources/app.asar` open), the build says so and writes the installer to a new `release-<date>-<time>/` folder instead; close the app and run **Developer: Reload Window** in VS Code to free `release/` again. Releases are automated with semantic-release from Conventional Commit messages (`feat:`, `fix:`, `chore:` …); see [docs/RELEASE_GUIDE.md](docs/RELEASE_GUIDE.md).
 
 ## Screenshots
 
