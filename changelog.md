@@ -72,10 +72,24 @@ The format loosely follows the *Keep a Changelog* standard and uses **Semantic V
 ---
 
 ## [Unreleased]
-### In development
-- Visual integration of backend features (Suppliers UI, image upload)
-- Ticket printing
-- Advanced user system
+
+### Added
+- **Business Zakat**: zakat on the complete business according to Islamic law, step by step (money, trade goods, debts owed to the business, other wealth, debts due; nisab on gold or silver; lunar or solar year), built from the app's records.
+  - Zakat year filter (From / To): every figure, stock included, is valued as it stood on the zakat day, with a check that a full year (hawl) has passed.
+  - PDF report (calculation, rulings applied, signature lines) and Excel report.
+- **Accounts**: one ledger per supplier, client, walk-in seller or customer, capital source or lender, savings account and expense category, with the running balance.
+  - Filters by kind, balance, search and date range; balances as of the end date with the balance brought forward.
+  - PDF and Excel reports of the account list and of each statement; CSV export; record supplier payments and loan repayments from the account.
+  - "View account" links from supplier, client, savings, capital and GRN pages.
+- **Capital & income on credit**: pick or create the source as you type; record payments against credit entries, loans, promised capital and goods on credit; one **Repayments** form spreads a payment over a source's or supplier's outstanding entries.
+- **Credit bills** (`CB-000042`) for every entry taken or given on credit, printable in A4 or ticket format.
+- `AmountInput`: amount fields show thousands separators while typing; amounts across screens, prints and exports use thousands separators.
+
+### Changed
+- Purchase order page shows the payments first; the supplier account figure is shown in full.
+- The GRN form no longer offers "Use these prices as the products' cost".
+- Sidebar rows are more compact so every page fits without a scrollbar.
+- New pages `accounts` and `zakat` in the page permissions; existing non-admin users need them ticked.
 
 ---
 

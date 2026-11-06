@@ -114,12 +114,30 @@ The roadmap is flexible and can be adjusted to the needs of development.
 
 ---
 
-## 🔴 Phase 5 – Future (v1.1.0+)
+## 🧾 Phase 5 – Business Management ✅ **COMPLETED**
+**Goal:** Run the whole business, not only the till.
+
+- ✅ User roles, page permissions and a first-run admin setup.
+- ✅ Ticket (80 mm) and A4 printing for invoices, GRNs and credit bills.
+- ✅ Expenses, profit and loss, and cash flow.
+- ✅ Purchase orders, supplier payments and supplier accounts.
+- ✅ Goods Received Notes for goods bought from clients and walk-in sellers.
+- ✅ Stock card (every stock movement), barcodes and decimal quantities.
+- ✅ Savings accounts.
+- ✅ Capital, loans, promised capital, income and withdrawals, including credit entries, repayments and credit bills.
+- ✅ Centralized **Accounts** with a ledger per party, and PDF / Excel reports.
+- ✅ **Business Zakat** calculator for a chosen zakat year, with PDF / Excel reports.
+
+**Status:** ✅ **Completed** (November 2026)
+
+---
+
+## 🔴 Phase 6 – Future
 **Goal:** Scalability and advanced features.
 
-- User roles.
+- Receiving payments from clients against credit sales.
+- Recording zakat payments.
 - Multi-company.
-- Ticket printing.
 - Optional plugins or modules.
 - Advanced security improvements.
 

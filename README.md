@@ -11,7 +11,7 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 
-*A cross-platform desktop app for small businesses to run sales, stock, clients and reports, with all data stored locally on the machine. No server, no subscription, no internet required.*
+*A cross-platform desktop app for small businesses to run sales, stock, purchases, clients, capital, accounts and reports, with all data stored locally on the machine. No server, no subscription, no internet required.*
 
 [Features](#features) • [Getting started](#getting-started) • [Usage](#usage) • [Project structure](#project-structure) • [Building](#building-installers) • [License](#license)
 
@@ -26,10 +26,18 @@ NexoraCloud keeps everything in a local SQLite database on the user's computer. 
 This repository is a fork of [CeroCloud/CeroCloud-Desktop](https://github.com/CeroCloud/CeroCloud-Desktop). On top of the upstream app it adds:
 
 - **Full English translation** alongside Spanish, switchable at runtime
-- **Local login** with role-based, per-page access control and user management
+- **Local login** with a first-run admin setup wizard, role-based per-page access control and user management
 - **Category management**, with renames and deletes synced to products
-- **Credit sales** with per-client credit limits
-- **More currencies** (LKR, INR, MYR, SGD, in addition to GTQ, USD, EUR, MXN)
+- **Credit and cheque payments**, with optional per-client credit limits
+- **Purchases**: supplier orders, advance payments, goods receiving and supplier accounts
+- **Goods Received Notes (GRN)** for goods bought from clients or walk-in sellers
+- **Expenses**, **savings accounts** and **capital & income** (capital, loans, promised capital, income and withdrawals, including entries on credit and printable credit bills)
+- **Accounts**: one ledger per supplier, client, walk-in, capital source or lender, savings account and expense category, with PDF and Excel reports
+- **Business Zakat** calculator built on the business's own records, with PDF and Excel reports
+- **Stock card** (every stock movement), internal barcodes and decimal quantities
+- **Record pages** for every product, client, supplier, order, GRN, expense and capital entry, with audit details
+- **NIC attachments** for clients and suppliers, and a movable **data folder**
+- **More currencies** (LKR, INR, MYR, SGD, in addition to GTQ, USD, EUR, MXN) and thousands separators on every amount
 - **Editable cart quantities** and a `ton` unit of measure
 - **Cross-platform `Ctrl` shortcuts** and a single-instance lock
 
@@ -39,34 +47,78 @@ This repository is a fork of [CeroCloud/CeroCloud-Desktop](https://github.com/Ce
 - Multiple open bills in tabs, so several customers can be served at once
 - Fast product search by name, code or category (`F2`)
 - Editable quantities directly in the cart
-- Payment by cash (with change calculation), card, transfer, credit or other; each method can be enabled or disabled in Settings
-- **Credit sales** for registered clients, checked against the client's credit limit and outstanding balance
+- Payment by cash (with change calculation), card, transfer, cheque (number and bank printed on the invoice), credit or other; each method can be enabled or disabled in Settings
+- **Credit sales** for registered clients, optionally checked against the client's credit limit and outstanding balance
+- Amount fields show thousands separators as you type (`1,250,000.00`)
 - Configurable tax (included or added), discounts, and an optional required customer name
 - Printable invoices in **A4** or **80 mm thermal ticket** format, with custom prefix, numbering, header/footer images and disclaimer
 
 ### Inventory
-- Product catalog with code, category, supplier, image, cost, price, stock, minimum stock and unit (unit, ton, kg, g, l, ml, m, box, package)
+- Product catalog with code, barcode, category, supplier, image, cost, price, stock, minimum stock and unit (unit, ton, kg, g, l, ml, m, box, package); decimal quantities for weighed or measured goods
+- Internal barcodes generated automatically when a product has none
 - **Categories** page: create, rename and delete categories; changes propagate to linked products
 - Low-stock alerts with a configurable threshold
-- Inventory movement log (sales, purchases, adjustments, returns)
+- **Stock card**: every stock change (sale, cancellation, purchase, GRN, capital goods, adjustment, import) with the stock before and after, the user and a link to the record that caused it
 - Bulk **import from Excel or CSV** (`.xlsx`, `.xls`, `.csv`) through a guided wizard
 - Product image upload
 
 ### Clients and suppliers
-- Client records with tax ID, contact details, notes and credit limit
-- Per-client purchase history and current credit balance
-- Supplier directory linked to products
+- Client records with tax ID, contact details, notes, NIC scan and an optional credit limit
+- Per-client purchase history, goods bought from the client (GRN) and current credit balance
+- Supplier directory linked to products, with NIC scan, orders and the supplier account
+
+### Purchases
+- **Purchase orders** to suppliers, editable until the goods arrive; cancel or delete open orders
+- **Advance payments** on an order, and payments or refunds on the supplier account
+- **Receive goods** against an order: received quantities and costs update stock, and the order's advance plus any credit with the supplier pays for them first
+- **Supplier accounts**: paid, refunded, goods received, advances held and the balance (credit in your favour or amount owed)
+- **Goods Received Notes (GRN)** for goods bought from a registered client or a walk-in seller, paid on receipt; printable in A4 or ticket format and cancellable (stock is reversed)
+
+### Expenses and savings
+- Expenses by type (rent, utilities, wages …) with date, payment method and description; expense types can be managed
+- Savings accounts (employee, personal or other) with deposits, withdrawals and a running balance
+
+### Capital & income
+- Record **initial and additional capital**, **other income** and **owner withdrawals**
+- Capital as money, the owner's **own goods** (added to stock), **goods on credit** from a supplier, **borrowed money** (loans) or **promised capital**
+- Capital and income **on credit**: pick an existing source or create one as you type
+- Record payments against loans, promises, credit entries and goods on credit; **Repayments** spreads one payment over a source's or supplier's outstanding entries, oldest first
+- Every entry taken or given on credit gets a numbered **credit bill** (`CB-000042`) showing payments and the balance due, printable in A4 or ticket format
+
+### Accounts
+- One place for every account: **suppliers**, **clients**, **walk-in** sellers and customers (grouped by name), **capital sources and lenders**, **savings accounts** and **expense categories**
+- Each account's ledger lists every transaction (orders, goods received, payments, refunds, sales, GRNs, capital, loans, repayments, deposits, expenses) with references, method, user, items and the running balance
+- Balances read as *owes you*, *you owe* or *settled*; totals of what is owed to you and what you owe
+- Filter by kind, balance, search and date range; with dates, balances are shown as they stood on the end date and each ledger opens with the balance brought forward
+- **PDF report** and **Excel report** of the account list (with every transaction of the listed accounts) and of each account's statement, plus CSV export
+- Record a supplier payment or a loan repayment straight from the account
+
+### Business Zakat
+- Zakat on the **complete business** according to Islamic law (zakat al-tijarah), laid out step by step:
+  - **A** money (cash and bank, from the records or a counted balance), **B** trade goods (stock at market value or cost), **C** debts owed to the business, **D** other zakatable wealth, less **E** debts due now
+  - **F** nisab (85 g gold or 595 g silver at the price you enter, per gram or per sovereign) and the zakat year (lunar 2.5% or solar 2.577%)
+- **Zakat year** filter (From / To): every figure is valued as it stood on the zakat day, stock included (rebuilt from the stock card), and the page shows whether a full year (hawl) has passed
+- Each step shows its ruling; figures from the records can be included or left out where the schools differ
+- **PDF report** (calculation, rulings applied, signature lines) and **Excel report**
+- Settings and amounts entered are kept on the computer
+
+### Record pages
+- A detail page for each product, category, client, supplier, purchase order, GRN, expense, savings account, capital entry and user, with related records, links between them and who created or last changed it
 
 ### Dashboard and reports
 - Dashboard with revenue, sales count, average bill, stock health, 7-day revenue trend and top products
 - Reports with profitability analysis (revenue, cost, gross profit, margin), peak activity hours and most profitable products
+- **Profit** report (profit and loss with expenses and other income) and **cash flow** (sales collected, credit sales, capital, loans, payments to suppliers and clients, withdrawals)
+- **Purchases** report (orders and supplier payments) and reports for expenses, capital, GRNs and stock movements
+- One date range filter shared by the report tabs, with client and transaction-type filters
 - Transaction list with sale cancellation (stock is restored automatically)
 - CSV export of inventory, sales, detailed sales and low-stock items; PDF report generation
 
 ### Users and access control
 - Local sign-in; passwords are hashed with **scrypt** and a random salt
 - Two roles: **Administrator** (every page) and **User** (only the pages granted to them)
-- Page-level permissions for Dashboard, Inventory, Sales, Suppliers, Clients, Reports, Users and Settings, enforced in both the UI and the Electron main process
+- Page-level permissions for Dashboard, Inventory, Sales, Suppliers, Purchases, Clients, Expenses, Savings, Capital, Accounts, Zakat, Reports, Users and Settings, enforced in both the UI and the Electron main process
+- New pages (such as Accounts and Zakat) must be ticked for existing non-admin users; each account kind on the Accounts page also needs access to its own page (Purchases, Clients, Capital, Savings, Expenses)
 - Safeguards: the last administrator cannot be deleted or demoted, and admins cannot remove their own admin role
 
 ### Backups and data safety
@@ -145,7 +197,7 @@ An administrator can move the data to another folder (another drive, for example
 
 ### Resetting the database
 
-**Settings → Backups → Reset Database** (administrators only) permanently deletes all products, categories, sales, clients, suppliers and expenses, along with their images and attachments. User accounts and app settings are kept, and the default expense types are recreated. Create a backup first if you might need the data.
+**Settings → Backups → Reset Database** (administrators only) permanently deletes all products, categories, sales, clients, suppliers, purchases, GRNs, expenses, savings, capital entries and the stock card, along with their images and attachments. User accounts and app settings are kept, and the default expense types are recreated. Create a backup first if you might need the data.
 
 ## Usage
 
@@ -195,9 +247,11 @@ CeroCloud-Desktop/
 │   └── assets/              # App icons and branding
 ├── src/
 │   ├── app/                 # App shell and routes
-│   ├── features/            # Pages: dashboard, inventory, sales, clients, suppliers,
-│   │                        #        reports, users, settings, auth, about
-│   ├── components/          # Layout, wizards (backup, restore, import), print templates, UI
+│   ├── features/            # Pages: dashboard, inventory, sales, clients, suppliers, purchases,
+│   │                        #        expenses, savings, capital, accounts, zakat, reports,
+│   │                        #        users, settings, auth, about
+│   ├── components/          # Layout, wizards (backup, restore, import), record pages,
+│   │                        # print templates (invoice, GRN, credit bill, reports), UI
 │   ├── services/            # Data access, export, PDF, backup and encryption services
 │   ├── stores/              # Zustand stores (auth, cart, UI, notifications)
 │   ├── i18n/                # Translations (locales/en, locales/es)
