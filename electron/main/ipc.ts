@@ -474,6 +474,7 @@ export function registerIpcHandlers() {
     ipcMain.handle('clients:getCreditBalance', (_event, id: number) => {
         return clientQueries.getCreditBalance(id)
     })
+    ipcMain.handle('clients:getCreditBalances', () => clientQueries.getCreditBalances())
 
     // Expense types (reads stay open so backups include them for every user)
     ipcMain.handle('expenseTypes:getAll', () => expenseTypeQueries.getAll())

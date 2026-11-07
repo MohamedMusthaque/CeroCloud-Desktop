@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { parseISO } from 'date-fns'
 import { motion } from 'framer-motion'
-import { Plus, Search, Eye, Edit2, Trash2, PackageCheck, ClipboardList, Wallet, Users, Clock, HandCoins, TrendingDown, Banknote, ArrowUpCircle, ArrowDownCircle, PackagePlus, ListOrdered } from 'lucide-react'
+import { Plus, Search, Eye, Edit2, Trash2, PackageCheck, ClipboardList, Wallet, Users, UserCheck, Clock, HandCoins, TrendingDown, Banknote, ArrowUpCircle, ArrowDownCircle, PackagePlus, ListOrdered } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -24,18 +24,22 @@ import { ReceiveGoodsDialog } from './ReceiveGoodsDialog'
 import { SupplierPaymentForm, type SupplierPaymentPreset } from './SupplierPaymentForm'
 import { GoodsReceiptForm } from './GoodsReceiptForm'
 import { GoodsReceiptsList } from './GoodsReceiptsList'
+import { ClientAccountsList, type ClientAccountRow } from './ClientAccountsList'
+import { canSeeAccountType } from '@/features/accounts/accountLedger'
 import { purchaseErrorMessage } from './purchaseErrors'
 import { STATUS_STYLES, grnId, statusLabel } from './purchaseUi'
 
-type Section = 'orders' | 'grn' | 'payments' | 'accounts'
+type Section = 'orders' | 'grn' | 'payments' | 'accounts' | 'clientAccounts'
 
 export function Purchases() {
     const { t, locale } = useTranslation()
     // The Transactions links open the central Accounts page
-    const canSeeAccounts = canAccessPage(useAuthStore((state) => state.user), 'accounts')
+    const user = useAuthStore((state) => state.user)
+    const canSeeAccounts = canAccessPage(user, 'accounts')
+    const canSeeClientAccounts = canSeeAccountType(user, 'client')
     const [section, setSection] = useState<Section>('orders')
     // Each tab remembers its own layout
-    const [views, setViews] = useState<Record<Section, ViewMode>>({ orders: 'list', grn: 'list', payments: 'list', accounts: 'list' })
+    const [views, setViews] = useState<Record<Section, ViewMode>>({ orders: 'list', grn: 'list', payments: 'list', accounts: 'list', clientAccounts: 'list' })
     const [orders, setOrders] = useState<Purchase[]>([])
     const [payments, setPayments] = useState<SupplierPayment[]>([])
     const [accounts, setAccounts] = useState<SupplierAccount[]>([])
@@ -43,6 +47,8 @@ export function Purchases() {
     const [products, setProducts] = useState<Product[]>([])
     const [receipts, setReceipts] = useState<GoodsReceipt[]>([])
     const [clients, setClients] = useState<Client[]>([])
+    // Outstanding credit sales by client id
+    const [creditBalances, setCreditBalances] = useState<Record<number, number>>({})
     const [loading, setLoading] = useState(true)
 
     // Filters
@@ -61,6 +67,8 @@ export function Purchases() {
     const [paymentPreset, setPaymentPreset] = useState<SupplierPaymentPreset>({})
     const [toCancel, setToCancel] = useState<Purchase | null>(null)
     const [grnFormOpen, setGrnFormOpen] = useState(false)
+    // Client preselected on the GRN form (opened from the Client Accounts tab)
+    const [grnClientId, setGrnClientId] = useState<number | undefined>()
     const [receiptToCancel, setReceiptToCancel] = useState<GoodsReceipt | null>(null)
     const [toDelete, setToDelete] = useState<Purchase | null>(null)
     const [paymentToDelete, setPaymentToDelete] = useState<SupplierPayment | null>(null)
@@ -68,9 +76,10 @@ export function Purchases() {
     const loadData = useCallback(async () => {
         try {
             setLoading(true)
-            const [orderData, paymentData, accountData, supplierData, productData, receiptData, clientData] = await Promise.all([
+            const [orderData, paymentData, accountData, supplierData, productData, receiptData, clientData, balanceData] = await Promise.all([
                 purchaseService.getAll(), supplierPaymentService.getAll(), supplierAccountService.getAll(),
-                supplierService.getAll(), productService.getAll(), goodsReceiptService.getAll(), clientService.getAll()
+                supplierService.getAll(), productService.getAll(), goodsReceiptService.getAll(), clientService.getAll(),
+                clientService.getCreditBalances()
             ])
             setOrders(orderData)
             setPayments(paymentData)
@@ -79,6 +88,7 @@ export function Purchases() {
             setProducts(productData)
             setReceipts(receiptData)
             setClients(clientData)
+            setCreditBalances(balanceData)
         } catch (error) {
             console.error('Error loading purchases:', error)
             toast.error(t('pur.loadError'))
@@ -132,6 +142,27 @@ export function Purchases() {
             r.notes?.toLowerCase().includes(term) || r.items?.some(i => i.product_name?.toLowerCase().includes(term)))
     ), [receipts, fromDate, toDate, term])
 
+    // Every client, with the goods bought from them on GRNs (receipts load newest first)
+    const clientAccounts = useMemo((): ClientAccountRow[] => clients.filter(c => c.id).map(client => {
+        const done = receipts.filter(r => r.client_id === client.id && r.status === 'completed')
+        return {
+            client,
+            grnCount: done.length,
+            bought: done.reduce((sum, r) => sum + r.total, 0),
+            lastGrn: done[0]?.receipt_date ?? null,
+            owes: creditBalances[client.id!] ?? 0
+        }
+    }), [clients, receipts, creditBalances])
+
+    const filteredClientAccounts = useMemo(() => clientAccounts.filter(({ client }) =>
+        !term || client.name.toLowerCase().includes(term) || client.phone?.toLowerCase().includes(term) || client.tax_id?.toLowerCase().includes(term)
+    ), [clientAccounts, term])
+
+    const openGrn = (clientId?: number) => {
+        setGrnClientId(clientId)
+        setGrnFormOpen(true)
+    }
+
     const printReceipt = (receipt: GoodsReceipt) => {
         toast.promise(pdfGenerator.generateGoodsReceipt(receipt, companyService.getSettings()), {
             loading: t('rep.export.generating'), success: t('rep.export.success'), error: t('rep.export.error')
@@ -179,7 +210,7 @@ export function Purchases() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <button
-                        onClick={() => setGrnFormOpen(true)}
+                        onClick={() => openGrn()}
                         className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all font-medium"
                     >
                         <PackagePlus className="w-5 h-5" />
@@ -216,7 +247,8 @@ export function Purchases() {
                     { id: 'orders', label: t('pur.section.orders'), icon: ClipboardList },
                     { id: 'grn', label: t('pur.section.grn'), icon: PackagePlus },
                     { id: 'payments', label: t('pur.section.payments'), icon: Banknote },
-                    { id: 'accounts', label: t('pur.section.accounts'), icon: Users }
+                    { id: 'accounts', label: t('pur.section.accounts'), icon: Users },
+                    { id: 'clientAccounts', label: t('pur.section.clientAccounts'), icon: UserCheck }
                 ] as const).map(tab => (
                     <button
                         key={tab.id}
@@ -240,13 +272,13 @@ export function Purchases() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                         type="text"
-                        placeholder={section === 'orders' ? t('pur.searchOrders') : section === 'grn' ? t('grn.searchPlaceholder') : t('pur.searchPayments')}
+                        placeholder={section === 'orders' ? t('pur.searchOrders') : section === 'grn' ? t('grn.searchPlaceholder') : section === 'clientAccounts' ? t('pur.searchClients') : t('pur.searchPayments')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className={cn(filterInputClass, "w-full pl-10 pr-4 placeholder-gray-500")}
                     />
                 </div>
-                {section !== 'grn' && (
+                {section !== 'grn' && section !== 'clientAccounts' && (
                     <select value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)} aria-label={t('pur.col.supplier')} className={filterInputClass}>
                         <option value="all">{t('pur.allSuppliers')}</option>
                         {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -265,7 +297,7 @@ export function Purchases() {
                         <option value="refund">{t('supPay.typeShort.refund')}</option>
                     </select>
                 )}
-                {section !== 'accounts' && (
+                {section !== 'accounts' && section !== 'clientAccounts' && (
                     <DateRangeInputs
                         value={{ from: fromDate || undefined, to: toDate || undefined }}
                         onChange={(range) => { setFromDate(range.from ?? ''); setToDate(range.to ?? '') }}
@@ -418,6 +450,18 @@ export function Purchases() {
                         </tbody>
                     </TableCard>
                 )
+            ) : section === 'clientAccounts' ? (
+                filteredClientAccounts.length === 0 ? (
+                    <EmptyState icon={UserCheck} title={clients.length === 0 ? t('pur.cacc.empty') : t('pur.cacc.noResults')} />
+                ) : (
+                    <ClientAccountsList
+                        rows={filteredClientAccounts}
+                        viewMode={views.clientAccounts}
+                        formatDay={formatDay}
+                        canSeeTransactions={canSeeClientAccounts}
+                        onNewGrn={openGrn}
+                    />
+                )
             ) : filteredAccounts.length === 0 ? (
                 <EmptyState icon={Users} title={t('pur.acc.empty')} />
             ) : views.accounts === 'grid' ? (
@@ -491,9 +535,12 @@ export function Purchases() {
             <GoodsReceiptForm
                 isOpen={grnFormOpen}
                 clients={clients}
+                suppliers={suppliers}
                 products={products}
+                defaultClientId={grnClientId}
                 onClose={() => setGrnFormOpen(false)}
-                onSaved={() => { setSection('grn'); loadData() }}
+                // Saved from the Client Accounts tab: stay there to see the updated totals
+                onSaved={() => { if (section !== 'clientAccounts') setSection('grn'); loadData() }}
             />
 
             <ConfirmDialog

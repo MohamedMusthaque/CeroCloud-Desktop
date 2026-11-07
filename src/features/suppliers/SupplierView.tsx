@@ -1,16 +1,16 @@
 import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { parseISO } from 'date-fns'
-import { Info, Package, Boxes, DollarSign, AlertTriangle, User, Phone, Mail, MapPin, Contact, Wallet, ClipboardList } from 'lucide-react'
-import { useTranslation, unitLabel } from '@/i18n'
+import { Info, Package, Boxes, DollarSign, AlertTriangle, User, Phone, Mail, MapPin, Contact, Wallet, ClipboardList, PackagePlus } from 'lucide-react'
+import { useTranslation, unitLabel, paymentMethodLabel } from '@/i18n'
 import { cn, formatCurrency } from '@/lib/utils'
 import { supplierService } from '@/services/supplierService'
 import { productService } from '@/services/productService'
 import { companyService } from '@/services/companyService'
-import { purchaseService, supplierAccountService } from '@/services/purchaseService'
+import { goodsReceiptService, purchaseService, supplierAccountService } from '@/services/purchaseService'
 import { useAuthStore } from '@/stores/authStore'
 import { canAccessPage } from '@/lib/permissions'
-import type { Product, Purchase, Supplier, SupplierAccount } from '@/types/database'
+import type { GoodsReceipt, Product, Purchase, Supplier, SupplierAccount } from '@/types/database'
 import {
     ViewHeader, ViewAvatar, ViewBadge, ViewSection, ViewFields, ViewField, ViewAudit, ViewStat,
     ViewTable, ViewLink, ViewNic, ViewLoading, ViewNotFound, viewCellClass, viewLinkClass
@@ -19,7 +19,7 @@ import { useRecord, parseId } from '@/components/view/useRecord'
 import { SupplierForm } from './SupplierForm'
 import { AccountLink } from '@/features/accounts/AccountParts'
 import { AccountBalance } from '@/features/purchases/Purchases'
-import { STATUS_STYLES, statusLabel } from '@/features/purchases/purchaseUi'
+import { STATUS_STYLES, grnId, statusLabel } from '@/features/purchases/purchaseUi'
 
 // Latest orders listed on the supplier page
 const ORDERS_SHOWN = 10
@@ -29,6 +29,8 @@ interface SupplierRecord {
     products: Product[]
     account: SupplierAccount
     orders: Purchase[]
+    // Goods Received Notes: goods bought from this supplier and paid on the spot
+    receipts: GoodsReceipt[]
 }
 
 export function SupplierView() {
@@ -39,15 +41,16 @@ export function SupplierView() {
 
     const load = useCallback(async (): Promise<SupplierRecord | null> => {
         if (!supplierId) return null
-        const [supplier, products, account, orders] = await Promise.all([
+        const [supplier, products, account, orders, receipts] = await Promise.all([
             supplierService.getById(supplierId), productService.getAll(),
-            supplierAccountService.get(supplierId), purchaseService.getAll()
+            supplierAccountService.get(supplierId), purchaseService.getAll(), goodsReceiptService.getAll()
         ])
         return supplier ? {
             supplier,
             products: products.filter(p => p.supplier_id === supplierId),
             account,
-            orders: orders.filter(o => o.supplier_id === supplierId)
+            orders: orders.filter(o => o.supplier_id === supplierId),
+            receipts: receipts.filter(r => r.supplier_id === supplierId)
         } : null
     }, [supplierId])
     const { data, loading, reload } = useRecord(load)
@@ -56,7 +59,9 @@ export function SupplierView() {
     if (loading) return <ViewLoading />
     if (!data) return <ViewNotFound backTo="/suppliers" backLabel={backLabel} />
 
-    const { supplier, products, account, orders } = data
+    const { supplier, products, account, orders, receipts } = data
+    const receiptsDone = receipts.filter(r => r.status === 'completed')
+    const paidOnReceipts = receiptsDone.reduce((sum, r) => sum + r.total, 0)
     const formatDay = (day: string) => parseISO(day).toLocaleDateString(locale)
     const settings = companyService.getSettings()
     // Same rule as the inventory list
@@ -169,6 +174,41 @@ export function SupplierView() {
                                 </tr>
                             )
                         })}
+                    </ViewTable>
+                </ViewSection>
+            )}
+
+            {canSeePurchases && (
+                <ViewSection
+                    title={t('grnView.supplierSection')}
+                    icon={PackagePlus}
+                    actions={receiptsDone.length > 0 && (
+                        <span className="text-xs text-gray-500">
+                            {t('grnView.clientSummary', { count: receiptsDone.length, amount: formatCurrency(paidOnReceipts) })}
+                        </span>
+                    )}
+                >
+                    <ViewTable
+                        columns={[
+                            { label: t('grn.col.number') }, { label: t('grn.col.date') }, { label: t('grn.col.items') },
+                            { label: t('grn.col.payment') }, { label: t('grn.col.total'), align: 'right' }, { label: t('grn.col.status') }
+                        ]}
+                        empty={receipts.length === 0 ? t('grnView.supplierNone') : undefined}
+                    >
+                        {receipts.map(receipt => (
+                            <tr key={receipt.id} className={cn(receipt.status === 'cancelled' && "opacity-60")}>
+                                <td className={cn(viewCellClass, "font-mono whitespace-nowrap")}>
+                                    <ViewLink to={`/purchases/grn/${receipt.id}`} page="purchases">{t('grn.number', { id: grnId(receipt.id) })}</ViewLink>
+                                </td>
+                                <td className={cn(viewCellClass, "whitespace-nowrap")}>{formatDay(receipt.receipt_date)}</td>
+                                <td className={cn(viewCellClass, "max-w-xs truncate")} title={receipt.items?.map(i => `${i.quantity} × ${i.product_name}`).join(', ')}>
+                                    {receipt.items?.map(i => `${i.quantity} × ${i.product_name}`).join(', ')}
+                                </td>
+                                <td className={cn(viewCellClass, "whitespace-nowrap")}>{paymentMethodLabel(receipt.payment_method)}</td>
+                                <td className={cn(viewCellClass, "text-right font-bold text-gray-900 dark:text-white")}>{formatCurrency(receipt.total)}</td>
+                                <td className={viewCellClass}>{t(`grn.status.${receipt.status}`)}</td>
+                            </tr>
+                        ))}
                     </ViewTable>
                 </ViewSection>
             )}

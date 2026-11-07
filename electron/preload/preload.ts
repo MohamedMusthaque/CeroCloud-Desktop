@@ -77,6 +77,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         update: (id: number, client: any) => ipcRenderer.invoke('clients:update', id, client),
         delete: (id: number) => ipcRenderer.invoke('clients:delete', id),
         getCreditBalance: (id: number) => ipcRenderer.invoke('clients:getCreditBalance', id),
+        getCreditBalances: () => ipcRenderer.invoke('clients:getCreditBalances'),
     },
 
     // Expense types

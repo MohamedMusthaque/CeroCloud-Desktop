@@ -109,7 +109,9 @@ export function GoodsReceiptView() {
                             label={t('grnView.client')}
                             value={receipt.client_id
                                 ? <span className="flex flex-wrap items-center gap-x-3"><ViewLink to={`/clients/${receipt.client_id}`} page="clients">{receipt.client_name}</ViewLink><AccountLink type="client" id={receipt.client_id} /></span>
-                                : <span className="flex flex-wrap items-center gap-x-3">{`${receipt.client_name} (${t('grn.walkIn')})`}<AccountLink type="walkin" id={walkInId(receipt.client_name)} /></span>}
+                                : receipt.supplier_id
+                                    ? <span className="flex flex-wrap items-center gap-x-3"><ViewLink to={`/suppliers/${receipt.supplier_id}`} page="suppliers">{`${receipt.client_name} (${t('grn.supplier')})`}</ViewLink><AccountLink type="supplier" id={receipt.supplier_id} /></span>
+                                    : <span className="flex flex-wrap items-center gap-x-3">{`${receipt.client_name} (${t('grn.walkIn')})`}<AccountLink type="walkin" id={walkInId(receipt.client_name)} /></span>}
                             icon={User}
                         />
                         <ViewField label={t('grnView.date')} value={formatDay(receipt.receipt_date)} icon={CalendarDays} />

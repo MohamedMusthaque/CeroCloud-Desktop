@@ -101,14 +101,21 @@ export const pdfGenerator = {
         }
     },
 
-    // Goods Received Note (goods bought from a client), same paper size as the bill
+    // Goods Received Note (goods bought from a client, supplier or walk-in seller), same paper size as the bill
     generateGoodsReceipt: async (receipt: GoodsReceipt, settings: CompanySettings) => {
         let client: any
+        let supplier: Supplier | undefined
         if (receipt.client_id) {
             try {
                 client = await clientService.getById(receipt.client_id)
             } catch (error) {
                 console.warn('Error fetching client details:', error)
+            }
+        } else if (receipt.supplier_id) {
+            try {
+                supplier = (await supplierService.getById(receipt.supplier_id)) ?? undefined
+            } catch (error) {
+                console.warn('Error fetching supplier details:', error)
             }
         }
 
@@ -123,7 +130,7 @@ export const pdfGenerator = {
             await new Promise<void>((resolve) => {
                 root.render(
                     <div className="pdf-container">
-                        <GoodsReceiptTemplate receipt={receipt} settings={settings} client={client} />
+                        <GoodsReceiptTemplate receipt={receipt} settings={settings} client={client} supplier={supplier} />
                     </div>
                 )
                 // Give it a moment to paint and load images

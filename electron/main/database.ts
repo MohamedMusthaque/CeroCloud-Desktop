@@ -482,8 +482,9 @@ function initSchema() {
         created_by TEXT
     )`)
 
-  // Table: Goods Received Notes (goods bought from clients)
-  // (client_id has no foreign key: a restore can replace clients while keeping these)
+  // Table: Goods Received Notes (goods bought from clients, suppliers or walk-in sellers, paid on the spot)
+  // (client_id / supplier_id have no foreign key: a restore can replace them while keeping these;
+  //  client_name holds the seller's name whoever they are)
   db.exec(`
     CREATE TABLE IF NOT EXISTS goods_receipts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -560,6 +561,8 @@ function initSchema() {
     db.exec('UPDATE clients SET credit_limit_enabled = 1')
   }
   addColumnIfMissing('sales', 'client_id', 'INTEGER')
+  // GRNs can also come from a registered supplier (no foreign key, like client_id)
+  addColumnIfMissing('goods_receipts', 'supplier_id', 'INTEGER')
   addColumnIfMissing('sales', 'cheque_number', 'TEXT')
   addColumnIfMissing('sales', 'cheque_bank', 'TEXT')
   // File name of the attached NIC scan (see attachments.ts)
@@ -599,6 +602,7 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_capital_settlements_entry_id ON capital_settlements(entry_id);
     CREATE INDEX IF NOT EXISTS idx_capital_entries_source_id ON capital_entries(source_id);
     CREATE INDEX IF NOT EXISTS idx_goods_receipts_client_id ON goods_receipts(client_id);
+    CREATE INDEX IF NOT EXISTS idx_goods_receipts_supplier_id ON goods_receipts(supplier_id);
     CREATE INDEX IF NOT EXISTS idx_goods_receipt_items_receipt_id ON goods_receipt_items(receipt_id);
     CREATE INDEX IF NOT EXISTS idx_inventory_logs_product_id ON inventory_logs(product_id);
     CREATE INDEX IF NOT EXISTS idx_inventory_logs_created_at ON inventory_logs(created_at);
@@ -1024,6 +1028,16 @@ export const clientQueries = {
             WHERE client_id = ? AND payment_method = 'credit' AND status != 'cancelled'
         `).get(id) as { balance: number }
     return row.balance
+  },
+
+  // Outstanding credit balance of every client that has one, by client id
+  getCreditBalances: (): Record<number, number> => {
+    const rows = db.prepare(`
+            SELECT client_id, COALESCE(SUM(total), 0) AS balance FROM sales
+            WHERE client_id IS NOT NULL AND payment_method = 'credit' AND status != 'cancelled'
+            GROUP BY client_id
+        `).all() as { client_id: number; balance: number }[]
+    return Object.fromEntries(rows.map(row => [row.client_id, row.balance]))
   }
 }
 
@@ -2270,8 +2284,9 @@ export const purchaseQueries = {
 // ==========================================
 
 export interface GoodsReceiptInput {
-  // A registered client, or a walk-in seller's name
+  // A registered client, a registered supplier, or a walk-in seller's name
   client_id?: number | null
+  supplier_id?: number | null
   client_name?: string
   receipt_date?: string
   payment_method?: string
@@ -2295,15 +2310,22 @@ export const goodsReceiptQueries = {
     return { ...receipt, items: db.prepare('SELECT * FROM goods_receipt_items WHERE receipt_id = ? ORDER BY id ASC').all(id) as GoodsReceiptItem[] }
   },
 
-  // Goods arrive now: stock goes up and the client is paid
+  // Goods arrive now: stock goes up and the seller is paid
   create: (input: GoodsReceiptInput, actor: Actor = null): GoodsReceipt => {
     let clientId: number | null = null
+    let supplierId: number | null = null
     let clientName = String(input.client_name ?? '').trim()
+    if (input.client_id && input.supplier_id) throw new PurchaseError('CLIENT_REQUIRED')
     if (input.client_id) {
       const client = db.prepare('SELECT id, name FROM clients WHERE id = ?').get(Number(input.client_id)) as { id: number; name: string } | undefined
       if (!client) throw new PurchaseError('CLIENT_REQUIRED')
       clientId = client.id
       clientName = client.name
+    } else if (input.supplier_id) {
+      const supplier = db.prepare('SELECT id, name FROM suppliers WHERE id = ?').get(Number(input.supplier_id)) as { id: number; name: string } | undefined
+      if (!supplier) throw new PurchaseError('SUPPLIER_REQUIRED')
+      supplierId = supplier.id
+      clientName = supplier.name
     }
     if (!clientName) throw new PurchaseError('CLIENT_REQUIRED')
 
@@ -2319,10 +2341,10 @@ export const goodsReceiptQueries = {
 
     const id = db.transaction(() => {
       const info = db.prepare(`
-        INSERT INTO goods_receipts(client_id, client_name, receipt_date, total, payment_method, status, notes, created_at, created_by, updated_at, updated_by)
-        VALUES(@client_id, @client_name, @receipt_date, @total, @payment_method, 'completed', @notes, @now, @actor, @now, @actor)
+        INSERT INTO goods_receipts(client_id, supplier_id, client_name, receipt_date, total, payment_method, status, notes, created_at, created_by, updated_at, updated_by)
+        VALUES(@client_id, @supplier_id, @client_name, @receipt_date, @total, @payment_method, 'completed', @notes, @now, @actor, @now, @actor)
       `).run({
-        client_id: clientId, client_name: clientName, receipt_date: receiptDate, total,
+        client_id: clientId, supplier_id: supplierId, client_name: clientName, receipt_date: receiptDate, total,
         payment_method: String(input.payment_method || 'cash'), notes: String(input.notes ?? '').trim(), now, actor
       })
       const receiptId = Number(info.lastInsertRowid)
@@ -2696,8 +2718,8 @@ export function restoreDatabase(data: any) {
     // 8a. Restore Goods Received Notes (stock already reflects them)
     if (Array.isArray(data.goodsReceipts)) {
       const insertReceipt = db.prepare(`
-        INSERT INTO goods_receipts(id, client_id, client_name, receipt_date, total, payment_method, status, notes, created_at, created_by, updated_at, updated_by)
-        VALUES(@id, @client_id, @client_name, @receipt_date, @total, @payment_method, @status, @notes, @created_at, @created_by, @updated_at, @updated_by)
+        INSERT INTO goods_receipts(id, client_id, supplier_id, client_name, receipt_date, total, payment_method, status, notes, created_at, created_by, updated_at, updated_by)
+        VALUES(@id, @client_id, @supplier_id, @client_name, @receipt_date, @total, @payment_method, @status, @notes, @created_at, @created_by, @updated_at, @updated_by)
       `)
       const insertReceiptItem = db.prepare(`
         INSERT INTO goods_receipt_items(id, receipt_id, product_id, product_code, product_name, quantity, unit_cost, subtotal)
@@ -2705,7 +2727,7 @@ export function restoreDatabase(data: any) {
       `)
       for (const r of data.goodsReceipts) {
         insertReceipt.run({
-          id: r.id, client_id: r.client_id ?? null, client_name: r.client_name || '', receipt_date: r.receipt_date,
+          id: r.id, client_id: r.client_id ?? null, supplier_id: r.supplier_id ?? null, client_name: r.client_name || '', receipt_date: r.receipt_date,
           total: r.total || 0, payment_method: r.payment_method || 'cash', status: r.status || 'completed', notes: r.notes || '',
           created_at: r.created_at || new Date().toISOString(), updated_at: r.updated_at ?? null, ...auditOf(r)
         })

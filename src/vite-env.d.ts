@@ -74,6 +74,7 @@ interface ElectronAPI {
         update: (id: number, client: any) => Promise<any>
         delete: (id: number) => Promise<{ success: boolean }>
         getCreditBalance: (id: number) => Promise<number>
+        getCreditBalances: () => Promise<Record<number, number>>
     }
     expenseTypes: {
         getAll: () => Promise<any[]>

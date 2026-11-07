@@ -16,7 +16,7 @@ import type {
 } from '@/types/database'
 
 // Everyone the business deals with, in one place
-// walkin = people without a client record (walk-in sellers on a GRN, named walk-in customers), grouped by name
+// walkin = people without a client or supplier record (walk-in sellers on a GRN, named walk-in customers), grouped by name
 export const ACCOUNT_TYPES = ['supplier', 'client', 'walkin', 'source', 'savings', 'expense'] as const
 export type AccountType = typeof ACCOUNT_TYPES[number]
 
@@ -55,7 +55,7 @@ export type Bucket =
     | 'deposits' | 'withdrawals' | 'spent'
 
 export const BUCKETS: Record<AccountType, Bucket[]> = {
-    supplier: ['goodsReceived', 'paid', 'refunded'],
+    supplier: ['goodsReceived', 'paid', 'refunded', 'boughtFrom'],
     client: ['cashSales', 'creditSales', 'boughtFrom'],
     walkin: ['boughtFrom', 'cashSales', 'creditSales'],
     source: ['received', 'onCredit', 'borrowed', 'repaid', 'collected', 'goods'],
@@ -129,8 +129,8 @@ function makeAccount(base: Omit<Account, 'lines' | 'balance' | 'lastDate'>, line
     return { ...base, lines: finished, balance: last?.balance ?? 0, lastDate: last?.date ?? null }
 }
 
-// Suppliers: orders, goods received (owed), payments and refunds
-function supplierAccounts(suppliers: Supplier[], orders: Purchase[], payments: SupplierPayment[], entries: CapitalEntry[]): Account[] {
+// Suppliers: orders, goods received (owed), payments and refunds, and goods bought on a GRN (paid on the spot)
+function supplierAccounts(suppliers: Supplier[], orders: Purchase[], payments: SupplierPayment[], entries: CapitalEntry[], receipts: GoodsReceipt[]): Account[] {
     // Goods on credit recorded in Capital point at their order
     const capitalByOrder = new Map(entries.filter(e => e.form === 'supplier_credit' && e.purchase_id).map(e => [e.purchase_id!, e]))
     return suppliers.filter(s => s.id).map(supplier => {
@@ -169,6 +169,7 @@ function supplierAccounts(suppliers: Supplier[], orders: Purchase[], payments: S
                 method: payment.payment_method, by: payment.created_by, notes: payment.notes
             })
         }
+        lines.push(...receipts.filter(r => r.supplier_id === supplier.id).map(grnLine))
         return makeAccount({
             type: 'supplier', id: supplier.id!, name: supplier.name,
             info: [supplier.contact, supplier.phone].filter(Boolean).join(' · ') || undefined,
@@ -225,10 +226,11 @@ export const walkInId = (name: string) => name.trim().replace(/\s+/g, ' ').toLow
 // Sales made without a customer name share one "Walk-in customer" account
 export const UNNAMED_WALK_IN = '~'
 
-// People without a client record: walk-in sellers on a GRN, and walk-in customers on sales
+// People without a client or supplier record: walk-in sellers on a GRN, and walk-in customers on sales
 // (a sale under a registered client's name belongs to that client's account instead)
-function walkInAccounts(clients: Client[], sales: Sale[], receipts: GoodsReceipt[], withGrns: boolean, withSales: boolean): Account[] {
+function walkInAccounts(clients: Client[], suppliers: Supplier[], sales: Sale[], receipts: GoodsReceipt[], withGrns: boolean, withSales: boolean): Account[] {
     const clientIds = new Set(clients.map(c => c.id))
+    const supplierIds = new Set(suppliers.map(s => s.id))
     const clientNames = new Set(clients.map(c => c.name))
     const groups = new Map<string, { name: string; lines: Line[] }>()
     const add = (rawName: string | undefined | null, line: Line) => {
@@ -240,7 +242,10 @@ function walkInAccounts(clients: Client[], sales: Sale[], receipts: GoodsReceipt
     }
     if (withGrns) {
         for (const receipt of receipts) {
-            if (!receipt.client_id || !clientIds.has(receipt.client_id)) add(receipt.client_name, grnLine(receipt))
+            // A GRN for a client or supplier that still exists is on their own account
+            if (receipt.client_id && clientIds.has(receipt.client_id)) continue
+            if (receipt.supplier_id && supplierIds.has(receipt.supplier_id)) continue
+            add(receipt.client_name, grnLine(receipt))
         }
     }
     if (withSales) {
@@ -345,12 +350,12 @@ export async function loadAccounts(user: AuthUser | null, options?: { allTypes?:
     const [
         suppliers, orders, payments, clients, sales, receipts, entries, sources, savings, transactions, expenseTypes, expenses
     ] = await Promise.all([
-        can('supplier') ? supplierService.getAll() : none<Supplier>(),
+        can('supplier') || walkInGrns ? supplierService.getAll() : none<Supplier>(),
         can('supplier') ? purchaseService.getAll() : none<Purchase>(),
         can('supplier') ? supplierPaymentService.getAll() : none<SupplierPayment>(),
         can('client') || can('walkin') ? clientService.getAll() : none<Client>(),
         can('client') || walkInSales ? saleService.getAll() : none<Sale>(),
-        can('client') || walkInGrns ? goodsReceiptService.getAll() : none<GoodsReceipt>(),
+        can('client') || can('supplier') || walkInGrns ? goodsReceiptService.getAll() : none<GoodsReceipt>(),
         can('supplier') || can('source') ? capitalService.getAll() : none<CapitalEntry>(),
         can('source') ? capitalService.getSources() : none<CapitalSource>(),
         can('savings') ? savingsAccountService.getAll() : none<SavingsAccount>(),
@@ -359,9 +364,9 @@ export async function loadAccounts(user: AuthUser | null, options?: { allTypes?:
         can('expense') ? expenseService.getAll() : none<Expense>()
     ])
     return [
-        ...supplierAccounts(suppliers, orders, payments, entries),
+        ...(can('supplier') ? supplierAccounts(suppliers, orders, payments, entries, receipts) : []),
         ...(can('client') ? clientAccounts(clients, sales, receipts) : []),
-        ...(can('walkin') ? walkInAccounts(clients, sales, receipts, walkInGrns, walkInSales) : []),
+        ...(can('walkin') ? walkInAccounts(clients, suppliers, sales, receipts, walkInGrns, walkInSales) : []),
         ...sourceAccounts(sources, entries),
         ...savingsAccounts(savings, transactions),
         ...expenseAccounts(expenseTypes, expenses)

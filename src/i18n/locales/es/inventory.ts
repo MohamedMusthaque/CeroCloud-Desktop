@@ -33,7 +33,7 @@ export const inventoryPage = {
     'stock.type.sale': 'Venta',
     'stock.type.sale_cancel': 'Venta anulada',
     'stock.type.purchase': 'Recibido del proveedor',
-    'stock.type.grn': 'Comprado a cliente (nota)',
+    'stock.type.grn': 'Comprado con nota de recepción',
     'stock.type.grn_cancel': 'Nota de recepción anulada',
     'stock.type.capital': 'Capital en mercadería',
     'stock.type.capital_delete': 'Capital en mercadería eliminado',

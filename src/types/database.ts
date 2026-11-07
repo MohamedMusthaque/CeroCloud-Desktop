@@ -184,7 +184,7 @@ export interface CapitalEntry extends AuditFields {
     settled?: number
 }
 
-// Goods Received Note: goods bought from a client (the reverse of a bill)
+// Goods Received Note: goods bought from a client, a supplier or a walk-in seller, paid on the spot
 export interface GoodsReceiptItem {
     id?: number
     receipt_id?: number
@@ -198,8 +198,10 @@ export interface GoodsReceiptItem {
 
 export interface GoodsReceipt extends AuditFields {
     id?: number
-    // Registered client, or null for a walk-in seller (name only)
+    // Registered client or supplier (at most one is set); both null for a walk-in seller (name only)
     client_id?: number | null
+    supplier_id?: number | null
+    // The seller's name, whoever they are
     client_name: string
     receipt_date: string // Local day 'YYYY-MM-DD'
     total: number

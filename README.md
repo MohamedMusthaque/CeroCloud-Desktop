@@ -30,7 +30,7 @@ This repository is a fork of [CeroCloud/CeroCloud-Desktop](https://github.com/Ce
 - **Category management**, with renames and deletes synced to products
 - **Credit and cheque payments**, with optional per-client credit limits
 - **Purchases**: supplier orders, advance payments, goods receiving and supplier accounts
-- **Goods Received Notes (GRN)** for goods bought from clients or walk-in sellers
+- **Goods Received Notes (GRN)** for goods bought from clients, suppliers or walk-in sellers
 - **Expenses**, **savings accounts** and **capital & income** (capital, loans, promised capital, income and withdrawals, including entries on credit and printable credit bills)
 - **Accounts**: one ledger per supplier, client, walk-in, capital source or lender, savings account and expense category, with PDF and Excel reports
 - **Business Zakat** calculator built on the business's own records, with PDF and Excel reports
@@ -72,7 +72,7 @@ This repository is a fork of [CeroCloud/CeroCloud-Desktop](https://github.com/Ce
 - **Advance payments** on an order, and payments or refunds on the supplier account
 - **Receive goods** against an order: received quantities and costs update stock, and the order's advance plus any credit with the supplier pays for them first
 - **Supplier accounts**: paid, refunded, goods received, advances held and the balance (credit in your favour or amount owed)
-- **Goods Received Notes (GRN)** for goods bought from a registered client or a walk-in seller, paid on receipt; printable in A4 or ticket format and cancellable (stock is reversed)
+- **Goods Received Notes (GRN)** for goods bought from a registered client, a registered supplier or a walk-in seller, paid on receipt; printable in A4 or ticket format and cancellable (stock is reversed)
 
 ### Expenses and savings
 - Expenses by type (rent, utilities, wages …) with date, payment method and description; expense types can be managed

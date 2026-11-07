@@ -218,7 +218,9 @@ export function ProductView() {
                             <td className={viewCellClass}>
                                 {receipt.client_id
                                     ? <ViewLink to={`/clients/${receipt.client_id}`} page="clients">{receipt.client_name}</ViewLink>
-                                    : `${receipt.client_name} (${t('grn.walkIn')})`}
+                                    : receipt.supplier_id
+                                        ? <ViewLink to={`/suppliers/${receipt.supplier_id}`} page="suppliers">{`${receipt.client_name} (${t('grn.supplier')})`}</ViewLink>
+                                        : `${receipt.client_name} (${t('grn.walkIn')})`}
                             </td>
                             <td className={cn(viewCellClass, "text-right")}>{item.quantity}</td>
                             <td className={cn(viewCellClass, "text-right")}>{formatCurrency(item.unit_cost)}</td>

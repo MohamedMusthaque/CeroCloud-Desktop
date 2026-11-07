@@ -44,7 +44,7 @@ export const zakat = {
     'zakat.flow.capital': 'Capital y préstamos recibidos',
     'zakat.flow.expenses': 'Gastos pagados',
     'zakat.flow.suppliers': 'Pagado a proveedores (neto)',
-    'zakat.flow.grn': 'Pagado a clientes (notas de recepción)',
+    'zakat.flow.grn': 'Pagado en notas de recepción',
     'zakat.flow.withdrawals': 'Retiros del dueño',
     'zakat.flow.loanRepayments': 'Cuotas de préstamos pagadas',
     'zakat.a.negative': 'Los registros muestran más pagos que cobros ({amount}): falta registrar dinero inicial o ingresos. Use el saldo contado.',

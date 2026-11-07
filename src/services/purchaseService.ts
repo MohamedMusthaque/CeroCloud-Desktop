@@ -58,7 +58,8 @@ export const purchaseService = {
 
 export interface GoodsReceiptInput {
     client_id?: number | null
-    // Walk-in seller when there's no registered client
+    supplier_id?: number | null
+    // Walk-in seller when there's no registered client or supplier
     client_name?: string
     receipt_date: string
     payment_method: string
@@ -67,7 +68,7 @@ export interface GoodsReceiptInput {
     update_costs: boolean
 }
 
-// Goods Received Notes: goods bought from clients
+// Goods Received Notes: goods bought from clients, suppliers or walk-in sellers
 export const goodsReceiptService = {
     // Newest first, with `items`
     getAll: (): Promise<GoodsReceipt[]> => window.electronAPI.goodsReceipts.getAll(),

@@ -63,6 +63,14 @@ class ClientService {
         }
         return window.electronAPI.clients.getCreditBalance(id)
     }
+
+    // Outstanding credit balance of every client that has one, by client id
+    async getCreditBalances(): Promise<Record<number, number>> {
+        if (!window.electronAPI?.clients) {
+            throw new Error('Client API not available')
+        }
+        return window.electronAPI.clients.getCreditBalances()
+    }
 }
 
 export const clientService = new ClientService()

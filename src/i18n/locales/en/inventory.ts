@@ -35,7 +35,7 @@ export const inventoryPage: Record<keyof typeof es, string> = {
     'stock.type.sale': 'Sale',
     'stock.type.sale_cancel': 'Sale cancelled',
     'stock.type.purchase': 'Received from supplier',
-    'stock.type.grn': 'Bought from client (GRN)',
+    'stock.type.grn': 'Bought on GRN',
     'stock.type.grn_cancel': 'GRN cancelled',
     'stock.type.capital': 'Capital in goods',
     'stock.type.capital_delete': 'Capital goods removed',

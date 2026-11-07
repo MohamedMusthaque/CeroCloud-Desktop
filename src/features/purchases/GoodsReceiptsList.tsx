@@ -36,7 +36,9 @@ export function GoodsReceiptsList({ receipts, viewMode, formatDay, onPrint, onCa
 
     const seller = (receipt: GoodsReceipt) => receipt.client_id
         ? <Link to={`/clients/${receipt.client_id}`} className="font-medium text-gray-900 dark:text-white hover:text-primary hover:underline">{receipt.client_name}</Link>
-        : <span className="font-medium text-gray-900 dark:text-white" title={t('grn.walkIn')}>{receipt.client_name}</span>
+        : receipt.supplier_id
+            ? <Link to={`/suppliers/${receipt.supplier_id}`} className="font-medium text-gray-900 dark:text-white hover:text-primary hover:underline" title={t('grn.supplier')}>{receipt.client_name}</Link>
+            : <span className="font-medium text-gray-900 dark:text-white" title={t('grn.walkIn')}>{receipt.client_name}</span>
 
     const actions = (receipt: GoodsReceipt) => (
         <div className="flex justify-end gap-1">

@@ -46,7 +46,7 @@ export const zakat: Record<keyof typeof es, string> = {
     'zakat.flow.capital': 'Capital and loans received',
     'zakat.flow.expenses': 'Expenses paid',
     'zakat.flow.suppliers': 'Paid to suppliers (net)',
-    'zakat.flow.grn': 'Paid to clients (GRNs)',
+    'zakat.flow.grn': 'Paid on GRNs',
     'zakat.flow.withdrawals': 'Owner withdrawals',
     'zakat.flow.loanRepayments': 'Loan repayments',
     'zakat.a.negative': 'The records show more paid out than received ({amount}): opening money or income is missing. Use the counted balance.',

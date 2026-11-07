@@ -1,19 +1,20 @@
 import { forwardRef } from 'react'
 import { format, parseISO } from 'date-fns'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
-import type { Client, CompanySettings, GoodsReceipt } from '@/types/database'
+import type { Client, CompanySettings, GoodsReceipt, Supplier } from '@/types/database'
 import { grnId } from '@/features/purchases/purchaseUi'
 import { formatCurrency } from '@/lib/utils'
 
 interface GoodsReceiptTemplateProps {
     receipt: GoodsReceipt
     settings: CompanySettings
-    // Registered seller's details, when the GRN is for a client
+    // Registered seller's details, when the GRN is for a client or a supplier
     client?: Client
+    supplier?: Supplier
 }
 
 // Goods Received Note: laid out like the bill (InvoiceTemplate), same paper size, logo and banners
-export const GoodsReceiptTemplate = forwardRef<HTMLDivElement, GoodsReceiptTemplateProps>(({ receipt, settings, client }, ref) => {
+export const GoodsReceiptTemplate = forwardRef<HTMLDivElement, GoodsReceiptTemplateProps>(({ receipt, settings, client, supplier }, ref) => {
     const { t, dateLocale } = useTranslation()
     const isTicket = settings.invoice?.paperSize === 'ticket80mm'
     const items = receipt.items ?? []
@@ -61,10 +62,11 @@ export const GoodsReceiptTemplate = forwardRef<HTMLDivElement, GoodsReceiptTempl
                 <div className="mb-2 break-words">
                     <p className="font-bold uppercase">{t('print.receivedFrom')}</p>
                     <p className="text-sm font-bold">{receipt.client_name}</p>
-                    {!receipt.client_id && <p>{t('print.walkInSeller')}</p>}
+                    {receipt.supplier_id ? <p>{t('print.col.supplier')}</p> : !receipt.client_id && <p>{t('print.walkInSeller')}</p>}
                     {client?.tax_id && <p>{t('print.nit', { id: client.tax_id })}</p>}
-                    {client?.address && <p>{client.address}</p>}
-                    {client?.phone && <p>{client.phone}</p>}
+                    {supplier?.contact && <p>{supplier.contact}</p>}
+                    {(client ?? supplier)?.address && <p>{(client ?? supplier)!.address}</p>}
+                    {(client ?? supplier)?.phone && <p>{(client ?? supplier)!.phone}</p>}
                 </div>
 
                 <div className="border-b border-black border-dashed my-2" />
@@ -178,6 +180,14 @@ export const GoodsReceiptTemplate = forwardRef<HTMLDivElement, GoodsReceiptTempl
                                 {client.address && <p>{client.address}</p>}
                                 {client.phone && <p>{t('print.phone', { phone: client.phone })}</p>}
                                 {client.email && <p>{client.email}</p>}
+                            </div>
+                        ) : receipt.supplier_id ? (
+                            <div className="text-sm text-gray-600 mt-1 space-y-0.5">
+                                <p className="text-gray-500">{t('print.col.supplier')}</p>
+                                {supplier?.contact && <p>{supplier.contact}</p>}
+                                {supplier?.address && <p>{supplier.address}</p>}
+                                {supplier?.phone && <p>{t('print.phone', { phone: supplier.phone })}</p>}
+                                {supplier?.email && <p>{supplier.email}</p>}
                             </div>
                         ) : (
                             <p className="text-gray-500 text-sm">{t('print.walkInSeller')}</p>
