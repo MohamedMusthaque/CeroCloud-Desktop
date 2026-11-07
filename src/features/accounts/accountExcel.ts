@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx'
 import { toast } from 'sonner'
 import { t, paymentMethodLabel } from '@/i18n'
+import { fileStamp } from '@/lib/utils'
 import { companyService } from '@/services/companyService'
 import type { SummaryRow } from '@/components/print/AccountsReportTemplate'
 import { BALANCE_MODES, accountName, balanceState, cashTotals, lineLabel, typeLabel, type Account, type AccountLine, type AccountType } from './accountLedger'
@@ -55,7 +56,6 @@ function makeSheet(rows: Cell[][], headerRow: number, columns: { width: number; 
 }
 
 const safeFileName = (name: string) => name.replace(/[\\/:*?"<>|]+/g, '').trim() || 'account'
-const today = () => new Date().toISOString().split('T')[0]
 // Sheet names: up to 31 characters, none of : \ / ? * [ ]
 const sheetName = (name: string) => name.replace(/[:\\/?*[\]]+/g, ' ').trim().slice(0, 31) || 'Sheet'
 
@@ -139,7 +139,7 @@ export function downloadAccountsExcel({ rows, filters, balanceLabel, fromDate, t
         XLSX.utils.book_append_sheet(book, makeSheet([...lineTop, lineHeader, ...lineBody], lineTop.length,
             [{ width: 28 }, { width: 16 }, ...LINE_COLUMNS], lineTop.length + lineBody.length), sheetName(t('acct.excel.transactionsSheet')))
         return book
-    }, `${t('acct.report.summaryFile')}_${today()}.xlsx`)
+    }, `${t('acct.report.summaryFile')}_${fileStamp()}.xlsx`)
 }
 
 export interface StatementExcelInput {
@@ -190,5 +190,5 @@ export function downloadAccountExcel({ account, rows, filters, opening, openingD
         }
         XLSX.utils.book_append_sheet(book, sheet, sheetName(t('acct.report.statementSubtitle')))
         return book
-    }, `${safeFileName(name)}_${t('acct.report.statementFile')}_${today()}.xlsx`)
+    }, `${safeFileName(name)}_${t('acct.report.statementFile')}_${fileStamp()}.xlsx`)
 }

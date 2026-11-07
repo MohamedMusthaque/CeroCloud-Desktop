@@ -3,7 +3,7 @@ import { saveAs } from 'file-saver'
 import jsPDF from 'jspdf'
 import { companyService } from './companyService'
 import { t, getLocale, paymentMethodLabel, unitLabel } from '@/i18n'
-import { formatAmount } from '@/lib/utils'
+import { fileStamp, formatAmount } from '@/lib/utils'
 
 export const exportService = {
     // Export products to CSV
@@ -30,7 +30,7 @@ export const exportService = {
         ].join('\n')
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        saveAs(blob, `${t('export.file.inventory')}_${new Date().toISOString().split('T')[0]}.csv`)
+        saveAs(blob, `${t('export.file.inventory')}_${fileStamp()}.csv`)
     },
 
     // Export sales to CSV
@@ -57,7 +57,7 @@ export const exportService = {
         ].join('\n')
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        saveAs(blob, `${t('export.file.sales')}_${new Date().toISOString().split('T')[0]}.csv`)
+        saveAs(blob, `${t('export.file.sales')}_${fileStamp()}.csv`)
     },
 
     // Export sales with details to CSV
@@ -90,7 +90,7 @@ export const exportService = {
         ].join('\n')
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        saveAs(blob, `${t('export.file.salesDetailed')}_${new Date().toISOString().split('T')[0]}.csv`)
+        saveAs(blob, `${t('export.file.salesDetailed')}_${fileStamp()}.csv`)
     },
 
     // Export low stock products
@@ -116,7 +116,7 @@ export const exportService = {
         ].join('\n')
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        saveAs(blob, `${t('export.file.lowStock')}_${new Date().toISOString().split('T')[0]}.csv`)
+        saveAs(blob, `${t('export.file.lowStock')}_${fileStamp()}.csv`)
     },
 
     // Export invoice to PDF
@@ -205,7 +205,7 @@ export const exportService = {
         doc.text(t('export.thanks'), 105, 280, { align: 'center' })
 
         // Save
-        doc.save(`${t('export.file.invoice')}_${sale.id}_${new Date().toISOString().split('T')[0]}.pdf`)
+        doc.save(`${t('export.file.invoice')}_${sale.id}_${fileStamp()}.pdf`)
     },
 
     // Export daily closing report to PDF
@@ -274,7 +274,7 @@ export const exportService = {
         })
 
         // Save
-        doc.save(`${t('export.file.dailyClosing')}_${date.toISOString().split('T')[0]}.pdf`)
+        doc.save(`${t('export.file.dailyClosing')}_${fileStamp()}.pdf`)
     },
 
     // Export complete inventory to PDF
@@ -411,7 +411,7 @@ export const exportService = {
         })
 
         // Save
-        doc.save(`${t('export.file.inventoryFull')}_${new Date().toISOString().split('T')[0]}.pdf`)
+        doc.save(`${t('export.file.inventoryFull')}_${fileStamp()}.pdf`)
     },
 
     // Export sales to PDF
@@ -559,7 +559,7 @@ export const exportService = {
         })
 
         // Save
-        doc.save(`${t('export.file.sales')}_${new Date().toISOString().split('T')[0]}.pdf`)
+        doc.save(`${t('export.file.sales')}_${fileStamp()}.pdf`)
     },
 
     // Export low stock products to PDF
@@ -632,6 +632,6 @@ export const exportService = {
         doc.text(t('export.restockHint'), 105, 285, { align: 'center' })
 
         // Save
-        doc.save(`${t('export.file.lowStock')}_${new Date().toISOString().split('T')[0]}.pdf`)
+        doc.save(`${t('export.file.lowStock')}_${fileStamp()}.pdf`)
     },
 }

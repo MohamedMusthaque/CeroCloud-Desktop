@@ -1,12 +1,12 @@
 import * as XLSX from 'xlsx'
 import { toast } from 'sonner'
 import { t } from '@/i18n'
+import { fileStamp } from '@/lib/utils'
 import { pdfGenerator } from '@/services/pdfGenerator'
 import { companyService } from '@/services/companyService'
 import { ZakatRulingsPage, ZakatStatementPage } from '@/components/print/ZakatReportTemplate'
 import type { ZakatReport } from './zakatReportData'
 
-const today = () => new Date().toISOString().split('T')[0]
 const MONEY = '#,##0.00'
 
 // Two A4 pages: the calculation, then the rulings applied and sign-off
@@ -16,7 +16,7 @@ export function downloadZakatPdf(report: ZakatReport) {
         <ZakatStatementPage key="statement" settings={settings} report={report} page={{ current: 1, total: 2 }} />,
         <ZakatRulingsPage key="rulings" settings={settings} report={report} page={{ current: 2, total: 2 }} />
     ]
-    return toast.promise(pdfGenerator.generatePages(pages, `${t('zakat.report.file')}_${today()}.pdf`), {
+    return toast.promise(pdfGenerator.generatePages(pages, `${t('zakat.report.file')}_${fileStamp()}.pdf`), {
         loading: t('rep.export.generating'), success: t('rep.export.success'), error: t('rep.export.error')
     })
 }
@@ -106,7 +106,7 @@ export function downloadZakatExcel(report: ZakatReport) {
         ]
         XLSX.utils.book_append_sheet(book, sheet(rulings, [34, 110], []), t('zakat.report.sheet.rulings').slice(0, 31))
 
-        XLSX.writeFile(book, `${t('zakat.report.file')}_${today()}.xlsx`)
+        XLSX.writeFile(book, `${t('zakat.report.file')}_${fileStamp()}.xlsx`)
         toast.success(t('acct.excel.success'))
     } catch (error) {
         console.error('Error generating zakat Excel file:', error)

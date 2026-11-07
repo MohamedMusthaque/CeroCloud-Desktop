@@ -3,6 +3,7 @@ import { saveAs } from 'file-saver'
 import { secureEncryptionService, arrayToBase64, base64ToArray } from './secureEncryptionService'
 import { Product, Category, Sale, Supplier, CompanySettings, Client, Expense, ExpenseType, SavingsAccount, SavingsTransaction, Purchase, SupplierPayment, CapitalEntry, GoodsReceipt, InventoryLog } from '@/types/database'
 import { t } from '@/i18n'
+import { fileStamp } from '@/lib/utils'
 
 interface BackupMetadata {
     app: string
@@ -186,7 +187,7 @@ export const zipBackupService = {
             })
 
             // File name with the .cerobak extension
-            const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0]
+            const timestamp = fileStamp()
             const secureFlag = password ? t('zipBackup.protectedSuffix') : ''
             const filename = `nexoracloud_backup${secureFlag}_${timestamp}.cerobak`
 

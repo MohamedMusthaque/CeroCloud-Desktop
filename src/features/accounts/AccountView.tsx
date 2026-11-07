@@ -5,7 +5,7 @@ import { saveAs } from 'file-saver'
 import { toast } from 'sonner'
 import { ArrowDownLeft, ArrowUpRight, Minus, Search, Download, Banknote, Receipt, Scale, ListOrdered, ExternalLink, ArrowLeftRight, Ban, FileDown, FileSpreadsheet } from 'lucide-react'
 import { useTranslation, paymentMethodLabel } from '@/i18n'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, fileStamp, formatCurrency } from '@/lib/utils'
 import { DateRangeInputs } from '@/components/ui/DateRangeInputs'
 import { ClearFiltersButton } from '@/components/ui/ClearFiltersButton'
 import { ViewHeader, ViewAvatar, ViewSection, ViewStat, ViewTable, ViewLink, ViewLoading, ViewNotFound, viewCellClass } from '@/components/view/ViewPage'
@@ -105,7 +105,7 @@ export function AccountView() {
         ]
         const csv = lines.map(line => line.map(quote).join(',')).join('\n')
         const safeName = name.replace(/[\\/:*?"<>|]+/g, '').trim() || String(account.id)
-        saveAs(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }), `${safeName}_${t('acct.file')}_${new Date().toISOString().split('T')[0]}.csv`)
+        saveAs(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }), `${safeName}_${t('acct.file')}_${fileStamp()}.csv`)
     }
 
     const openSupplierPayment = async () => {

@@ -1,5 +1,6 @@
 import { saveAs } from 'file-saver'
 import { t } from '@/i18n'
+import { fileStamp } from '@/lib/utils'
 
 export const backupService = {
     // Create backup (export current database)
@@ -54,7 +55,7 @@ export const backupService = {
             }
 
             const blob = new Blob([finalContent], { type: 'application/json' })
-            const filename = `backup_nexoracloud_${new Date().toISOString().split('T')[0]}_${Date.now()}.${fileExtension}`
+            const filename = `backup_nexoracloud_${fileStamp()}.${fileExtension}`
 
             saveAs(blob, filename)
             return { success: true, filename }

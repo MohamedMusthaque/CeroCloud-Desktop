@@ -1,5 +1,6 @@
 import { toast } from 'sonner'
 import { t } from '@/i18n'
+import { fileStamp } from '@/lib/utils'
 import { pdfGenerator } from '@/services/pdfGenerator'
 import { companyService } from '@/services/companyService'
 import { AccountsSummaryPage, AccountStatementPage, type SummaryRow } from '@/components/print/AccountsReportTemplate'
@@ -26,7 +27,6 @@ function paginate<T>(rows: T[], perPage: { first: number; other: number }): T[][
 }
 
 const safeFileName = (name: string) => name.replace(/[\\/:*?"<>|]+/g, '').trim() || 'account'
-const today = () => new Date().toISOString().split('T')[0]
 
 function download(pages: React.ReactNode[], filename: string) {
     return toast.promise(pdfGenerator.generatePages(pages, filename), {
@@ -63,7 +63,7 @@ export function downloadAccountsSummary({ rows, filters, balanceLabel }: Summary
             page={{ current: index + 1, total: chunks.length }}
         />
     ))
-    return download(pages, `${t('acct.report.summaryFile')}_${today()}.pdf`)
+    return download(pages, `${t('acct.report.summaryFile')}_${fileStamp()}.pdf`)
 }
 
 export interface StatementReportInput {
@@ -97,5 +97,5 @@ export function downloadAccountStatement({ account, rows, filters, opening, open
             page={{ current: index + 1, total: chunks.length }}
         />
     ))
-    return download(pages, `${safeFileName(accountName(account, t))}_${t('acct.report.statementFile')}_${today()}.pdf`)
+    return download(pages, `${safeFileName(accountName(account, t))}_${t('acct.report.statementFile')}_${fileStamp()}.pdf`)
 }

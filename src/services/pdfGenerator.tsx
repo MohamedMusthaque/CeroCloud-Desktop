@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { fileStamp } from '@/lib/utils'
 import { Sale, CompanySettings, GoodsReceipt, CapitalEntry, Supplier } from '@/types/database'
 import { InvoiceTemplate } from '@/components/print/InvoiceTemplate'
 import { GoodsReceiptTemplate } from '@/components/print/GoodsReceiptTemplate'
@@ -12,7 +13,7 @@ import jsPDF from 'jspdf'
 
 import { clientService } from './clientService'
 import { supplierService } from './supplierService'
-import { t, getLocale } from '@/i18n'
+import { t } from '@/i18n'
 
 export const pdfGenerator = {
     generateInvoice: async (sale: Sale, settings: CompanySettings) => {
@@ -87,7 +88,7 @@ export const pdfGenerator = {
             }
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-            pdf.save(`${t('export.file.invoice')}_${sale.id}_${new Date().toISOString().split('T')[0]}.pdf`)
+            pdf.save(`${t('export.file.invoice')}_${sale.id}_${fileStamp()}.pdf`)
 
             // Cleanup
             root.unmount()
@@ -146,7 +147,7 @@ export const pdfGenerator = {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: isTicket ? [pdfWidth, pdfHeight] : 'a4' })
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight)
-            pdf.save(`${t('export.file.grn')}_${receipt.id}_${receipt.receipt_date}.pdf`)
+            pdf.save(`${t('export.file.grn')}_${receipt.id}_${fileStamp()}.pdf`)
         } catch (error) {
             console.error('Error generating GRN PDF:', error)
             throw error
@@ -194,7 +195,7 @@ export const pdfGenerator = {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: isTicket ? [pdfWidth, pdfHeight] : 'a4' })
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight)
-            pdf.save(`${billNumber(entry)}_${entry.entry_date}.pdf`)
+            pdf.save(`${billNumber(entry)}_${fileStamp()}.pdf`)
         } catch (error) {
             console.error('Error generating capital bill PDF:', error)
             throw error
@@ -340,9 +341,7 @@ export const pdfGenerator = {
                 'daily-closing': t('export.file.report')
             }
             const filenamePrefix = filenameMap[type] || t('export.file.report')
-            const dateStr = new Date().toLocaleDateString(getLocale()).replace(/\//g, '-')
-
-            pdf.save(`${filenamePrefix}_${dateStr}.pdf`)
+            pdf.save(`${filenamePrefix}_${fileStamp()}.pdf`)
 
             // Cleanup
             root.unmount()
