@@ -1035,8 +1035,9 @@ function CartItemRow({ item, onUpdate, onSetQuantity, onSetPrice, onRemove, curr
                         value={price}
                         onCommit={(value) => onSetPrice(item.product.id!, value)}
                         label={t('pos.unitPrice')}
+                        money
                         className={cn(
-                            "w-20 h-6 px-1.5 text-xs text-right font-semibold",
+                            "w-24 h-6 px-1.5 text-xs text-right font-semibold",
                             priceChanged && "border-amber-400 dark:border-amber-500 text-amber-700 dark:text-amber-400"
                         )}
                     />
@@ -1089,7 +1090,8 @@ const lineTotal = (price: number, quantity: number) => Math.round(price * quanti
 const itemPrice = (item: CartItem) => item.unitPrice ?? item.product.price
 
 // Editable cart number (quantity or unit price): applied on Enter or blur, Escape restores the current value
-function NumberCommitInput({ value, onCommit, label, className }: { value: number; onCommit: (value: number) => void; label: string; className?: string }) {
+// (money: shows thousands separators while typing, like the other amount fields)
+function NumberCommitInput({ value, onCommit, label, className, money }: { value: number; onCommit: (value: number) => void; label: string; className?: string; money?: boolean }) {
     const [draft, setDraft] = useState(String(value))
     const cancelRef = useRef(false)
 
@@ -1109,32 +1111,39 @@ function NumberCommitInput({ value, onCommit, label, className }: { value: numbe
         setDraft(String(value))
     }
 
+    const shared = {
+        onFocus: (e: React.FocusEvent<HTMLInputElement>) => e.target.select(),
+        onBlur: commit,
+        'aria-label': label,
+        title: label,
+        onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === 'Enter') {
+                e.preventDefault()
+                e.currentTarget.blur()
+            }
+            if (e.key === 'Escape') {
+                cancelRef.current = true
+                e.currentTarget.blur()
+            }
+        },
+        className: cn(
+            "rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+            className
+        )
+    }
+
+    // AmountInput hands back the plain number ('1250.5'), so commit() reads it the same way
+    if (money) return <AmountInput {...shared} value={draft} onChange={setDraft} decimals={2} />
+
     return (
         <input
+            {...shared}
             type="number"
             min={0}
             step="any"
             inputMode="decimal"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onFocus={(e) => e.target.select()}
-            onBlur={commit}
-            aria-label={label}
-            title={label}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault()
-                    e.currentTarget.blur()
-                }
-                if (e.key === 'Escape') {
-                    cancelRef.current = true
-                    e.currentTarget.blur()
-                }
-            }}
-            className={cn(
-                "rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
-                className
-            )}
         />
     )
 }
