@@ -49,6 +49,7 @@ import { goodsReceiptService, purchaseService, supplierAccountService, supplierP
 import { capitalService } from '@/services/capitalService'
 import { format, subDays, startOfDay } from 'date-fns'
 import { ReportPeriodFilter } from './ReportPeriodFilter'
+import { SaleDetailModal } from './SaleDetailModal'
 import { filterSalesByPeriod, filterExpensesByPeriod, filterByDayPeriod, periodLabel, type ReportPeriod } from '@/lib/reportPeriod'
 import { useTranslation, paymentMethodLabel, t as translateNow } from '@/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -78,6 +79,8 @@ export function Reports() {
 
     // UI States
     const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null)
+    // Transaction History row opened in the detail window
+    const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [historyPeriod, setHistoryPeriod] = useState<ReportPeriod>({ range: 'all' })
@@ -837,7 +840,21 @@ export function Reports() {
                             {/* List Content */}
                             <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[600px] overflow-y-auto bg-white dark:bg-gray-800">
                                 {sortedSales.slice(0, 100).map((sale) => (
-                                    <div key={sale.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors group">
+                                    <div
+                                        key={sale.id}
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => setSelectedSale(sale)}
+                                        onKeyDown={(e) => {
+                                            if (e.target !== e.currentTarget) return
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault()
+                                                setSelectedSale(sale)
+                                            }
+                                        }}
+                                        title={t('saleDetail.open')}
+                                        className="grid grid-cols-12 gap-4 px-6 py-4 items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 focus:outline-none focus-visible:bg-indigo-50 dark:focus-visible:bg-indigo-900/20 transition-colors group"
+                                    >
 
                                         {/* Date / ID */}
                                         <div className="col-span-3">
@@ -893,7 +910,7 @@ export function Reports() {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="col-span-2 text-right flex items-center justify-end gap-2">
+                                        <div className="col-span-2 text-right flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                                             <button
                                                 onClick={() => pdfGenerator.generateInvoice(sale, settings)}
                                                 className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
@@ -924,6 +941,15 @@ export function Reports() {
                     )}
                 </motion.div>
             </AnimatePresence>
+
+            <SaleDetailModal
+                sale={selectedSale}
+                products={products}
+                settings={settings}
+                onClose={() => setSelectedSale(null)}
+                onReprint={(sale) => pdfGenerator.generateInvoice(sale, settings)}
+                onCancelSale={(sale) => { setSelectedSale(null); setSaleToCancel(sale) }}
+            />
 
             <ConfirmDialog
                 isOpen={!!saleToCancel}
