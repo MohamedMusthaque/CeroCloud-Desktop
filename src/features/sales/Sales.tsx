@@ -17,7 +17,8 @@ import {
     ArrowUpDown,
     Camera,
     HandCoins,
-    Landmark
+    Landmark,
+    RotateCcw
 } from 'lucide-react'
 import { productService } from '@/services/productService'
 import { saleService } from '@/services/saleService'
@@ -53,6 +54,7 @@ export function Sales() {
         addItem,
         updateQuantity: updateStoreQuantity,
         removeItem,
+        setUnitPrice,
         clearCart,
         setCustomerName,
         setCustomer,
@@ -301,8 +303,28 @@ export function Sales() {
         }
     }
 
+    // Typed unit price for this bill only (the product's own price is unchanged)
+    const handleSetUnitPrice = (productId: number, price: number | null) => {
+        const item = cart.find(i => i.product.id === productId)
+        if (!item) return
+        if (price === null) {
+            setUnitPrice(productId, null)
+            return
+        }
+        if (!Number.isFinite(price) || price < 0) {
+            toast.error(t('pos.invalidPrice'))
+            return
+        }
+        const rounded = Math.round(price * 100) / 100
+        const cost = item.product.cost ?? 0
+        if (cost > 0 && rounded < cost) {
+            toast.warning(t('pos.belowCost', { cost: formatCurrency(cost, settings.currencySymbol) }))
+        }
+        setUnitPrice(productId, rounded)
+    }
+
     // Totals Calculation
-    const subtotal = cart.reduce((sum, item) => sum + lineTotal(item.product.price, item.quantity), 0)
+    const subtotal = cart.reduce((sum, item) => sum + lineTotal(itemPrice(item), item.quantity), 0)
     const discountAmount = subtotal * (activeTab.discount / 100)
     const taxRate = settings.enableTax ? (settings.taxRate / 100) : 0
     const tax = (subtotal - discountAmount) * taxRate
@@ -348,8 +370,8 @@ export function Sales() {
                 product_code: item.product.code,
                 product_name: item.product.name,
                 quantity: item.quantity,
-                unit_price: item.product.price,
-                subtotal: lineTotal(item.product.price, item.quantity),
+                unit_price: itemPrice(item),
+                subtotal: lineTotal(itemPrice(item), item.quantity),
             }))
 
             const sale: Omit<Sale, 'id'> = {
@@ -605,6 +627,7 @@ export function Sales() {
                                     item={item}
                                     onUpdate={handleUpdateQuantity}
                                     onSetQuantity={handleSetQuantity}
+                                    onSetPrice={handleSetUnitPrice}
                                     onRemove={removeItem}
                                     currencySymbol={settings.currencySymbol}
                                 />
@@ -980,7 +1003,10 @@ function ProductCard({ product, settings, onClick }: { product: Product; setting
     )
 }
 
-function CartItemRow({ item, onUpdate, onSetQuantity, onRemove, currencySymbol }: { item: CartItem; onUpdate: (id: number, delta: number) => void; onSetQuantity: (id: number, quantity: number) => void; onRemove: (id: number) => void; currencySymbol: string }) {
+function CartItemRow({ item, onUpdate, onSetQuantity, onSetPrice, onRemove, currencySymbol }: { item: CartItem; onUpdate: (id: number, delta: number) => void; onSetQuantity: (id: number, quantity: number) => void; onSetPrice: (id: number, price: number | null) => void; onRemove: (id: number) => void; currencySymbol: string }) {
+    const { t } = useTranslation()
+    const price = itemPrice(item)
+    const priceChanged = item.unitPrice !== undefined
     return (
         <motion.div
             layout
@@ -1004,20 +1030,49 @@ function CartItemRow({ item, onUpdate, onSetQuantity, onRemove, currencySymbol }
             </div>
             <div className="flex-1 min-w-0">
                 <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">{item.product.name}</h4>
-                <div className="text-xs text-gray-500">{formatCurrency(item.product.price, currencySymbol)} x {item.quantity}</div>
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-gray-500 mt-0.5">
+                    <NumberCommitInput
+                        value={price}
+                        onCommit={(value) => onSetPrice(item.product.id!, value)}
+                        label={t('pos.unitPrice')}
+                        className={cn(
+                            "w-20 h-6 px-1.5 text-xs text-right font-semibold",
+                            priceChanged && "border-amber-400 dark:border-amber-500 text-amber-700 dark:text-amber-400"
+                        )}
+                    />
+                    <span>× {item.quantity}</span>
+                    {priceChanged && (
+                        <span className="inline-flex items-center gap-1">
+                            <span className="line-through" title={t('pos.listPrice')}>{formatCurrency(item.product.price, currencySymbol)}</span>
+                            <button
+                                onClick={() => onSetPrice(item.product.id!, null)}
+                                className="p-0.5 rounded text-gray-400 hover:text-primary hover:bg-primary/10"
+                                title={t('pos.resetPrice')}
+                                aria-label={t('pos.resetPrice')}
+                            >
+                                <RotateCcw className="w-3 h-3" />
+                            </button>
+                        </span>
+                    )}
+                </div>
             </div>
             <div className="flex items-center gap-2">
                 <button onClick={() => onUpdate(item.product.id!, -1)} className="w-7 h-7 flex items-center justify-center bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-gray-100 border border-gray-200 dark:border-gray-600">
                     <Minus className="w-3 h-3" />
                 </button>
-                <QuantityInput value={item.quantity} onCommit={(quantity) => onSetQuantity(item.product.id!, quantity)} />
+                <NumberCommitInput
+                    value={item.quantity}
+                    onCommit={(quantity) => onSetQuantity(item.product.id!, quantity)}
+                    label={t('pos.quantity')}
+                    className="w-14 h-7 text-sm text-center font-semibold"
+                />
                 <button onClick={() => onUpdate(item.product.id!, 1)} className="w-7 h-7 flex items-center justify-center bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-gray-100 border border-gray-200 dark:border-gray-600">
                     <Plus className="w-3 h-3" />
                 </button>
             </div>
             <div className="text-right min-w-[60px]">
                 <div className="font-bold text-sm text-gray-900 dark:text-white">
-                    {formatCurrency(lineTotal(item.product.price, item.quantity), currencySymbol)}
+                    {formatCurrency(lineTotal(price, item.quantity), currencySymbol)}
                 </div>
                 <button onClick={() => onRemove(item.product.id!)} className="p-1 text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
                     <Trash2 className="w-3 h-3" />
@@ -1030,8 +1085,11 @@ function CartItemRow({ item, onUpdate, onSetQuantity, onRemove, currencySymbol }
 // Price of a bill line, to the cent (quantities can be decimal, e.g. 0.333 kg)
 const lineTotal = (price: number, quantity: number) => Math.round(price * quantity * 100) / 100
 
-// Editable cart quantity: applied on Enter or blur, Escape restores the current value
-function QuantityInput({ value, onCommit }: { value: number; onCommit: (quantity: number) => void }) {
+// Unit price on the bill: the price typed for this bill, or the product's price
+const itemPrice = (item: CartItem) => item.unitPrice ?? item.product.price
+
+// Editable cart number (quantity or unit price): applied on Enter or blur, Escape restores the current value
+function NumberCommitInput({ value, onCommit, label, className }: { value: number; onCommit: (value: number) => void; label: string; className?: string }) {
     const [draft, setDraft] = useState(String(value))
     const cancelRef = useRef(false)
 
@@ -1045,8 +1103,8 @@ function QuantityInput({ value, onCommit }: { value: number; onCommit: (quantity
             setDraft(String(value))
             return
         }
-        const quantity = parseFloat(draft)
-        if (!Number.isNaN(quantity) && quantity !== value) onCommit(quantity)
+        const typed = parseFloat(draft)
+        if (!Number.isNaN(typed) && typed !== value) onCommit(typed)
         // Show the stored value again; if it changed, the effect above updates it
         setDraft(String(value))
     }
@@ -1061,6 +1119,8 @@ function QuantityInput({ value, onCommit }: { value: number; onCommit: (quantity
             onChange={(e) => setDraft(e.target.value)}
             onFocus={(e) => e.target.select()}
             onBlur={commit}
+            aria-label={label}
+            title={label}
             onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault()
@@ -1071,7 +1131,10 @@ function QuantityInput({ value, onCommit }: { value: number; onCommit: (quantity
                     e.currentTarget.blur()
                 }
             }}
-            className="w-14 h-7 font-semibold text-sm text-center rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className={cn(
+                "rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+                className
+            )}
         />
     )
 }

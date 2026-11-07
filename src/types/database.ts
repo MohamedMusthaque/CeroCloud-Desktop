@@ -283,6 +283,8 @@ export interface SaleItem {
 export interface CartItem {
     product: Product
     quantity: number
+    // Price for this bill only, when changed from the product's price
+    unitPrice?: number
 }
 
 // Every way stock changes: opening = stock when the log started, initial = stock of a new product,

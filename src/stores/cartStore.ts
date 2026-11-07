@@ -31,6 +31,8 @@ interface CartState {
     addItem: (product: Product, allowNegativeStock?: boolean) => void
     updateQuantity: (productId: number, delta: number, allowNegativeStock?: boolean) => void
     removeItem: (productId: number) => void
+    // Price for this bill only; null (or the product's own price) goes back to the product's price
+    setUnitPrice: (productId: number, price: number | null) => void
     clearCart: () => void
 
     // Transaction Data
@@ -146,6 +148,18 @@ export const useCartStore = create<CartState>()(
                         ? { ...tab, items: tab.items.filter(i => i.product.id !== productId) }
                         : tab
                 )
+            })),
+
+            setUnitPrice: (productId, price) => set(state => ({
+                tabs: state.tabs.map(tab => tab.id !== state.activeTabId ? tab : {
+                    ...tab,
+                    items: tab.items.map(i => {
+                        if (i.product.id !== productId) return i
+                        const { unitPrice: _previous, ...rest } = i
+                        void _previous
+                        return price === null || price === i.product.price ? rest : { ...rest, unitPrice: price }
+                    })
+                })
             })),
 
             clearCart: () => set(state => ({
