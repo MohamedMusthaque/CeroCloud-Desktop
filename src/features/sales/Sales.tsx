@@ -1013,38 +1013,29 @@ function CartItemRow({ item, onUpdate, onSetQuantity, onSetPrice, onRemove, curr
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="flex gap-3 items-center bg-gray-50 dark:bg-gray-700/30 p-2 rounded-xl group"
+            className="bg-gray-50 dark:bg-gray-700/30 p-2 rounded-xl group space-y-2"
         >
-            <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-lg shrink-0 overflow-hidden border border-gray-100 dark:border-gray-600">
-                {item.product.image ? (
-                    <LazyImage
-                        src={getImageSrc(item.product.image) || ""}
-                        alt={item.product.name}
-                        aspectRatio="aspect-square"
-                        className="w-full h-full object-cover"
-                        fallback={<NoImagePlaceholder iconClassName="w-5 h-5" />}
-                    />
-                ) : (
-                    <NoImagePlaceholder iconClassName="w-5 h-5" />
-                )}
-            </div>
-            <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">{item.product.name}</h4>
-                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-gray-500 mt-0.5">
-                    <NumberCommitInput
-                        value={price}
-                        onCommit={(value) => onSetPrice(item.product.id!, value)}
-                        label={t('pos.unitPrice')}
-                        money
-                        className={cn(
-                            "w-24 h-6 px-1.5 text-xs text-right font-semibold",
-                            priceChanged && "border-amber-400 dark:border-amber-500 text-amber-700 dark:text-amber-400"
-                        )}
-                    />
-                    <span>× {item.quantity}</span>
+            {/* Product: the full name wraps instead of being cut off */}
+            <div className="flex gap-3 items-start">
+                <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-lg shrink-0 overflow-hidden border border-gray-100 dark:border-gray-600">
+                    {item.product.image ? (
+                        <LazyImage
+                            src={getImageSrc(item.product.image) || ""}
+                            alt={item.product.name}
+                            aspectRatio="aspect-square"
+                            className="w-full h-full object-cover"
+                            fallback={<NoImagePlaceholder iconClassName="w-5 h-5" />}
+                        />
+                    ) : (
+                        <NoImagePlaceholder iconClassName="w-5 h-5" />
+                    )}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm leading-snug text-gray-900 dark:text-white whitespace-normal [overflow-wrap:anywhere]">{item.product.name}</h4>
                     {priceChanged && (
-                        <span className="inline-flex items-center gap-1">
-                            <span className="line-through" title={t('pos.listPrice')}>{formatCurrency(item.product.price, currencySymbol)}</span>
+                        <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-500">
+                            <span>{t('pos.listPrice')}:</span>
+                            <span className="line-through">{formatCurrency(item.product.price, currencySymbol)}</span>
                             <button
                                 onClick={() => onSetPrice(item.product.id!, null)}
                                 className="p-0.5 rounded text-gray-400 hover:text-primary hover:bg-primary/10"
@@ -1053,31 +1044,49 @@ function CartItemRow({ item, onUpdate, onSetQuantity, onSetPrice, onRemove, curr
                             >
                                 <RotateCcw className="w-3 h-3" />
                             </button>
-                        </span>
+                        </div>
                     )}
                 </div>
+                <button
+                    onClick={() => onRemove(item.product.id!)}
+                    className="p-1 shrink-0 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                    title={t('common.delete')}
+                    aria-label={t('common.delete')}
+                >
+                    <Trash2 className="w-3.5 h-3.5" />
+                </button>
             </div>
+
+            {/* Unit price × quantity = line total, each in its own space */}
             <div className="flex items-center gap-2">
-                <button onClick={() => onUpdate(item.product.id!, -1)} className="w-7 h-7 flex items-center justify-center bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-gray-100 border border-gray-200 dark:border-gray-600">
-                    <Minus className="w-3 h-3" />
-                </button>
                 <NumberCommitInput
-                    value={item.quantity}
-                    onCommit={(quantity) => onSetQuantity(item.product.id!, quantity)}
-                    label={t('pos.quantity')}
-                    className="w-14 h-7 text-sm text-center font-semibold"
+                    value={price}
+                    onCommit={(value) => onSetPrice(item.product.id!, value)}
+                    label={t('pos.unitPrice')}
+                    money
+                    className={cn(
+                        "w-24 shrink-0 h-7 px-1.5 text-xs text-right font-semibold",
+                        priceChanged && "border-amber-400 dark:border-amber-500 text-amber-700 dark:text-amber-400"
+                    )}
                 />
-                <button onClick={() => onUpdate(item.product.id!, 1)} className="w-7 h-7 flex items-center justify-center bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-gray-100 border border-gray-200 dark:border-gray-600">
-                    <Plus className="w-3 h-3" />
-                </button>
-            </div>
-            <div className="text-right min-w-[60px]">
-                <div className="font-bold text-sm text-gray-900 dark:text-white">
+                <span className="text-xs text-gray-400 shrink-0">×</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <button onClick={() => onUpdate(item.product.id!, -1)} aria-label="-1" className="w-7 h-7 flex items-center justify-center bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-gray-100 border border-gray-200 dark:border-gray-600">
+                        <Minus className="w-3 h-3" />
+                    </button>
+                    <NumberCommitInput
+                        value={item.quantity}
+                        onCommit={(quantity) => onSetQuantity(item.product.id!, quantity)}
+                        label={t('pos.quantity')}
+                        className="w-12 h-7 text-sm text-center font-semibold"
+                    />
+                    <button onClick={() => onUpdate(item.product.id!, 1)} aria-label="+1" className="w-7 h-7 flex items-center justify-center bg-white dark:bg-gray-700 rounded-full shadow-sm hover:bg-gray-100 border border-gray-200 dark:border-gray-600">
+                        <Plus className="w-3 h-3" />
+                    </button>
+                </div>
+                <div className="flex-1 min-w-0 text-right font-bold text-sm text-gray-900 dark:text-white break-all">
                     {formatCurrency(lineTotal(price, item.quantity), currencySymbol)}
                 </div>
-                <button onClick={() => onRemove(item.product.id!)} className="p-1 text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
-                    <Trash2 className="w-3 h-3" />
-                </button>
             </div>
         </motion.div>
     )
